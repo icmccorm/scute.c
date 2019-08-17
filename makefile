@@ -1,13 +1,16 @@
+targets = debug value chunk memory
+OBJ = $(targets:%=%.o)
+DEPS = $(targets:%=%.h)
+CC = gcc
+MAIN = main.c
 
-scute : memory.o chunk.o debug.o main.c
-	gcc -o scute memory.o chunk.o debug.o main.c
+scute: $(OBJ) $(DEPS) $(MAIN)
+	$(CC) main.c $(OBJ) $(DEPS) -o scute
 
-memory.o: memory.c memory.h common.h
-	gcc -c memory.c
-chunk.o: chunk.c chunk.h memory.h common.h
-	gcc -c chunk.c
-debug.o: debug.c debug.h chunk.h
-	gcc -c debug.c
+%.o : %.c 
+	$(CC) -c $^ -o $@
 
-clean:
-	rm scute *.o
+all : $(OBJ) scute
+
+clean: 
+	rm -rf *.o *.h.gch *.out scute
