@@ -5,9 +5,16 @@
 #include "value.h"
 
 typedef enum {
+	OP_RETURN,
 	OP_CONSTANT,
 	OP_CONSTANT_LONG,
-	OP_RETURN
+	OP_NEGATE,
+	OP_MULTIPLY,
+	OP_DIVIDE,
+	OP_SUBTRACT,
+	OP_ADD,
+	OP_MODULO,
+
 } OpCode;
 
 typedef struct {

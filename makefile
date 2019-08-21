@@ -1,11 +1,12 @@
-targets = debug value chunk memory
+targets = vm debug value chunk memory compiler
 OBJ = $(targets:%=%.o)
 DEPS = $(targets:%=%.h)
 CC = gcc
 MAIN = main.c
+FLAGS = -lm
 
 scute: $(OBJ) $(DEPS) $(MAIN)
-	$(CC) main.c $(OBJ) $(DEPS) -o scute
+	$(CC) main.c $(OBJ) $(DEPS) -o scute $(FLAGS)
 
 %.o : %.c 
 	$(CC) -c $^ -o $@
