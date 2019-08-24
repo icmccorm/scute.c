@@ -1,4 +1,4 @@
-targets = vm debug value chunk memory compiler
+targets = vm debug value chunk memory compiler scanner
 OBJ = $(targets:%=%.o)
 DEPS = $(targets:%=%.h)
 CC = gcc

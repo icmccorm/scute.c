@@ -18,7 +18,6 @@ void initVM() {
 
 void freeVM() {
 
-
 }
 
 void push(Value value) {
