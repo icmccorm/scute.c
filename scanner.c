@@ -9,12 +9,18 @@ typedef struct {
     const char* current;
     const char* origin;
     int line;
-    int indent;
+    const char* lastScanned;
 } Scanner;
 
 Scanner scanner;
 
-
+void initScanner(const char* source){
+    scanner.origin = source;
+    scanner.start = source;
+    scanner.current = source;
+    scanner.line = 1;
+    scanner.lastScanned = source;
+}
 
 static TK makeToken(TKType type){
     TK token;
@@ -22,7 +28,7 @@ static TK makeToken(TKType type){
     token.line = scanner.line;
     token.start = scanner.start;
     token.length = (int) (scanner.current - scanner.start);
-    token.indent = scanner.indent;
+    scanner.lastScanned = scanner.start;
     return token;
 }
 
@@ -54,7 +60,6 @@ static TK errorToken(const char* s){
     token.start = s;
     token.line = scanner.line;
     token.length = (int) strlen(s);
-    token.indent = scanner.indent;
     return token;
 }
 
@@ -64,13 +69,11 @@ static char peek(){
 }
 
 static TK makeNewline(){
-    scanner.indent = 0;
     ++scanner.line;
 
     TK token;
     token.type = TK_NEWLINE;
     token.line = scanner.line;
-    token.indent = scanner.indent;
     token.start = scanner.start;
 
     while(peek() == '\n'){
@@ -78,22 +81,31 @@ static TK makeNewline(){
     }
 
     token.length = (int) (scanner.current - scanner.start);
-
-    while(peek() == '\t' || peek() == ' '){
-        if(peek() == '\t') ++scanner.indent;
-        advance();
-    }
-
+    scanner.lastScanned = scanner.start;
     return token;
 }
 
-TK scanTK(){
+static void skipWhiteSpace(){
+    for(;;){
+        switch(peek()){
+            case ' ':
+                advance();
+            default:
+                return;
+        }
+    }
+}
 
+static char previous(){
+    return *scanner.lastScanned;
+}
+
+TK scanTK(){
+    skipWhiteSpace();
     scanner.start = scanner.current;
     if(isAtEnd()) return makeToken(TK_EOF);
 
     const char c = advance();
-
     switch(c){
         case '*': return makeToken(TK_TIMES);
         case '(': return makeToken(TK_L_PAREN);
@@ -162,24 +174,13 @@ TK scanTK(){
                 return scanTK();
             }
         case '\t':
-        case ' ':
-            return scanTK();
+            if(previous() == '\n' || previous() == '\t'){
+                return makeToken(TK_INDENT);
+            }else{
+                return scanTK();
+            }
         default:
             //handle integers and IDs.
             break;
     }
-}
-
-void initScanner(const char* source){
-    scanner.origin = source;
-    scanner.start = source;
-    scanner.current = source;
-    scanner.line = 1;
-    scanner.indent = 0;
-
-    while(peek() == '\t' || peek() == ' '){
-        if(peek() == '\t') ++scanner.indent;
-        advance();
-    }
-
 }

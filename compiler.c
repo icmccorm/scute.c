@@ -18,11 +18,14 @@ void compile(const char* source){
             printf("   | ");
         }
         switch(token.type){
+            case TK_INDENT:
+                printf("%2d '\\t' \n", token.type);
+                break;
             case TK_NEWLINE:
-                printf("%2d %2d '\\n' \n", token.type, token.indent);
+                printf("%2d '\\n' \n", token.type);
                 break;
             default:
-                printf("%2d %2d '%.*s' \n", token.type, token.indent, token.length, token.start);
+                printf("%2d '%.*s' \n", token.type, token.length, token.start);
                 break;
         }
             
