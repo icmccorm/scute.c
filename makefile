@@ -1,17 +1,25 @@
-targets = vm debug value chunk memory compiler scanner
-OBJ = $(targets:%=%.o)
-DEPS = $(targets:%=%.h)
+DEPS = ./src/headers
+HEADERS = $(shell find ./src -name "*.h")
+SRC = $(shell find ./src -name "*.c")
+OBJ = $(SRC:%.c=%.o)
+DEP_DIRS = $(shell find ./src -type f -iname "*.h" -printf "%h\n" | sort -u)
+INCLUDES = $(DEP_DIRS:%=-I %)
+FLAGS = $(INCLUDES)
 CC = gcc
-MAIN = main.c
-FLAGS = -lm
 
-scute: $(OBJ) $(DEPS) $(MAIN)
-	$(CC) main.c $(OBJ) $(DEPS) -o scute $(FLAGS)
+.PHONY : all clean
+.SILENT : scute
 
-%.o : %.c 
-	$(CC) -c $^ -o $@
+test:
+	echo $(SOURCES)
 
-all : $(OBJ) scute
+scute : $(SRC) 
+	$(CC) $(FLAGS) $^ main.c -o ./scute -lm
 
-clean: 
+all: scute tmp
+
+tmp:
+	mkdir tmp
+
+clean :	
 	rm -rf *.o *.h.gch *.out scute
