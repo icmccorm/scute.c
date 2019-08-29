@@ -64,7 +64,8 @@ void writeConstant(Chunk* chunk, Value value, int line){
 	/* It can be assumed that the average programmer will never reach the overflow limit
 	 * of 2^24 unique literals of type number, but who really knows for sure?
 	 * with this assumption, having two separate types of constant instructions is just as
-	 * efficient as having an extra preceeding byte to denote the quantity of proceeding bytes.
+	 * efficient as having an extra preceeding byte to denote the quantity of proceeding bytes,
+	 * up to a certain point.
 	 */
 
 	if(numBytes > 1){

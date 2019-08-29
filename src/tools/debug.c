@@ -12,6 +12,10 @@ void printChunk(Chunk* chunk, const char* name) {
 	}
 }
 
+static int simpleInstruction(const char* name, int offset);
+static int longConstantInstruction(const char* name, Chunk* chunk, int offset);
+static int constantInstruction(const char* name, Chunk* chunk, int offset);
+
 int printInstruction(Chunk* chunk, int offset){
 	printf("%4d ", offset);
 	
@@ -43,7 +47,6 @@ int printInstruction(Chunk* chunk, int offset){
 		default:
 			printf("Unknown opcode %d\n", instruction);
 			return offset + 1;
-
 	}
 }
 

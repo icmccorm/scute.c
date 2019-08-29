@@ -50,37 +50,57 @@ static InterpretResult run() {
 		typeName b = pop(); \
 		typeName a = pop(); \
 		push(a op b); \
-	} while(false)
+	} while(false);
 
 	for(;;) {
-		uint8_t instruction;
-		switch(instruction = READ_BYTE()){
+		switch(READ_BYTE()){
 			case OP_RETURN:
 				printValue(pop());
 				printf("\n");
 				return INTERPRET_OK;
-			case OP_CONSTANT:{
+			case OP_CONSTANT:;
 				Value test = READ_CONSTANT();
 				push(test);
 				break;
-			}
 			case OP_NEGATE:
 				push(-pop());
 				break;	
-			case OP_ADD:		BINARY_OP(+, double);
-			case OP_SUBTRACT:	BINARY_OP(-, double);
-			case OP_MULTIPLY:	BINARY_OP(*, double);
-			case OP_DIVIDE:		BINARY_OP(/, double);
-			case OP_MODULO:		BINARY_OP(%, int);
+			case OP_ADD:		
+				BINARY_OP(+, double);
+				break;
+			case OP_SUBTRACT:	
+				BINARY_OP(-, double);
+				break;
+			case OP_MULTIPLY:	
+				BINARY_OP(*, double);
+				break;
+			case OP_DIVIDE:		
+				BINARY_OP(/, double);
+				break;
+			case OP_MODULO:		
+				BINARY_OP(%, int);	  
+				break; 
 		}	
 	}
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef BINARY_OP
-
 }
 
 InterpretResult interpret(const char* source){
-	compile(source);
-	return INTERPRET_OK;
+	Chunk chunk;
+	initChunk(&chunk);
+
+	if(!compile(source, &chunk)){
+		freeChunk(&chunk);
+		return INTERPRET_COMPILE_ERROR;
+	}
+
+	vm.chunk = &chunk;
+	vm.ip = vm.chunk->code;
+
+	InterpretResult result = run();
+
+	freeChunk(&chunk);
+	return result;
 }
