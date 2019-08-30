@@ -26,7 +26,7 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line){
 		chunk->opsPerLine = GROW_ARRAY(chunk->opsPerLine, int, oldCapacity, chunk->lineCapacity);
 		chunk->lineNums = GROW_ARRAY(chunk->lineNums, int, oldCapacity, chunk->lineCapacity);
 	
-		if(chunk->lineCount = 0) ++chunk->lineCount;
+		if(chunk->lineCount == 0) ++chunk->lineCount;
 	}
 	
 	if(line > chunk->lineNums[chunk->lineCount-1]){
