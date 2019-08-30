@@ -6,7 +6,7 @@ build
 tmp
 
 # compiled solution
-scute
+scute*
 
 # IDE-related
 .vscode
