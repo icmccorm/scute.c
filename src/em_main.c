@@ -10,6 +10,7 @@
 void runCode(const char* code){
 	initVM();
 	InterpretResult result = interpret(code);
+	freeVM();
 
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
