@@ -13,7 +13,7 @@ TMP_OBJ_PATHS = $(SHARED_OBJS:%=$(BUILD_DIR)/%)
 
 EM_FLAGS = --pre-js ./pre.js
 EM_JS_FLAGS = -O2 $(EM_JS_EXPORTS) -s WASM=1 -s ENVIRONMENT='worker' -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=InterpreterModule
-EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode"]'
+EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString"]'
 DEV_FLAGS = -lm -g -shared
 PROD_FLAGS = -lm
 
