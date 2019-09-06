@@ -79,13 +79,13 @@ static int longConstantInstruction(const char* name, Chunk* chunk, int offset){
 }
 
 int getLine(Chunk* chunk, int opIndex) {
-	int runningTotal = 0;
+	int runningTotal = 1;
 	for(int i = 0; i<chunk->lineCount; ++i){
 		runningTotal += chunk->opsPerLine[i];
 		if(opIndex <= runningTotal){
 			return chunk->lineNums[i];
 		}
 	}
-	return 0;
+	return 1;
 }
 

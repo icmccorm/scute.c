@@ -10,34 +10,35 @@ void initChunk(Chunk* chunk){
 	chunk -> capacity = 0;
 	chunk -> code = NULL;
 	initValueArray(&chunk->constants);
-		
+
 	chunk -> opsPerLine = NULL;
 	chunk -> lineNums = NULL;
-	chunk -> lineCount = 0;
+	chunk -> lineCount = -1;
 	chunk -> lineCapacity = 0;
+	chunk -> previousLine = 0;
 }
 
 void writeChunk(Chunk* chunk, uint8_t byte, int line){
-	if(chunk->lineCapacity < chunk->lineCount + 1){
+	if(line > -1){
+		if(chunk->lineCapacity < chunk->lineCount + 1 || chunk->lineCapacity == 0){
 
-		int oldCapacity = chunk->lineCapacity;
-		chunk->lineCapacity = GROW_CAPACITY(oldCapacity);
-		
-		chunk->opsPerLine = GROW_ARRAY(chunk->opsPerLine, int, oldCapacity, chunk->lineCapacity);
-		chunk->lineNums = GROW_ARRAY(chunk->lineNums, int, oldCapacity, chunk->lineCapacity);
-	
-		if(chunk->lineCount == 0) ++chunk->lineCount;
+			int oldCapacity = chunk->lineCapacity;
+			chunk->lineCapacity = GROW_CAPACITY(oldCapacity);
+			
+			chunk->opsPerLine = GROW_ARRAY(chunk->opsPerLine, int, oldCapacity, chunk->lineCapacity);
+			chunk->lineNums = GROW_ARRAY(chunk->lineNums, int, oldCapacity, chunk->lineCapacity);
+		}
+		// add override for line number -1?
+		if(line > chunk->previousLine){
+			++(chunk->lineCount);
+			chunk->lineNums[chunk->lineCount] = line;
+			chunk->opsPerLine[chunk->lineCount] = 1;
+			chunk->previousLine = line;
+		}else{
+			++(chunk->opsPerLine[chunk->lineCount]);
+		}
 	}
 	
-	if(line > chunk->lineNums[chunk->lineCount-1]){
-		chunk->lineNums[chunk->lineCount] = line;
-		++chunk->lineCount;
-		chunk->opsPerLine[chunk->lineCount] = 1;		
-
-	}else{
-		++chunk->opsPerLine[chunk->lineCount-1];
-	}
-
 	if(chunk->capacity < chunk->count + 1){
 		int oldCapacity = chunk->capacity;
 		chunk->capacity = GROW_CAPACITY(oldCapacity);

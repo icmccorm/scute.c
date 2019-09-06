@@ -26,6 +26,7 @@ typedef struct {
 	int* lineNums;
 	int lineCount;
 	int lineCapacity;
+	int previousLine;
 } Chunk;
 
 void initChunk(Chunk* chunk);
