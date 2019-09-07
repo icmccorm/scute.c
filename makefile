@@ -28,10 +28,10 @@ $(BUILD_DIR):
 	@mkdir $(BUILD_DIR)
 
 ifdef PROD
-scute : $(SRC_PATHS)
+scute : $(LOCAL_ENTRY) $(SRC_PATHS)
 	@$(CC) $(FLAGS) $(LOCAL_ENTRY) $(SRC_PATHS) -o ./$(EXEC_FILE) -lm
 else
-scute : $(SRC_PATHS) $(BUILD_DIR) $(TMP_OBJ_PATHS) 
+scute : $(LOCAL_ENTRY) $(SRC_PATHS) $(BUILD_DIR) $(TMP_OBJ_PATHS) 
 	@$(CC) $(FLAGS) $(LOCAL_ENTRY) $(TMP_OBJ_PATHS) -o ./$(EXEC_FILE) -lm
 endif
 
