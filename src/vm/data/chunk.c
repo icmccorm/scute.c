@@ -61,12 +61,17 @@ void freeChunk(Chunk* chunk){
 void writeConstant(Chunk* chunk, Value value, int line){
 	writeValueArray(&chunk->constants, value);
 
-	int numBytes = ceil((double)(log(chunk->constants.count-1)/log(2)) / 8); 	
+	int constIndex = chunk->constants.count;
+
+	int numBytes = constIndex <= 1 ? 1 : ceil((double)(log(constIndex)/log(2)) / 8); 	
 	/* It can be assumed that the average programmer will never reach the overflow limit
 	 * of 2^24 unique literals of type number, but who really knows for sure?
 	 * with this assumption, having two separate types of constant instructions is just as
 	 * efficient as having an extra preceeding byte to denote the quantity of proceeding bytes,
 	 * up to a certain point.
+	 * 
+	 * If the maximum of 2^24 unique constants is reached (god forbid), then a runtime error will
+	 * occur.
 	 */
 
 	if(numBytes > 1){
@@ -75,7 +80,6 @@ void writeConstant(Chunk* chunk, Value value, int line){
 
 		for(int i = 0; i<3; ++i){
 			uint8_t byteAtIndex = (constIndex >> 8*i) & 0xFF;
-//			printf("byte: %x\n", byteAtIndex);
 			writeChunk(chunk, (uint8_t) byteAtIndex, -1);
 
 		}
@@ -85,4 +89,15 @@ void writeConstant(Chunk* chunk, Value value, int line){
 		writeChunk(chunk, chunk->constants.count - 1, -1);
 
 	}
+}
+
+int getLine(Chunk* chunk, int opIndex) {
+	int runningTotal = 1;
+	for(int i = 0; i<chunk->lineCount; ++i){
+		runningTotal += chunk->opsPerLine[i];
+		if(opIndex <= runningTotal){
+			return chunk->lineNums[i];
+		}
+	}
+	return 1;
 }

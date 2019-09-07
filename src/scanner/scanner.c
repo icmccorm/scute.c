@@ -185,6 +185,7 @@ static TKType findIdentifier(){
             }else{
                 return TK_E;
             }
+        case 'n': return checkKeyword(1, 3, "ull", TK_NULL);
         default:
             return TK_ID;
     }

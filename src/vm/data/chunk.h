@@ -14,7 +14,9 @@ typedef enum {
 	OP_SUBTRACT,
 	OP_ADD,
 	OP_MODULO,
-
+	OP_NULL,
+	OP_TRUE,
+	OP_FALSE
 } OpCode;
 
 typedef struct {

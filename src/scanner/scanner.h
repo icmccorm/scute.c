@@ -13,6 +13,7 @@ typedef enum {
     TK_INTEGER,
     TK_TRUE,
     TK_FALSE,
+    TK_NULL,
     TK_STRING,
     TK_ID,
     TK_FUNC,

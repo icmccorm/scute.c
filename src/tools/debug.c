@@ -44,6 +44,12 @@ int printInstruction(Chunk* chunk, int offset){
 			return constantInstruction("OP_CONSTANT", chunk, offset);
 		case OP_CONSTANT_LONG:
 			return longConstantInstruction("OP_CONSTANT_LONG", chunk, offset);
+		case OP_TRUE:
+			return simpleInstruction("OP_TRUE", offset);
+		case OP_FALSE:
+			return simpleInstruction("OP_FALSE", offset);
+		case OP_NULL:
+			return simpleInstruction("OP_NULL", offset);
 		default:
 			printf("Unknown opcode %d\n", instruction);
 			return offset + 1;
@@ -77,15 +83,3 @@ static int longConstantInstruction(const char* name, Chunk* chunk, int offset){
 	printf("'\n");
 	return offset + 4;
 }
-
-int getLine(Chunk* chunk, int opIndex) {
-	int runningTotal = 1;
-	for(int i = 0; i<chunk->lineCount; ++i){
-		runningTotal += chunk->opsPerLine[i];
-		if(opIndex <= runningTotal){
-			return chunk->lineNums[i];
-		}
-	}
-	return 1;
-}
-

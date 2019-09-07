@@ -119,6 +119,7 @@ static void binary();
 static void unary();
 static void grouping();
 static void number();
+static void literal();
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -126,63 +127,64 @@ ParseRule rules[] = {
 { NULL,     binary,     PC_FACTOR },    // TK_TIMES,
 { NULL,     binary,     PC_FACTOR },    // TK_DIVIDE,
 { NULL,     binary,     PC_FACTOR },    // TK_MODULO,
-{ NULL,     NULL,   PC_NONE },    // TK_ASSIGN,
-{ NULL,     NULL,   PC_NONE },    // TK_EQUALS,
-{ NULL,     NULL,   PC_NONE },    // TK_INCR_ASSIGN,
-{ NULL,     NULL,   PC_NONE },    // TK_DECR_ASSIGN,
-{ NULL,     NULL,   PC_NONE },    // TK_BANG,
-{ NULL,	    NULL,	PC_NONE },    // TK_BANG_EQUALS,
-{ NULL,	    NULL,	PC_NONE },    // TK_INCR, 
-{ NULL,	    NULL,	PC_NONE },    // TK_DECR,
-{ NULL,	    NULL,	PC_NONE },    // TK_COLON,
-{ NULL,	    NULL,	PC_NONE },    // TK_QUESTION,
-{ NULL,	    NULL,	PC_NONE },    // TK_LESS_EQUALS,
-{ NULL,	    NULL,	PC_NONE },    // TK_GREATER_EQUALS,
-{ NULL,	    NULL,	PC_NONE },    // TK_LESS,
-{ NULL,	    NULL,	PC_NONE },    // TK_GREATER,
-{ NULL,	    NULL,	PC_NONE },    // TK_EVAL_ASSIGN,
-{ NULL,	    NULL,	PC_NONE },    // TK_L_LIMIT, 
-{ NULL,	    NULL,	PC_NONE },    // TK_R_LIMIT,
-{ number,   NULL,   PC_NONE },    // TK_REAL,
-{ number,   NULL,   PC_NONE },    // TK_INTEGER,
-{ NULL,	    NULL,	PC_NONE },    // TK_TRUE,
-{ NULL,	    NULL,	PC_NONE },    // TK_FALSE,
-{ NULL,	    NULL,	PC_NONE },    // TK_STRING,
-{ NULL,	    NULL,	PC_NONE },    // TK_ID,
-{ NULL,	    NULL,	PC_NONE },    // TK_FUNC,
-{ NULL,	    NULL,	PC_NONE },    // TK_AND,
-{ NULL,	    NULL,	PC_NONE },    // TK_OR,
-{ NULL,	    NULL,	PC_NONE },    // TK_PRE,
-{ NULL,	    NULL,	PC_NONE },    // TK_PI,
-{ NULL,	    NULL,	PC_NONE },    // TK_E,
-{ NULL,	    NULL,	PC_NONE },    // TK_TAU,
-{ NULL,	    NULL,	PC_NONE },    // TK_SEMI,
-{ NULL,	    NULL,	PC_NONE },    // TK_L_BRACE,
-{ NULL,	    NULL,	PC_NONE },    // TK_R_BRACE,
-{ grouping, NULL,   PC_NONE },    // TK_L_PAREN,
-{ NULL,	    NULL,	PC_NONE },    // TK_R_PAREN, 
-{ NULL,	    NULL,	PC_NONE },    // TK_L_BRACK,
-{ NULL,	    NULL,	PC_NONE },    // TK_R_BRACK,
-{ NULL,	    NULL,	PC_NONE },    // TK_COMMA,
-{ NULL,	    NULL,	PC_NONE },    // TK_DEREF, 
-{ NULL,	    NULL,	PC_NONE },    // TK_TILDA, 
-{ NULL,	    NULL,	PC_NONE },    // TK_NEWLINE,
-{ NULL,	    NULL,	PC_NONE },    // TK_INDENT,
-{ NULL,	    NULL,	PC_NONE },    // TK_DO,
-{ NULL,	    NULL,	PC_NONE },    // TK_WHILE,
-{ NULL,	    NULL,	PC_NONE },    // TK_FOR,
-{ NULL,	    NULL,	PC_NONE },    // TK_IF,
-{ NULL,	    NULL,	PC_NONE },    // TK_ELSE,
-{ NULL,	    NULL,	PC_NONE },    // TK_RECT,
-{ NULL,	    NULL,	PC_NONE },    // TK_CIRC,
-{ NULL,	    NULL,	PC_NONE },    // TK_ELLIP,
-{ NULL,	    NULL,	PC_NONE },    // TK_LET,
-{ NULL,	    NULL,	PC_NONE },    // TK_PRINT,
-{ NULL,	    NULL,	PC_NONE },    // TK_DRAW,
-{ NULL,	    NULL,	PC_NONE },    // TK_TEXT,
-{ NULL,	    NULL,	PC_NONE },    // TK_T,
-{ NULL,	    NULL,	PC_NONE },    // TK_ERROR,
-{ NULL,     NULL,   PC_NONE }    // TK_EOF
+{ NULL,     NULL,       PC_NONE },    // TK_ASSIGN,
+{ NULL,     NULL,       PC_NONE },    // TK_EQUALS,
+{ NULL,     NULL,       PC_NONE },    // TK_INCR_ASSIGN,
+{ NULL,     NULL,       PC_NONE },    // TK_DECR_ASSIGN,
+{ NULL,     NULL,       PC_NONE },    // TK_BANG,
+{ NULL,	    NULL,	    PC_NONE },    // TK_BANG_EQUALS,
+{ NULL,	    NULL,	    PC_NONE },    // TK_INCR, 
+{ NULL,	    NULL,	    PC_NONE },    // TK_DECR,
+{ NULL,	    NULL,	    PC_NONE },    // TK_COLON,
+{ NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
+{ NULL,	    NULL,	    PC_NONE },    // TK_LESS_EQUALS,
+{ NULL,	    NULL,	    PC_NONE },    // TK_GREATER_EQUALS,
+{ NULL,	    NULL,	    PC_NONE },    // TK_LESS,
+{ NULL,	    NULL,	    PC_NONE },    // TK_GREATER,
+{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
+{ NULL,	    NULL,	    PC_NONE },    // TK_L_LIMIT, 
+{ NULL,	    NULL,	    PC_NONE },    // TK_R_LIMIT,
+{ literal,  NULL,       PC_NONE },     // TK_REAL,
+{ literal,  NULL,       PC_NONE },     // TK_INTEGER,
+{ literal,	NULL,	    PC_NONE },    // TK_TRUE,
+{ literal,	NULL,	    PC_NONE },    // TK_FALSE,
+{ literal,	NULL,	    PC_NONE },    // TK_NULL,
+{ NULL,	    NULL,	    PC_NONE },    // TK_STRING,
+{ NULL,	    NULL,	    PC_NONE },    // TK_ID,
+{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
+{ NULL,	    NULL,	    PC_NONE },    // TK_AND,
+{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
+{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
+{ NULL,	    NULL,	    PC_NONE },    // TK_PI,
+{ NULL,	    NULL,	    PC_NONE },    // TK_E,
+{ NULL,	    NULL,	    PC_NONE },    // TK_TAU,
+{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
+{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
+{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
+{ grouping, NULL,       PC_NONE },    // TK_L_PAREN,
+{ NULL,	    NULL,	    PC_NONE },    // TK_R_PAREN, 
+{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACK,
+{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
+{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
+{ NULL,	    NULL,	    PC_NONE },    // TK_DEREF, 
+{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
+{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
+{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
+{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
+{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
+{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
+{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
+{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
+{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
+{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
+{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
+{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
+{ NULL,	    NULL,	    PC_NONE },    // TK_PRINT,
+{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
+{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
+{ NULL,	    NULL,	    PC_NONE },    // TK_T,
+{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
+{ NULL,     NULL,       PC_NONE }    // TK_EOF
 };
 
 
@@ -213,7 +215,21 @@ static void expression() {
 
 static void number() {
     double value = strtod(parser.previous.start, NULL);
-    emitConstant(value);
+    emitConstant(NUM_VAL(value));
+}
+
+static void literal() {
+    switch(parser.previous.type){
+        case TK_FALSE:  emitByte(OP_FALSE); break;
+        case TK_TRUE:   emitByte(OP_TRUE); break;
+        case TK_NULL:   emitByte(OP_NULL); break;
+        case TK_INTEGER:
+        case TK_REAL:
+            number();
+            break;
+        default:
+            return;
+    }    
 }
 
 static void binary(){
