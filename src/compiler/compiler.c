@@ -9,6 +9,7 @@
 typedef struct {
     TK current;
     TK previous;
+    int indent;
     bool hadError;
     bool panicMode;
 } Parser;
@@ -135,12 +136,12 @@ ParseRule rules[] = {
 { NULL,	    binary,	    PC_COMPARE }, // TK_GREATER_EQUALS,
 { NULL,	    binary,	    PC_COMPARE }, // TK_LESS,
 { NULL,	    binary,	    PC_COMPARE }, // TK_GREATER,
-{ NULL,     NULL,       PC_NONE },    // TK_ASSIGN,
-{ NULL,     NULL,       PC_NONE },    // TK_INCR_ASSIGN,
-{ NULL,     NULL,       PC_NONE },    // TK_DECR_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },    // TK_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },    // TK_INCR_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },    // TK_DECR_ASSIGN,
 { unary,    NULL,       PC_UNARY },   // TK_BANG,
-{ NULL,	    NULL,	    PC_NONE },    // TK_INCR, 
-{ NULL,	    NULL,	    PC_NONE },    // TK_DECR,
+{ NULL,	    NULL,	    PC_UNARY },    // TK_INCR, 
+{ NULL,	    NULL,	    PC_UNARY },    // TK_DECR,
 { NULL,	    NULL,	    PC_NONE },    // TK_COLON,
 { NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
 { NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
@@ -152,7 +153,7 @@ ParseRule rules[] = {
 { literal,	NULL,	    PC_NONE },    // TK_FALSE,
 { literal,	NULL,	    PC_NONE },    // TK_NULL,
 { NULL,	    NULL,	    PC_NONE },    // TK_STRING,
-{ NULL,	    NULL,	    PC_NONE },    // TK_ID,
+{ var,	    assign,	    PC_ASSIGN },    // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 { NULL,	    NULL,	    PC_NONE },    // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
@@ -181,7 +182,7 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
-{ function,	NULL,	    PC_CALL },    // TK_PRINT,
+{ function,	NULL,	    PC_PRIMARY },    // TK_PRINT,
 { NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
 { NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
 { NULL,	    NULL,	    PC_NONE },    // TK_T,
@@ -207,6 +208,20 @@ static void parsePrecedence(PCType precedence){
         advance();
         ParseFn infixRule = getRule(parser.previous.type)->infix;
         infixRule();
+    }
+}
+
+static void statement(){
+    advance();
+    ParseRule* rule = getRule(parser.previous.type);
+    if(rule->precedence = PC_PRIMARY){
+        ParseFn primary = rule->prefix;
+        primary();
+    }else{
+        advance();
+        while(getRule(parser.previous.type)->precedence < PC_PRIMARY){
+            advance();
+        }
     }
 }
 
@@ -335,7 +350,9 @@ bool compile(const char* source, Chunk* chunk){
     compilingChunk = chunk;
 
     advance();
-    expression();
+    while(parser.current.type != TK_EOF){
+        statement();
+    }
 
     consume(TK_EOF, "Expected end of expression.");
     endCompiler();
