@@ -31,7 +31,7 @@ ifdef PROD
 scute : $(LOCAL_ENTRY) $(SRC_PATHS)
 	@$(CC) $(FLAGS) $(LOCAL_ENTRY) $(SRC_PATHS) -o ./$(EXEC_FILE) -lm
 else
-scute : $(LOCAL_ENTRY) $(SRC_PATHS) $(BUILD_DIR) $(TMP_OBJ_PATHS) 
+scute : $(BUILD_DIR) $(TMP_OBJ_PATHS) $(LOCAL_ENTRY)  
 	@$(CC) $(FLAGS) $(LOCAL_ENTRY) $(TMP_OBJ_PATHS) -o ./$(EXEC_FILE) -lm
 endif
 
@@ -40,7 +40,7 @@ all: scute
 scute.o : $(SRC_PATHS) 
 	@$(CC) $(FLAGS) -c $(SRC_PATHS) -o ./scute.o -lm
 
-$(BUILD_DIR)/%.so :
+$(BUILD_DIR)/%.so : $(SRC_PATHS)
 	@$(CC) $(FLAGS) -c $(filter %/$*.c, $(SRC_PATHS)) -o $(@D)/$(notdir $@) $(DEV_FLAGS)
 
 emcc : $(SRC_PATHS) $(EM_ENTRY)
