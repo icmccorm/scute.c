@@ -4,7 +4,6 @@
 #include "value.h"
 #include "chunk.h"
 
-
 void printChunk(Chunk* chunk, const char* name) {
 	printf("== %s ==\n", name);
 	for (int offset = 0; offset < chunk->count;) {
@@ -50,6 +49,28 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_FALSE", offset);
 		case OP_NULL:
 			return simpleInstruction("OP_NULL", offset);
+		case OP_NOT:
+			return simpleInstruction("OP_NOT", offset);
+		case OP_LESS:
+			return simpleInstruction("OP_LESS", offset);
+		case OP_GREATER:
+			return simpleInstruction("OP_GREATER", offset);
+		case OP_LESS_EQUALS:
+			return simpleInstruction("OP_LESS_EQUALS", offset);
+		case OP_GREATER_EQUALS:
+			return simpleInstruction("OP_GREATER_EQUALS", offset);
+		case OP_EQUALS:
+			return simpleInstruction("OP_EQUALS", offset);
+		case OP_PRINT:
+			return simpleInstruction("OP_PRINT", offset);
+		case OP_PI:
+			return simpleInstruction("OP_PI", offset);
+		case OP_TAU:
+			return simpleInstruction("OP_TAU", offset);
+		case OP_E:
+			return simpleInstruction("OP_E", offset);
+		case OP_SEPARATOR:
+			return simpleInstruction("OP_SEPARATOR", offset);
 		default:
 			printf("Unknown opcode %d\n", instruction);
 			return offset + 1;

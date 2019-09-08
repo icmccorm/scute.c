@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "compiler.h"
 
+
 VM vm;
 
 static void resetStack(){
@@ -49,8 +50,8 @@ static void runtimeError(const char* format, ...){
 	resetStack();
 }
 
-static void binary(){
-
+static bool isFalsey(Value val){
+	return IS_NULL(val) || (IS_BOOL(val) && !AS_BOOL(val));
 }
 
 static InterpretResult run() {
@@ -81,9 +82,10 @@ static InterpretResult run() {
 
 	for(;;) {
 		switch(READ_BYTE()){
-			case OP_RETURN:
+			case OP_PRINT:
 				printValue(pop());
 				printf("\n");
+			case OP_RETURN:
 				return INTERPRET_OK;
 			case OP_CONSTANT:;
 				Value test = READ_CONSTANT();
@@ -111,6 +113,21 @@ static InterpretResult run() {
 			case OP_MODULO:
 				BINARY_OP(%, NUM_VAL, int);
 				break;
+			case OP_EQUALS:
+				BINARY_OP(==, NUM_VAL, double);
+				break;
+			case OP_LESS:
+				BINARY_OP(<, NUM_VAL, double);
+				break;
+			case OP_LESS_EQUALS:
+				BINARY_OP(<=, NUM_VAL, double);
+				break;
+			case OP_GREATER:
+				BINARY_OP(>, BOOL_VAL, double);
+				break;
+			case OP_GREATER_EQUALS:
+				BINARY_OP(>=, BOOL_VAL, double);
+				break;
 			case OP_TRUE:
 				push(BOOL_VAL(true));
 				break;
@@ -119,6 +136,18 @@ static InterpretResult run() {
 				break;
 			case OP_NULL:
 				push(NULL_VAL);
+				break;
+			case OP_NOT:
+				push(BOOL_VAL(isFalsey(pop())));
+				break;
+			case OP_PI:
+				push(NUM_VAL(PI));
+				break;
+			case OP_TAU:
+				push(NUM_VAL(2*PI));
+				break;
+			case OP_E:
+				push(NUM_VAL(E));
 				break;
 		}	
 	}

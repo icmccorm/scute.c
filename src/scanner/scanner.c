@@ -168,7 +168,16 @@ static TKType findIdentifier(){
             }else{
                 return TK_T;
             }
-        case 'p': return checkKeyword(1, 1, "i", TK_PI);
+        case 'p': 
+            if(scanner.current - scanner.start > 1){
+                switch(scanner.start[1]){
+                    case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
+                    case 'i': return TK_PI;
+                }
+            }else{
+                return TK_ID;
+            }
+        return checkKeyword(1, 1, "i", TK_PI);
         case 'e':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){

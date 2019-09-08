@@ -16,7 +16,18 @@ typedef enum {
 	OP_MODULO,
 	OP_NULL,
 	OP_TRUE,
-	OP_FALSE
+	OP_FALSE,
+	OP_NOT,
+	OP_LESS,
+	OP_GREATER,
+	OP_EQUALS,
+	OP_LESS_EQUALS,
+	OP_GREATER_EQUALS,
+	OP_PRINT,
+	OP_SEPARATOR,
+	OP_PI,
+	OP_TAU,
+	OP_E
 } OpCode;
 
 typedef struct {

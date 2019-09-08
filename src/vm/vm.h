@@ -5,6 +5,8 @@
 #include "value.h"
 
 #define STACK_MAX 256
+#define PI 3.141592653589793238462
+#define E  2.718281828459045235360
 
 typedef struct {
 	Chunk* chunk;

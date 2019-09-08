@@ -23,7 +23,7 @@ typedef struct {
 	Value * values;
 } ValueArray;	
 
-#define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value, .number = (int)value}})
+#define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}})
 #define NULL_VAL ((Value){VL_NULL, {.number = 0}})
 #define NUM_VAL(value) ((Value){VL_NUM, {.number = value}})
 
@@ -38,7 +38,6 @@ typedef struct {
 void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
-
 void printValue(Value value);
 
 #endif
