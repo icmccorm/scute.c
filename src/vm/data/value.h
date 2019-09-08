@@ -24,7 +24,7 @@ typedef struct {
 } ValueArray;	
 
 #define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}})
-#define NULL_VAL ((Value){VL_NULL, {.number = 0}})
+#define NULL_VAL() ((Value){VL_NULL, {.number = 0}})
 #define NUM_VAL(value) ((Value){VL_NUM, {.number = value}})
 
 #define AS_BOOL(value) ((value).as.boolean)

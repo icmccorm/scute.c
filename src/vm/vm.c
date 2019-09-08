@@ -135,7 +135,7 @@ static InterpretResult run() {
 				push(BOOL_VAL(false));
 				break;
 			case OP_NULL:
-				push(NULL_VAL);
+				push(NULL_VAL());
 				break;
 			case OP_NOT:
 				push(BOOL_VAL(isFalsey(pop())));
