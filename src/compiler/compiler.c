@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "common.h"
 #include "compiler.h"
 #include "chunk.h"
 #include "scanner.h"
 #include "value.h"
+#include "object.h"
 
 typedef struct {
     TK current;
@@ -25,7 +27,7 @@ static void emitByte(uint8_t byte){
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
-static void errorAt(TK* token, const char* message){
+static void errorAt(TK* token, char* message){
     if(parser.panicMode) return;
     parser.panicMode = true;
     fprintf(stderr, "[line %d] Error", token->line);
@@ -42,11 +44,11 @@ static void errorAt(TK* token, const char* message){
     parser.hadError = true;
 }
 
-static void errorAtCurrent(const char* message){
+static void errorAtCurrent(char* message){
     errorAt(&parser.current, message);
 }
 
-static void error(const char* message){
+static void error(char* message){
     errorAt(&parser.previous, message);
 }
 
@@ -60,7 +62,7 @@ static void advance() {
     }
 }
 
-static void consume(TKType type, const char* message){
+static void consume(TKType type, char* message){
     if(parser.current.type == type){
         advance();
         return;
@@ -123,6 +125,7 @@ static void number();
 static void literal();
 static void function();
 static void constant();
+static void string();
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -152,8 +155,8 @@ ParseRule rules[] = {
 { literal,	NULL,	    PC_NONE },    // TK_TRUE,
 { literal,	NULL,	    PC_NONE },    // TK_FALSE,
 { literal,	NULL,	    PC_NONE },    // TK_NULL,
-{ NULL,	    NULL,	    PC_NONE },    // TK_STRING,
-{ var,	    assign,	    PC_ASSIGN },    // TK_ID,
+{ string,	NULL,	    PC_NONE },    // TK_STRING,
+{ NULL,	    NULL,	    PC_ASSIGN },    // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 { NULL,	    NULL,	    PC_NONE },    // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
@@ -251,6 +254,10 @@ static void literal() {
     }    
 }
 
+static void string(){
+    emitConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
+}
+
 static void emitParams(int numParams, int minParams){
     consume(TK_L_PAREN, "Expected '('.");
     for(int i = 0; i<numParams; ++i){
@@ -268,7 +275,6 @@ static void emitParams(int numParams, int minParams){
         }
     }
     consume(TK_R_PAREN, "Expected ')'.");
-
 }
 
 static void function(){
@@ -342,7 +348,7 @@ static void grouping(){
     consume(TK_R_PAREN, "Expect ')' after expression.");
 }
 
-bool compile(const char* source, Chunk* chunk){
+bool compile(char* source, Chunk* chunk){
     initScanner(source);
     parser.hadError = false;
     parser.panicMode = false;

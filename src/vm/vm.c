@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdarg.h>
+
 #include "common.h"
 #include "vm.h"
 #include "value.h"
 #include "debug.h"
 #include "compiler.h"
-
+#include "object.h"
 
 VM vm;
 
@@ -15,11 +16,22 @@ static void resetStack(){
 
 void initVM() {
 	resetStack();		
+	vm.objects = NULL;
 }
 
+static void freeObjects(){
+	
+	Obj* list = vm.objects;
+
+	while(list != NULL){
+		Obj* next = list->next;
+		freeObject(list);
+		list = next;
+	}
+}
 
 void freeVM() {
-
+	freeObjects();
 }
 
 void push(Value value) {
@@ -36,7 +48,7 @@ static Value peek(int distance){
 	return vm.stackTop[-1 - distance];
 }
 
-static void runtimeError(const char* format, ...){
+static void runtimeError(char* format, ...){
 	va_list args;
 	va_start(args, format);
 	vfprintf(stderr, format, args);
@@ -156,7 +168,7 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-InterpretResult interpret(const char* source){
+InterpretResult interpret(char* source){
 	Chunk chunk;
 	initChunk(&chunk);
 

@@ -63,13 +63,13 @@ typedef enum {
 
 typedef struct{
     TKType type;
-    const char* start;
+    char* start;
     int length;
     int line;
     int indent;
 } TK; 
 
-void initScanner(const char* source);
+void initScanner(char* source);
 TK scanTK();
 
 #endif

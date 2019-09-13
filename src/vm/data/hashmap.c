@@ -8,12 +8,12 @@ void initMap(HashMap* map){
 	map->numEntries = 0;
 	map->capacity = 0;
 	map->entries = NULL;
-}
+} 
 
 void grow(HashMap* map){
 	int oldCapacity = map->capacity;
 	map->capacity = GROW_CAPACITY(map->capacity);
-	map->entries = GROW_ARRAY(map->entries, HashEntry*, oldCapacity, map->capacity);
+	map->entries = GROW_ARRAY(map->entries, HashEntry* , oldCapacity, map->capacity);
 	
 	for(int i = oldCapacity; i < map->capacity; ++i){
 		map->entries[i] = NULL;
@@ -27,7 +27,7 @@ void freeMap(HashMap* map){
 	FREE_ARRAY(HashEntry*, map->entries, map->capacity);
 }
 
-static int hashFunction(HashMap* map, const char* key){
+static int hashFunction(HashMap* map, char* key){
 	int sum = 0;
 	int charIndex = 0;
 	while(key[charIndex] != '\0'){
@@ -38,7 +38,7 @@ static int hashFunction(HashMap* map, const char* key){
 	return sum % map->capacity;
 }
 
-static HashEntry* includes(HashMap* map, const char* key){
+static HashEntry* includes(HashMap* map, char* key){
 	if(map->capacity == 0 || map->numEntries == 0) return NULL;
 
 	int index = hashFunction(map, key);
@@ -48,7 +48,7 @@ static HashEntry* includes(HashMap* map, const char* key){
 	return map->entries[index];
 }
 
-void insert(HashMap* map, const char* key, Value value){
+void insert(HashMap* map, char* key, Value value){
 	HashEntry* entry = includes(map, key);
 	if(entry != NULL){
 		entry->value = value;
@@ -65,7 +65,7 @@ void insert(HashMap* map, const char* key, Value value){
 	}
 }
 
-Value get(HashMap* map, const char* key){
+Value get(HashMap* map, char* key){
 	HashEntry* entry = includes(map, key);
 	if(entry != NULL){
 		return entry->value;
@@ -74,7 +74,7 @@ Value get(HashMap* map, const char* key){
 	}
 }
 
-void set(HashMap* map, const char* key, Value value) {
+void set(HashMap* map, char* key, Value value) {
 	HashEntry* entry = includes(map, key);
 	if(entry != NULL){
 		entry->value = value;

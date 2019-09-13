@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "value.h"
+#include "hashmap.h"
 
 typedef enum {
 	OP_RETURN,
@@ -40,6 +41,7 @@ typedef struct {
 	int lineCount;
 	int lineCapacity;
 	int previousLine;
+	HashMap* map; 
 } Chunk;
 
 void initChunk(Chunk* chunk);
@@ -49,4 +51,6 @@ void freeChunk(Chunk* chunk);
 int getLine(Chunk* chunk, int opIndex);
 
 void writeConstant(Chunk* chunk, Value value, int line);
+void writeVar(Chunk* chunk, char* key, Value value, int line);
+
 #endif

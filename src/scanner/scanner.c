@@ -5,16 +5,16 @@
 #include "scanner.h"
 
 typedef struct {
-    const char* start;
-    const char* current;
-    const char* origin;
+    char* start;
+    char* current;
+    char* origin;
     int line;
-    const char* lastScanned;
+    char* lastScanned;
 } Scanner;
 
 Scanner scanner;
 
-void initScanner(const char* source){
+void initScanner(char* source){
     scanner.origin = source;
     scanner.start = source;
     scanner.current = source;
@@ -46,7 +46,7 @@ static char peekNext(){
     return scanner.current[1];
 }
 
-static bool match(const char c){
+static bool match(char c){
     if(isAtEnd()) return false;
     if(*scanner.current != c) return false;
 
@@ -54,7 +54,7 @@ static bool match(const char c){
     return true;
 }
 
-static TK errorToken(const char* s){
+static TK errorToken(char* s){
     TK token;
     token.type = TK_ERROR;
     token.start = s;
@@ -123,7 +123,7 @@ static TK number(){
     return makeToken(TK_INTEGER);
 }
 
-static TKType checkKeyword(int start, int length, const char* rest, TKType type){
+static TKType checkKeyword(int start, int length, char* rest, TKType type){
     if(scanner.current - scanner.start == start + length &&
         memcmp(scanner.start + start, rest, length) == 0){
             return type;
@@ -225,7 +225,7 @@ TK scanTK(){
 
     scanner.start = scanner.current;
 
-    const char c = advance();
+    char c = advance();
     switch(c){
         case '*': return makeToken(TK_TIMES);
         case '(': return makeToken(TK_L_PAREN);
