@@ -16,6 +16,7 @@ typedef struct {
 	Value stack[STACK_MAX];
 	Value* stackTop;
 	Obj* objects;
+	HashMap strings;
 } VM;
 
 extern VM vm;

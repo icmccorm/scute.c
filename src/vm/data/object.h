@@ -3,11 +3,11 @@
 
 #include "common.h"
 #include "value.h"
+#include "svg.h"
 
 typedef enum {
 	OBJ_STRING,
-	OBJ_FUNC,
-
+	OBJ_SHAPE
 } OBJType;
 
 //definition for Obj
@@ -21,6 +21,12 @@ struct sObjString{
 	Obj object;
 	int length;
 	char* chars;
+	uint32_t hash;
+};
+
+struct sObjShape{
+	Obj object;
+	Shape shape;
 };
 
 bool isObjectType(Value value, OBJType type);
@@ -28,12 +34,11 @@ ObjString* copyString(char * start, int length);
 void freeObject(Obj* obj);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
-#define IS_FUNC(value) (isObjectType(value, OBJ_FUNC))
+#define IS_SHAPE(value) (isObjectType(value, OBJ_SHAPE))
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*)allocateObject(sizeof(type), objType)
-
 #endif

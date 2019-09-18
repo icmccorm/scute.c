@@ -6,6 +6,7 @@
 #include "value.h"
 #include "memory.h"
 #include "vm.h"
+#include "hashmap.h"
 
 bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
@@ -34,9 +35,16 @@ ObjString* allocateString(char* chars, int length){
 	ObjString* obj = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 	obj->chars = chars;
 	obj->length = length;
+	obj->hash = hashFunction(chars, length);
+
+	insert(&vm.strings, obj, NULL_VAL());
 }
 
 ObjString* copyString(char* chars, int length){
+
+	ObjString* interned = findKey(&vm.strings, chars, length);
+	if(interned != NULL) return interned;
+	
 	char* heapChars = ALLOCATE(char, length + 1);
 	memcpy(heapChars, chars, length);
 	heapChars[length] = '\0';

@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "compiler.h"
 #include "object.h"
+#include "hashmap.h"
 
 VM vm;
 
@@ -17,6 +18,7 @@ static void resetStack(){
 void initVM() {
 	resetStack();		
 	vm.objects = NULL;
+	initMap(&vm.strings);
 }
 
 static void freeObjects(){
@@ -32,6 +34,7 @@ static void freeObjects(){
 
 void freeVM() {
 	freeObjects();
+	freeMap(&vm.strings);
 }
 
 void push(Value value) {
@@ -64,6 +67,20 @@ static void runtimeError(char* format, ...){
 
 static bool isFalsey(Value val){
 	return IS_NULL(val) || (IS_BOOL(val) && !AS_BOOL(val));
+}
+
+static bool valuesEqual(Value a, Value b){
+	if(a.type != b.type) return false;
+	switch(a.type){
+		case VL_BOOL:
+			return AS_BOOL(a) == AS_BOOL(b);
+		case VL_NULL:
+			return true;
+		case VL_OBJ:
+			return AS_OBJ(a) == AS_OBJ(b);
+		case VL_NUM:
+			return AS_NUM(a) == AS_NUM(b);
+	}	
 }
 
 static InterpretResult run() {
@@ -111,8 +128,8 @@ static InterpretResult run() {
 				push(NUM_VAL(-AS_NUM(pop())));
 				break;	
 			case OP_ADD:
-				BINARY_OP(+, NUM_VAL, double);		
-				break;
+
+
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
 				break;
@@ -125,20 +142,16 @@ static InterpretResult run() {
 			case OP_MODULO:
 				BINARY_OP(%, NUM_VAL, int);
 				break;
-			case OP_EQUALS:
-				BINARY_OP(==, NUM_VAL, double);
+			case OP_EQUALS: ;
+				Value b = pop();
+				Value a = pop();
+				push(BOOL_VAL(valuesEqual(a, b)));
 				break;
 			case OP_LESS:
-				BINARY_OP(<, NUM_VAL, double);
-				break;
-			case OP_LESS_EQUALS:
-				BINARY_OP(<=, NUM_VAL, double);
+				BINARY_OP(<, BOOL_VAL, double);
 				break;
 			case OP_GREATER:
 				BINARY_OP(>, BOOL_VAL, double);
-				break;
-			case OP_GREATER_EQUALS:
-				BINARY_OP(>=, BOOL_VAL, double);
 				break;
 			case OP_TRUE:
 				push(BOOL_VAL(true));

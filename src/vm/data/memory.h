@@ -14,7 +14,7 @@
 	reallocate(pointer, sizeof(type) * (oldCount), 0)
 
 #define ALLOCATE(type, count) \
-	(type*) reallocate(NULL, 0, sizeof(type)*count)
+	((type*) reallocate(NULL, 0, sizeof(type)*count))
 
 #define FREE(type, pointer) \
 	reallocate(pointer, sizeof(type), 0)

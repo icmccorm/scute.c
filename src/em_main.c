@@ -17,9 +17,3 @@ void runCode(const char* code){
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
-
-int main(){
-
-	runCode("(1+1) + (53*45)");
-	return 0;
-}

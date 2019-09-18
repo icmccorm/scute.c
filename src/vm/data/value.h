@@ -5,6 +5,7 @@
 
 typedef struct sObj Obj;
 typedef struct sObjString ObjString;
+typedef struct SObjShape ObjShape;
 
 typedef enum {
 	VL_BOOL,

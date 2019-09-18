@@ -16,8 +16,18 @@ typedef struct {
     bool panicMode;
 } Parser;
 
+typedef struct {
+    HashMap* globals;
+} Compiler;
+
 Parser parser;
+Compiler currentScope;
 Chunk* compilingChunk;
+
+void initCompiler(){
+
+}
+
 
 static Chunk* currentChunk() {
     return compilingChunk;
@@ -39,7 +49,6 @@ static void errorAt(TK* token, char* message){
     } else {
         fprintf(stderr, " at '%.*s'", token->length, token->start);
     }
-
     fprintf(stderr, ": %s\n", message);
     parser.hadError = true;
 }
@@ -94,6 +103,10 @@ static void emitConstant(Value value){
     writeConstant(currentChunk(), value, parser.previous.line);
 }
 
+static Value getTokenString(){
+    return OBJ_VAL(copyString(parser.previous.start, parser.previous.length));
+}
+
 typedef enum{
 	PC_NONE,
 	PC_ASSIGN,
@@ -117,7 +130,7 @@ typedef struct{
     PCType precedence;
 } ParseRule;
 
-
+static void expression();
 static void binary();
 static void unary();
 static void grouping();
@@ -126,6 +139,7 @@ static void literal();
 static void function();
 static void constant();
 static void string();
+static void assign();
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -139,12 +153,12 @@ ParseRule rules[] = {
 { NULL,	    binary,	    PC_COMPARE }, // TK_GREATER_EQUALS,
 { NULL,	    binary,	    PC_COMPARE }, // TK_LESS,
 { NULL,	    binary,	    PC_COMPARE }, // TK_GREATER,
-{ NULL,     binary,     PC_ASSIGN },    // TK_ASSIGN,
-{ NULL,     binary,     PC_ASSIGN },    // TK_INCR_ASSIGN,
-{ NULL,     binary,     PC_ASSIGN },    // TK_DECR_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },  // TK_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },  // TK_INCR_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },  // TK_DECR_ASSIGN,
 { unary,    NULL,       PC_UNARY },   // TK_BANG,
-{ NULL,	    NULL,	    PC_UNARY },    // TK_INCR, 
-{ NULL,	    NULL,	    PC_UNARY },    // TK_DECR,
+{ NULL,	    NULL,	    PC_UNARY },   // TK_INCR, 
+{ NULL,	    NULL,	    PC_UNARY },   // TK_DECR,
 { NULL,	    NULL,	    PC_NONE },    // TK_COLON,
 { NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
 { NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
@@ -156,7 +170,7 @@ ParseRule rules[] = {
 { literal,	NULL,	    PC_NONE },    // TK_FALSE,
 { literal,	NULL,	    PC_NONE },    // TK_NULL,
 { string,	NULL,	    PC_NONE },    // TK_STRING,
-{ NULL,	    NULL,	    PC_ASSIGN },    // TK_ID,
+{ NULL,     NULL,	    PC_ASSIGN },  // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 { NULL,	    NULL,	    PC_NONE },    // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
@@ -185,7 +199,7 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
-{ function,	NULL,	    PC_PRIMARY },    // TK_PRINT,
+{ function,	NULL,	    PC_PRIMARY }, // TK_PRINT,
 { NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
 { NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
 { NULL,	    NULL,	    PC_NONE },    // TK_T,
@@ -199,19 +213,30 @@ static ParseRule* getRule(TKType type){
 
 static void parsePrecedence(PCType precedence){
     advance();
-    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-    if(prefixRule == NULL){
-        error("Expect expression.");
-        return;
+    switch(parser.previous.type){
+        case TK_LET:
+            assign();
+        case TK_PRINT:
+            function();
+            break;
+        default:
+            expression();
     }
-
-    prefixRule();
-
-    while(precedence <= getRule(parser.current.type)->precedence){
-        advance();
-        ParseFn infixRule = getRule(parser.previous.type)->infix;
-        infixRule();
+    if(parser.panicMode){
+        while(parser.current.type != TK_EOF){
+            advance();
+            switch(parser.current.type){
+                case TK_LET:
+                case TK_PRINT:
+                    break;
+            }
+        }
     }
+}
+
+static void assign(){
+    consume(TK_ID, "Expected an identifier.");
+    Value idName = getTokenString();
 }
 
 static void statement(){
@@ -255,7 +280,7 @@ static void literal() {
 }
 
 static void string(){
-    emitConstant(OBJ_VAL(copyString(parser.previous.start, parser.previous.length)));
+    emitConstant(getTokenString());
 }
 
 static void emitParams(int numParams, int minParams){
@@ -350,6 +375,7 @@ static void grouping(){
 
 bool compile(char* source, Chunk* chunk){
     initScanner(source);
+    initCompiler();
     parser.hadError = false;
     parser.panicMode = false;
 
