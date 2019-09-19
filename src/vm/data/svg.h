@@ -1,3 +1,8 @@
+#ifndef scute_svg_h
+#define scute_svg_h
+
+#include "value.h"
+
 typedef enum {
 	SP_RECT,
 	SP_CIRC,
@@ -9,11 +14,6 @@ typedef enum {
 struct sShape{
 	SPType type;
 };
-
-typedef struct sShape Shape;
-typedef struct sRect Rect;
-typedef struct sShape Shape;
-
 
 struct sRect{
 	Shape shape;
@@ -29,3 +29,6 @@ struct sCircle{
 	int cy;
 	int r;
 };
+#define AS_RECT(shape) ((Rect*)(shape));
+
+#endif

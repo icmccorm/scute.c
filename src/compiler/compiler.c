@@ -242,7 +242,7 @@ static void assign(){
 static void statement(){
     advance();
     ParseRule* rule = getRule(parser.previous.type);
-    if(rule->precedence = PC_PRIMARY){
+    if(rule->precedence == PC_PRIMARY){
         ParseFn primary = rule->prefix;
         primary();
     }else{

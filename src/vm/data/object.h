@@ -26,11 +26,12 @@ struct sObjString{
 
 struct sObjShape{
 	Obj object;
-	Shape shape;
+	Shape* shape;
 };
 
 bool isObjectType(Value value, OBJType type);
 ObjString* copyString(char * start, int length);
+ObjShape* createRect(int x, int y, int w, int h);
 void freeObject(Obj* obj);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
@@ -38,6 +39,8 @@ void freeObject(Obj* obj);
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
+
+#define AS_SHAPE(value) ((ObjShape*)AS_OBJ(value))
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*)allocateObject(sizeof(type), objType)
