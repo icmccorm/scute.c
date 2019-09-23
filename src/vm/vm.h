@@ -17,6 +17,7 @@ typedef struct {
 	Value* stackTop;
 	Obj* objects;
 	HashMap strings;
+	HashMap globals;
 } VM;
 
 extern VM vm;

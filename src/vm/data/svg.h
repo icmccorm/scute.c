@@ -29,6 +29,7 @@ struct sCircle{
 	int cy;
 	int r;
 };
-#define AS_RECT(shape) ((Rect*)(shape));
+
+#define AS_RECT(value) ((Rect*) value)
 
 #endif

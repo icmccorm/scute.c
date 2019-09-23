@@ -17,7 +17,7 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 CC = gcc
 WASMC = emcc
 
-FLAGS = $(INC_FLAGS)
+FLAGS = $(INC_FLAGS) -g
 D_FLAGS = -MMD -MP
 
 END_FLAGS = -lm

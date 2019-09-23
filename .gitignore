@@ -10,3 +10,5 @@ scute*
 
 # IDE-related
 .vscode
+
+*.o

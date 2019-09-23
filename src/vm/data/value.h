@@ -48,7 +48,7 @@ typedef struct {
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
 void initValueArray(ValueArray* array);
-void writeValueArray(ValueArray* array, Value value);
+int writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(Value value);
 

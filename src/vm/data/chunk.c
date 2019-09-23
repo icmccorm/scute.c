@@ -1,16 +1,16 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "chunk.h"
 #include "memory.h"
 #include "value.h"
-#include "math.h"
 
 void initChunk(Chunk* chunk){
 	chunk -> count = 0;
 	chunk -> capacity = 0;
 	chunk -> code = NULL;
+	
 	initValueArray(&chunk->constants);
-
 	chunk -> opsPerLine = NULL;
 	chunk -> lineNums = NULL;
 	chunk -> lineCount = -1;
@@ -59,10 +59,7 @@ void freeChunk(Chunk* chunk){
 }
 
 void writeConstant(Chunk* chunk, Value value, int line){
-	writeValueArray(&chunk->constants, value);
-
-	int constIndex = chunk->constants.count;
-
+	int constIndex = writeValueArray(&chunk->constants, value);
 	int numBytes = constIndex <= 1 ? 1 : ceil((double)(log(constIndex)/log(2)) / 8); 	
 	/* It can be assumed that the average programmer will never reach the overflow limit
 	 * of 2^24 unique literals of type number, but who really knows for sure?
@@ -76,18 +73,14 @@ void writeConstant(Chunk* chunk, Value value, int line){
 
 	if(numBytes > 1){
 		writeChunk(chunk, OP_CONSTANT_LONG, line);
-		int constIndex = chunk->constants.count-1;
-
 		for(int i = 0; i<3; ++i){
 			uint8_t byteAtIndex = (constIndex >> 8*i) & 0xFF;
 			writeChunk(chunk, (uint8_t) byteAtIndex, -1);
-
 		}
 	
 	}else{
 		writeChunk(chunk, OP_CONSTANT, line);
-		writeChunk(chunk, chunk->constants.count - 1, -1);
-
+		writeChunk(chunk, constIndex, -1);
 	}
 }
 

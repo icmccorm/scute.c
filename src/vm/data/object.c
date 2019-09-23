@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-
 #include "common.h"
 #include "object.h"
 #include "value.h"
@@ -41,6 +40,7 @@ ObjString* allocateString(char* chars, int length){
 	obj->hash = hashFunction(chars, length);
 
 	insert(&vm.strings, obj, NULL_VAL());
+	return obj;
 }
 
 ObjShape* allocateShape(SPType type){
@@ -48,6 +48,8 @@ ObjShape* allocateShape(SPType type){
 	switch(type){
 		case SP_RECT:
 			obj->shape = (Shape*) ALLOCATE(Rect, 1);
+			obj->shape->type = SP_RECT;
+			break;
 	}
 }
 

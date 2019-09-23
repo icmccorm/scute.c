@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -7,6 +8,7 @@
 #include "scanner.h"
 #include "value.h"
 #include "object.h"
+#include "vm.h"
 
 typedef struct {
     TK current;
@@ -79,6 +81,16 @@ static void consume(TKType type, char* message){
     errorAtCurrent(message);
 }
 
+static bool check(TKType type){
+    return parser.current.type == type;
+}
+
+static bool match(TKType type){
+    if(!check(type)) return false;
+    advance();
+    return true;
+}
+
 static void emitReturn(){
     emitByte(OP_RETURN);
 }
@@ -103,7 +115,11 @@ static void emitConstant(Value value){
     writeConstant(currentChunk(), value, parser.previous.line);
 }
 
-static Value getTokenString(){
+static int makeConstant(Value val){
+    return writeValueArray(&currentChunk()->constants, val);
+}
+
+static Value getTokenStringObj(){
     return OBJ_VAL(copyString(parser.previous.start, parser.previous.length));
 }
 
@@ -136,10 +152,11 @@ static void unary();
 static void grouping();
 static void number();
 static void literal();
-static void function();
 static void constant();
 static void string();
 static void assign();
+static void shape();
+static void id();
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -170,7 +187,7 @@ ParseRule rules[] = {
 { literal,	NULL,	    PC_NONE },    // TK_FALSE,
 { literal,	NULL,	    PC_NONE },    // TK_NULL,
 { string,	NULL,	    PC_NONE },    // TK_STRING,
-{ NULL,     NULL,	    PC_ASSIGN },  // TK_ID,
+{ id,       NULL,	    PC_NONE },    // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 { NULL,	    NULL,	    PC_NONE },    // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
@@ -195,11 +212,11 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 { NULL,	    NULL,	    PC_NONE },    // TK_IF,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
+{ shape,	NULL,	    PC_NONE },    // TK_RECT,
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
-{ function,	NULL,	    PC_PRIMARY }, // TK_PRINT,
+{ NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
 { NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
 { NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
 { NULL,	    NULL,	    PC_NONE },    // TK_T,
@@ -207,49 +224,71 @@ ParseRule rules[] = {
 { NULL,     NULL,       PC_NONE }     // TK_EOF
 };
 
+static void printStatement();
+static void expressionStatement();
+static void drawStatement();
+static void assignStatement();
+static void synchronize();
+static void emitParams();
+
 static ParseRule* getRule(TKType type){
     return &rules[type];
 }
 
 static void parsePrecedence(PCType precedence){
     advance();
-    switch(parser.previous.type){
-        case TK_LET:
-            assign();
-        case TK_PRINT:
-            function();
-            break;
-        default:
-            expression();
+    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+    if(prefixRule == NULL){
+        errorAtCurrent("Expect expression.");
+        return;
     }
-    if(parser.panicMode){
-        while(parser.current.type != TK_EOF){
-            advance();
-            switch(parser.current.type){
-                case TK_LET:
-                case TK_PRINT:
-                    break;
-            }
-        }
+
+    prefixRule();
+
+    while(precedence <= getRule(parser.current.type)->precedence){
+        advance();
+        ParseFn infix = getRule(parser.previous.type)->infix;
+        infix();
     }
 }
 
-static void assign(){
-    consume(TK_ID, "Expected an identifier.");
-    Value idName = getTokenString();
-}
+
 
 static void statement(){
     advance();
-    ParseRule* rule = getRule(parser.previous.type);
-    if(rule->precedence == PC_PRIMARY){
-        ParseFn primary = rule->prefix;
-        primary();
+    switch(parser.previous.type){
+        case TK_PRINT:
+            printStatement();
+            break;
+        case TK_DRAW:
+            drawStatement();
+            break;
+        case TK_LET:
+            assignStatement();
+            break;
+        default:
+            expressionStatement();
+            break;
+    }
+    if(parser.panicMode){
+        synchronize();
     }else{
-        advance();
-        while(getRule(parser.previous.type)->precedence < PC_PRIMARY){
-            advance();
+        if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
+    }
+}
+
+static void synchronize(){
+    parser.panicMode = false;
+    while(parser.current.type != TK_EOF){
+        if(parser.previous.type == TK_NEWLINE) return;
+        switch(parser.current.type){
+            case TK_PRINT:
+            case TK_DRAW:
+            case TK_LET:
+                return;
+            default: ;
         }
+        advance();
     }
 }
 
@@ -280,7 +319,12 @@ static void literal() {
 }
 
 static void string(){
-    emitConstant(getTokenString());
+    emitConstant(getTokenStringObj());
+}
+
+static void shape(){
+    emitParams(4, 4);
+    emitByte(OP_RECT);
 }
 
 static void emitParams(int numParams, int minParams){
@@ -302,13 +346,43 @@ static void emitParams(int numParams, int minParams){
     consume(TK_R_PAREN, "Expected ')'.");
 }
 
-static void function(){
-    switch(parser.previous.type){
-        case TK_PRINT:
-            emitParams(1, 1);
-            emitByte(OP_PRINT);
-            break;
+static void printStatement(){
+    expression();
+    emitByte(OP_PRINT);
+}
+
+static void drawStatement(){
+    emitParams(1, 1);
+    emitByte(OP_DRAW);
+}
+
+static void expressionStatement(){
+    expression();
+    emitByte(OP_POP);
+}
+
+static Value parseIdentifier(char* message){
+    consume(TK_ID, message);
+    return getTokenStringObj();
+}
+
+static void assignStatement(){
+    Value idString = parseIdentifier("Expected an identifier.");
+    char* contents = AS_CSTRING(idString);
+    if(match(TK_ASSIGN)){
+        expression();
+    }else{
+       emitByte(OP_NULL);
     }
+
+    emitConstant(idString);
+    emitByte(OP_DEF_GLOBAL);
+}
+
+static void id(){
+    Value idString = getTokenStringObj();
+    emitConstant(idString);
+    emitByte(OP_GET_GLOBAL);
 }
 
 static void binary(){

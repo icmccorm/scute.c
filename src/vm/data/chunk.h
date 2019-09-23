@@ -28,7 +28,13 @@ typedef enum {
 	OP_SEPARATOR,
 	OP_PI,
 	OP_TAU,
-	OP_E
+	OP_E,
+	OP_DRAW,
+	OP_RECT,
+	OP_POP,
+	OP_DEF_GLOBAL,
+	OP_GET_GLOBAL,
+	OP_DEF_LOCAL
 } OpCode;
 
 typedef struct {

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
-
+#include <math.h>
 #include "common.h"
 #include "vm.h"
 #include "value.h"
@@ -17,8 +17,9 @@ static void resetStack(){
 
 void initVM() {
 	resetStack();		
-	vm.objects = NULL;
+	vm.objects = NULL;	
 	initMap(&vm.strings);
+	initMap(&vm.globals);
 }
 
 static void freeObjects(){
@@ -110,10 +111,26 @@ static InterpretResult run() {
 	} while(false); 
 
 	for(;;) {
+		Value a;
+		Value b;
 		switch(READ_BYTE()){
+			case OP_GET_GLOBAL: ;
+				ObjString* setString = AS_STRING(pop());
+				Value stored = getValue(&vm.globals, setString);
+				push(stored);
+				break;
+			case OP_DEF_GLOBAL: ;
+				ObjString* getString = AS_STRING(pop());
+				Value expr = pop();
+				insert(&vm.globals, getString, expr);
+				break;
+			case OP_POP:
+				pop();
+				break;
 			case OP_PRINT:
 				printValue(pop());
 				printf("\n");
+				break;
 			case OP_RETURN:
 				return INTERPRET_OK;
 			case OP_CONSTANT:;
@@ -127,9 +144,51 @@ static InterpretResult run() {
 				}
 				push(NUM_VAL(-AS_NUM(pop())));
 				break;	
-			case OP_ADD:
+			case OP_ADD: ;
+				b = pop();
+				a = pop();
+				
+				switch(b.type){
+					case VL_NUM:
+						if(IS_NUM(a)){
+							push(NUM_VAL(AS_NUM(a) + AS_NUM(b)));
+						}else if(IS_STRING(a)){
+							int strLength = (int)((ceil(log10(AS_NUM(b)))+1)*sizeof(char));
+							char str[strLength];
+							sprintf(str, "%f", AS_NUM(b));
+							
+							int combinedLength = AS_STRING(a)->length + strLength;
+							char totalStr[combinedLength];
+							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
 
+							push(OBJ_VAL(copyString(totalStr, combinedLength)));
+						}else{
+							runtimeError("Only number types and strings can be added.");
+						}
+						break;
+					case VL_OBJ:
+						if(IS_STRING(a)){
+							int combinedLength = AS_STRING(a)->length + AS_STRING(b)->length;
+							char concat[combinedLength];
+							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
 
+							push(OBJ_VAL(copyString(concat, combinedLength)));
+						}else if(IS_NUM(a)){
+							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
+							char str[strLength];
+							sprintf(str, "%f", AS_NUM(a));
+							
+							int combinedLength = AS_STRING(b)->length + strLength;
+							char totalStr[combinedLength];
+							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
+
+							push(OBJ_VAL(copyString(totalStr, combinedLength)));
+						}else{
+							runtimeError("Only number types and strings can be added.");
+						}
+						break;
+				}
+				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
 				break;
@@ -143,8 +202,8 @@ static InterpretResult run() {
 				BINARY_OP(%, NUM_VAL, int);
 				break;
 			case OP_EQUALS: ;
-				Value b = pop();
-				Value a = pop();
+				b = pop();
+				a = pop();
 				push(BOOL_VAL(valuesEqual(a, b)));
 				break;
 			case OP_LESS:
@@ -174,6 +233,7 @@ static InterpretResult run() {
 			case OP_E:
 				push(NUM_VAL(E));
 				break;
+			
 		}	
 	}
 #undef READ_BYTE

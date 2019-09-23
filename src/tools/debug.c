@@ -71,6 +71,10 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_E", offset);
 		case OP_SEPARATOR:
 			return simpleInstruction("OP_SEPARATOR", offset);
+		case OP_DEF_GLOBAL:
+			return simpleInstruction("OP_DEF_GLOBAL", offset);
+		case OP_GET_GLOBAL:
+			return simpleInstruction("OP_GET_GLOBAL", offset);
 		default:
 			printf("Unknown opcode %d\n", instruction);
 			return offset + 1;
