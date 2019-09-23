@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "memory.h"
 #include "value.h"
+#include "object.h"
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;
@@ -8,7 +9,7 @@ void initValueArray(ValueArray* array){
 	array-> count = 0;
 }
 
-void writeValueArray(ValueArray* array, Value value){
+int writeValueArray(ValueArray* array, Value value){
 	if(array->capacity < array->count + 1){
 		int oldCapacity = array->capacity;
 		array->capacity = GROW_CAPACITY(oldCapacity);
@@ -18,7 +19,7 @@ void writeValueArray(ValueArray* array, Value value){
 
 	array->values[array->count] = value;
 	array->count++;
-
+	return array->count - 1;
 }
 
 void freeValueArray(ValueArray* array){
@@ -27,6 +28,34 @@ void freeValueArray(ValueArray* array){
 
 }
 
+void printObject(Value value);
+
 void printValue(Value value){
-	printf("%g", AS_NUM(value));
+	switch(value.type){
+		case VL_NULL:
+			printf("NULL");
+			break;
+		case VL_NUM:
+			printf("%g", AS_NUM(value));
+			break;
+		case VL_BOOL:
+			printf("%s", AS_BOOL(value) ? "true" : "false");
+			break;
+		case VL_OBJ:
+			printObject(value);
+			break;
+		default:
+			printf("%g", AS_NUM(value));
+			break;
+	}
+}
+
+void printObject(Value value){
+	switch(OBJ_TYPE(value)){
+		case OBJ_STRING:
+			printf("%s", AS_CSTRING(value));
+			break;
+		default:
+			break;
+	}
 }

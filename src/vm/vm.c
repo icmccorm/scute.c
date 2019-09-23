@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 #include "common.h"
 #include "vm.h"
 #include "value.h"
 #include "debug.h"
 #include "compiler.h"
-
+#include "object.h"
+#include "hashmap.h"
 
 VM vm;
 
@@ -15,11 +17,25 @@ static void resetStack(){
 
 void initVM() {
 	resetStack();		
+	vm.objects = NULL;	
+	initMap(&vm.strings);
+	initMap(&vm.globals);
 }
 
+static void freeObjects(){
+	
+	Obj* list = vm.objects;
+
+	while(list != NULL){
+		Obj* next = list->next;
+		freeObject(list);
+		list = next;
+	}
+}
 
 void freeVM() {
-
+	freeObjects();
+	freeMap(&vm.strings);
 }
 
 void push(Value value) {
@@ -36,7 +52,7 @@ static Value peek(int distance){
 	return vm.stackTop[-1 - distance];
 }
 
-static void runtimeError(const char* format, ...){
+static void runtimeError(char* format, ...){
 	va_list args;
 	va_start(args, format);
 	vfprintf(stderr, format, args);
@@ -52,6 +68,20 @@ static void runtimeError(const char* format, ...){
 
 static bool isFalsey(Value val){
 	return IS_NULL(val) || (IS_BOOL(val) && !AS_BOOL(val));
+}
+
+static bool valuesEqual(Value a, Value b){
+	if(a.type != b.type) return false;
+	switch(a.type){
+		case VL_BOOL:
+			return AS_BOOL(a) == AS_BOOL(b);
+		case VL_NULL:
+			return true;
+		case VL_OBJ:
+			return AS_OBJ(a) == AS_OBJ(b);
+		case VL_NUM:
+			return AS_NUM(a) == AS_NUM(b);
+	}	
 }
 
 static InterpretResult run() {
@@ -81,13 +111,29 @@ static InterpretResult run() {
 	} while(false); 
 
 	for(;;) {
+		Value a;
+		Value b;
 		switch(READ_BYTE()){
+			case OP_GET_GLOBAL: ;
+				ObjString* setString = AS_STRING(pop());
+				Value stored = getValue(&vm.globals, setString);
+				push(stored);
+				break;
+			case OP_DEF_GLOBAL: ;
+				ObjString* getString = AS_STRING(pop());
+				Value expr = pop();
+				insert(&vm.globals, getString, expr);
+				break;
+			case OP_POP:
+				pop();
+				break;
 			case OP_PRINT:
 				printValue(pop());
 				printf("\n");
+				break;
 			case OP_RETURN:
 				return INTERPRET_OK;
-			case OP_CONSTANT:;
+			case OP_CONSTANT: ;
 				Value test = READ_CONSTANT();
 				push(test);
 				break;
@@ -98,8 +144,59 @@ static InterpretResult run() {
 				}
 				push(NUM_VAL(-AS_NUM(pop())));
 				break;	
-			case OP_ADD:
-				BINARY_OP(+, NUM_VAL, double);		
+			case OP_ADD: ;
+				b = pop();
+				a = pop();
+				
+				switch(b.type){
+					case VL_NUM:
+						if(IS_NUM(a)){
+							push(NUM_VAL(AS_NUM(a) + AS_NUM(b)));
+						}else if(IS_STRING(a)){
+							int strLength = (int)((ceil(log10(AS_NUM(b)))+1)*sizeof(char));
+							char str[strLength];
+							sprintf(str, "%f", AS_NUM(b));
+							
+							int combinedLength = AS_STRING(a)->length + strLength;
+							char totalStr[combinedLength];
+							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
+
+							push(OBJ_VAL(copyString(totalStr, combinedLength)));
+						}else{
+							runtimeError("Only number types and strings can be added.");
+						}
+						break;
+					case VL_OBJ:
+						if(IS_STRING(a)){
+							int combinedLength = AS_STRING(a)->length + AS_STRING(b)->length;
+							char concat[combinedLength];
+							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
+
+							push(OBJ_VAL(copyString(concat, combinedLength)));
+						}else if(IS_NUM(a)){
+							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
+							char str[strLength];
+							sprintf(str, "%f", AS_NUM(a));
+							
+							int combinedLength = AS_STRING(b)->length + strLength;
+							char totalStr[combinedLength];
+							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
+
+							push(OBJ_VAL(copyString(totalStr, combinedLength)));
+						}else{
+							runtimeError("Only number types and strings can be added.");
+						}
+						break;
+				}
+				break;
+			case OP_RECT: ;
+				Value x = pop();
+				Value y = pop();
+				Value w = pop();
+				Value h = pop();
+
+				ObjShape* newRect = createRect(x, y, w, h);
+				push(OBJ_VAL(newRect));
 				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
@@ -113,20 +210,16 @@ static InterpretResult run() {
 			case OP_MODULO:
 				BINARY_OP(%, NUM_VAL, int);
 				break;
-			case OP_EQUALS:
-				BINARY_OP(==, NUM_VAL, double);
+			case OP_EQUALS: ;
+				b = pop();
+				a = pop();
+				push(BOOL_VAL(valuesEqual(a, b)));
 				break;
 			case OP_LESS:
-				BINARY_OP(<, NUM_VAL, double);
-				break;
-			case OP_LESS_EQUALS:
-				BINARY_OP(<=, NUM_VAL, double);
+				BINARY_OP(<, BOOL_VAL, double);
 				break;
 			case OP_GREATER:
 				BINARY_OP(>, BOOL_VAL, double);
-				break;
-			case OP_GREATER_EQUALS:
-				BINARY_OP(>=, BOOL_VAL, double);
 				break;
 			case OP_TRUE:
 				push(BOOL_VAL(true));
@@ -135,7 +228,7 @@ static InterpretResult run() {
 				push(BOOL_VAL(false));
 				break;
 			case OP_NULL:
-				push(NULL_VAL);
+				push(NULL_VAL());
 				break;
 			case OP_NOT:
 				push(BOOL_VAL(isFalsey(pop())));
@@ -149,6 +242,7 @@ static InterpretResult run() {
 			case OP_E:
 				push(NUM_VAL(E));
 				break;
+			
 		}	
 	}
 #undef READ_BYTE
@@ -156,7 +250,7 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-InterpretResult interpret(const char* source){
+InterpretResult interpret(char* source){
 	Chunk chunk;
 	initChunk(&chunk);
 

@@ -1,20 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "common.h"
 #include "compiler.h"
 #include "chunk.h"
 #include "scanner.h"
 #include "value.h"
+#include "object.h"
+#include "vm.h"
 
 typedef struct {
     TK current;
     TK previous;
+    int indent;
     bool hadError;
     bool panicMode;
 } Parser;
 
+typedef struct {
+    HashMap* globals;
+} Compiler;
+
 Parser parser;
+Compiler currentScope;
 Chunk* compilingChunk;
+
+void initCompiler(){
+
+}
+
 
 static Chunk* currentChunk() {
     return compilingChunk;
@@ -24,7 +39,7 @@ static void emitByte(uint8_t byte){
     writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
-static void errorAt(TK* token, const char* message){
+static void errorAt(TK* token, char* message){
     if(parser.panicMode) return;
     parser.panicMode = true;
     fprintf(stderr, "[line %d] Error", token->line);
@@ -36,16 +51,15 @@ static void errorAt(TK* token, const char* message){
     } else {
         fprintf(stderr, " at '%.*s'", token->length, token->start);
     }
-
     fprintf(stderr, ": %s\n", message);
     parser.hadError = true;
 }
 
-static void errorAtCurrent(const char* message){
+static void errorAtCurrent(char* message){
     errorAt(&parser.current, message);
 }
 
-static void error(const char* message){
+static void error(char* message){
     errorAt(&parser.previous, message);
 }
 
@@ -59,12 +73,22 @@ static void advance() {
     }
 }
 
-static void consume(TKType type, const char* message){
+static void consume(TKType type, char* message){
     if(parser.current.type == type){
         advance();
         return;
     }
     errorAtCurrent(message);
+}
+
+static bool check(TKType type){
+    return parser.current.type == type;
+}
+
+static bool match(TKType type){
+    if(!check(type)) return false;
+    advance();
+    return true;
 }
 
 static void emitReturn(){
@@ -91,6 +115,14 @@ static void emitConstant(Value value){
     writeConstant(currentChunk(), value, parser.previous.line);
 }
 
+static int makeConstant(Value val){
+    return writeValueArray(&currentChunk()->constants, val);
+}
+
+static Value getTokenStringObj(){
+    return OBJ_VAL(copyString(parser.previous.start, parser.previous.length));
+}
+
 typedef enum{
 	PC_NONE,
 	PC_ASSIGN,
@@ -114,14 +146,17 @@ typedef struct{
     PCType precedence;
 } ParseRule;
 
-
+static void expression();
 static void binary();
 static void unary();
 static void grouping();
 static void number();
 static void literal();
-static void function();
 static void constant();
+static void string();
+static void assign();
+static void shape();
+static void id();
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -135,12 +170,12 @@ ParseRule rules[] = {
 { NULL,	    binary,	    PC_COMPARE }, // TK_GREATER_EQUALS,
 { NULL,	    binary,	    PC_COMPARE }, // TK_LESS,
 { NULL,	    binary,	    PC_COMPARE }, // TK_GREATER,
-{ NULL,     NULL,       PC_NONE },    // TK_ASSIGN,
-{ NULL,     NULL,       PC_NONE },    // TK_INCR_ASSIGN,
-{ NULL,     NULL,       PC_NONE },    // TK_DECR_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },  // TK_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },  // TK_INCR_ASSIGN,
+{ NULL,     binary,     PC_ASSIGN },  // TK_DECR_ASSIGN,
 { unary,    NULL,       PC_UNARY },   // TK_BANG,
-{ NULL,	    NULL,	    PC_NONE },    // TK_INCR, 
-{ NULL,	    NULL,	    PC_NONE },    // TK_DECR,
+{ NULL,	    NULL,	    PC_UNARY },   // TK_INCR, 
+{ NULL,	    NULL,	    PC_UNARY },   // TK_DECR,
 { NULL,	    NULL,	    PC_NONE },    // TK_COLON,
 { NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
 { NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
@@ -151,8 +186,8 @@ ParseRule rules[] = {
 { literal,	NULL,	    PC_NONE },    // TK_TRUE,
 { literal,	NULL,	    PC_NONE },    // TK_FALSE,
 { literal,	NULL,	    PC_NONE },    // TK_NULL,
-{ NULL,	    NULL,	    PC_NONE },    // TK_STRING,
-{ NULL,	    NULL,	    PC_NONE },    // TK_ID,
+{ string,	NULL,	    PC_NONE },    // TK_STRING,
+{ id,       NULL,	    PC_NONE },    // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 { NULL,	    NULL,	    PC_NONE },    // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
@@ -177,17 +212,24 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 { NULL,	    NULL,	    PC_NONE },    // TK_IF,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
+{ shape,	NULL,	    PC_NONE },    // TK_RECT,
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
-{ function,	NULL,	    PC_CALL },    // TK_PRINT,
+{ NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
 { NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
 { NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
 { NULL,	    NULL,	    PC_NONE },    // TK_T,
 { NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
 { NULL,     NULL,       PC_NONE }     // TK_EOF
 };
+
+static void printStatement();
+static void expressionStatement();
+static void drawStatement();
+static void assignStatement();
+static void synchronize();
+static void emitParams();
 
 static ParseRule* getRule(TKType type){
     return &rules[type];
@@ -197,7 +239,7 @@ static void parsePrecedence(PCType precedence){
     advance();
     ParseFn prefixRule = getRule(parser.previous.type)->prefix;
     if(prefixRule == NULL){
-        error("Expect expression.");
+        errorAtCurrent("Expect expression.");
         return;
     }
 
@@ -205,8 +247,48 @@ static void parsePrecedence(PCType precedence){
 
     while(precedence <= getRule(parser.current.type)->precedence){
         advance();
-        ParseFn infixRule = getRule(parser.previous.type)->infix;
-        infixRule();
+        ParseFn infix = getRule(parser.previous.type)->infix;
+        infix();
+    }
+}
+
+
+
+static void statement(){
+    advance();
+    switch(parser.previous.type){
+        case TK_PRINT:
+            printStatement();
+            break;
+        case TK_DRAW:
+            drawStatement();
+            break;
+        case TK_LET:
+            assignStatement();
+            break;
+        default:
+            expressionStatement();
+            break;
+    }
+    if(parser.panicMode){
+        synchronize();
+    }else{
+        if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
+    }
+}
+
+static void synchronize(){
+    parser.panicMode = false;
+    while(parser.current.type != TK_EOF){
+        if(parser.previous.type == TK_NEWLINE) return;
+        switch(parser.current.type){
+            case TK_PRINT:
+            case TK_DRAW:
+            case TK_LET:
+                return;
+            default: ;
+        }
+        advance();
     }
 }
 
@@ -236,6 +318,15 @@ static void literal() {
     }    
 }
 
+static void string(){
+    emitConstant(getTokenStringObj());
+}
+
+static void shape(){
+    emitParams(4, 4);
+    emitByte(OP_RECT);
+}
+
 static void emitParams(int numParams, int minParams){
     consume(TK_L_PAREN, "Expected '('.");
     for(int i = 0; i<numParams; ++i){
@@ -249,20 +340,48 @@ static void emitParams(int numParams, int minParams){
             }
         }else{
             consume(TK_COMMA, "Expected additional parameters.");
-            emitByte(OP_SEPARATOR);
         }
     }
     consume(TK_R_PAREN, "Expected ')'.");
-
 }
 
-static void function(){
-    switch(parser.previous.type){
-        case TK_PRINT:
-            emitParams(1, 1);
-            emitByte(OP_PRINT);
-            break;
+static void printStatement(){
+    expression();
+    emitByte(OP_PRINT);
+}
+
+static void drawStatement(){
+    emitParams(1, 1);
+    emitByte(OP_DRAW);
+}
+
+static void expressionStatement(){
+    expression();
+    emitByte(OP_POP);
+}
+
+static Value parseIdentifier(char* message){
+    consume(TK_ID, message);
+    return getTokenStringObj();
+}
+
+static void assignStatement(){
+    Value idString = parseIdentifier("Expected an identifier.");
+    char* contents = AS_CSTRING(idString);
+    if(match(TK_ASSIGN)){
+        expression();
+    }else{
+       emitByte(OP_NULL);
     }
+
+    emitConstant(idString);
+    emitByte(OP_DEF_GLOBAL);
+}
+
+static void id(){
+    Value idString = getTokenStringObj();
+    emitConstant(idString);
+    emitByte(OP_GET_GLOBAL);
 }
 
 static void binary(){
@@ -327,15 +446,18 @@ static void grouping(){
     consume(TK_R_PAREN, "Expect ')' after expression.");
 }
 
-bool compile(const char* source, Chunk* chunk){
+bool compile(char* source, Chunk* chunk){
     initScanner(source);
+    initCompiler();
     parser.hadError = false;
     parser.panicMode = false;
 
     compilingChunk = chunk;
 
     advance();
-    expression();
+    while(parser.current.type != TK_EOF){
+        statement();
+    }
 
     consume(TK_EOF, "Expected end of expression.");
     endCompiler();

@@ -3,17 +3,24 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "object.h"
 
 #define STACK_MAX 256
-#define PI 3.141592653589793238462
-#define E  2.718281828459045235360
+#define PI ((double)3.141592653589793238462)
+#define E  ((double)2.718281828459045235360)
+
 
 typedef struct {
 	Chunk* chunk;
 	uint8_t* ip;
 	Value stack[STACK_MAX];
 	Value* stackTop;
+	Obj* objects;
+	HashMap strings;
+	HashMap globals;
 } VM;
+
+extern VM vm;
 
 void initVM();
 void freeVM();
@@ -27,6 +34,6 @@ typedef enum {
 	INTERPRET_RUNTIME_ERROR,
 } InterpretResult;
 
-InterpretResult interpret(const char* source);
+InterpretResult interpret(char* source);
 
 #endif

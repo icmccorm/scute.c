@@ -1,0 +1,153 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "hashmap.h"
+#include "value.h"
+#include "memory.h"
+#include "object.h"
+
+void initMap(HashMap* map){
+	map->numEntries = 0;
+	map->capacity = 0;
+	map->entries = NULL;
+} 
+
+static bool isDeleted(HashEntry* entry){
+	return entry->key == NULL && AS_BOOL(entry->value);
+}
+
+void grow(HashMap* map){
+	HashEntry* rehashed = NULL;
+	int oldCapacity = map->capacity;
+	map->capacity = GROW_CAPACITY(map->capacity);
+	rehashed = GROW_ARRAY(rehashed, HashEntry, 0, map->capacity);
+
+	for(int i = 0; i < map->capacity; ++i){
+		rehashed[i].key = NULL;
+		rehashed[i].value = NULL_VAL();
+	}
+	HashEntry* current = map->first;
+	while(current != NULL){
+		insert(map, current->key, current->value);
+		current = current->next;
+	}
+	FREE_ARRAY(HashEntry, map->entries, oldCapacity);
+	map->entries = rehashed;
+}
+
+void freeMap(HashMap* map){
+	FREE_ARRAY(HashEntry, map->entries, map->capacity);
+}
+
+uint32_t hashFunction(char* keyString, int length){
+	int sum = 0;
+	int charIndex = 0;
+
+	for(int i = 0; i<length; ++i){
+		sum += (uint8_t) keyString[i];
+	}
+}
+
+int hashIndex(HashMap* map, ObjString* obj){
+	return obj->hash % map->capacity;
+}
+
+static HashEntry* includes(HashMap* map, ObjString* key){
+	if(map->capacity == 0 || map->numEntries == 0) return NULL;
+
+	int index = hashIndex(map, key);
+	HashEntry entry = map->entries[index];
+	while(map->entries[index].key != NULL){
+		if(map->entries[index].key == key) break;
+		++index;
+	}
+	return &(map->entries[index]);
+}
+
+void insert(HashMap* map, ObjString* key, Value value){
+	if(map->numEntries + 1 > map->capacity) grow(map);
+	int index = hashIndex(map, key);
+	while(map->entries[index].key != NULL){
+		index = (index + 1) % map->capacity;
+	}
+	map->entries[index].key = key;
+	map->entries[index].value = value;
+	map->entries[index].next = NULL;
+
+	if(map->numEntries == 0) {
+		map->first = &(map->entries[index]);
+		map->previous = map->first;
+	}else{
+		map->previous->next = &(map->entries[index]);
+		map->previous = &(map->entries[index]);
+	}
+	++map->numEntries;
+}
+
+Value getValue(HashMap* map, ObjString* key){
+	HashEntry* entry = includes(map, key);
+	if(entry != NULL){
+		return entry->value;
+	}else{
+		return NULL_VAL();
+	}
+}
+
+//implement to return the entire HashEntry
+ObjString* findKey(HashMap* map, char* chars, int length){
+	if(map->capacity == 0 || map->numEntries == 0) return NULL;
+
+	uint32_t hash = hashFunction(chars, length);
+	uint32_t index = hashFunction(chars, length) % map->capacity;
+
+	while(map->entries[index].key != NULL ){
+		HashEntry current = map->entries[index];
+
+		if(!isDeleted(&current) && hash == current.key->hash){
+			int result = (int) memcmp(current.key->chars, chars, length);
+			if(result == 0) {
+				return current.key;
+			}
+		}
+		
+		index = (index + 1) % map->capacity;
+	}
+	return NULL;
+}
+
+void set(HashMap* map, ObjString* key, Value value) {
+	HashEntry* entry = includes(map, key);
+	if(entry != NULL){
+		entry->value = value;
+	}
+}
+
+void delete(HashMap* map, ObjString* key){
+	HashEntry* entry = includes(map, key);
+	if(entry != NULL){
+		entry->key = NULL;
+		entry->value = BOOL_VAL(true);
+	}
+}
+
+void printMap(HashMap* map){
+	printf("[");
+	if(map->capacity == 0 || map->numEntries == 0) {
+		printf("]"); 
+		return;
+	}
+	if(map->entries[0].key == NULL){
+		printf("X");
+	}else{
+		printf("%g", AS_NUM((map->entries[0].value)));
+	}
+
+	for(int i = 1; i<map->capacity; ++i){
+		if(map->entries[i].key == NULL){
+			printf(", X");
+		}else{
+			printf(", %g", AS_NUM((map->entries[i].value)));
+		}
+	}
+	printf("]\n");
+}

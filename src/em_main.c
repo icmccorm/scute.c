@@ -6,20 +6,14 @@
 #include "debug.h"
 #include "value.h"
 #include "vm.h"
+#include "svg.h"
+#include "output.h"
 
 void runCode(const char* code){
-
-	printf("passed string: %s\n", code);
 	initVM();
 	InterpretResult result = interpret(code);
 	freeVM();
 
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
-}
-
-int main(){
-
-	runCode("(1+1) + (53*45)");
-	return 0;
 }

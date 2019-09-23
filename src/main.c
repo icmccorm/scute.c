@@ -6,6 +6,9 @@
 #include "debug.h"
 #include "value.h"
 #include "vm.h"
+#include "hashmap.h"
+#include "object.h"
+
 
 static void repl() {
 	char line[1024];
@@ -56,11 +59,9 @@ static void runFile(const char* path){
 	char* source = readFile(path);
 	InterpretResult result = interpret(source);
 	free(source);
-	
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
-
 
 int main(int argc, const char* argv[]){
 	initVM();
@@ -75,6 +76,7 @@ int main(int argc, const char* argv[]){
 	freeVM();
 	return 0;
 }
+
 
 
 
