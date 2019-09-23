@@ -133,7 +133,7 @@ static InterpretResult run() {
 				break;
 			case OP_RETURN:
 				return INTERPRET_OK;
-			case OP_CONSTANT:;
+			case OP_CONSTANT: ;
 				Value test = READ_CONSTANT();
 				push(test);
 				break;
@@ -188,6 +188,15 @@ static InterpretResult run() {
 						}
 						break;
 				}
+				break;
+			case OP_RECT: ;
+				Value x = pop();
+				Value y = pop();
+				Value w = pop();
+				Value h = pop();
+
+				ObjShape* newRect = createRect(x, y, w, h);
+				push(OBJ_VAL(newRect));
 				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);

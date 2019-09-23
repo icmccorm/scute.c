@@ -43,24 +43,17 @@ ObjString* allocateString(char* chars, int length){
 	return obj;
 }
 
-ObjShape* allocateShape(SPType type){
-	ObjShape* obj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
-	switch(type){
-		case SP_RECT:
-			obj->shape = (Shape*) ALLOCATE(Rect, 1);
-			obj->shape->type = SP_RECT;
-			break;
-	}
-}
-
-ObjShape* createRect(int x, int y, int w, int h){
-	ObjShape* obj = allocateShape(SP_RECT);
-	Rect* rect = AS_RECT(obj->shape);
-	rect->x = x;
-	rect->y = y;
-	rect->height = h;
-	rect->width = w;
-	return obj;
+ObjShape* createRect(Value x, Value y, Value w, Value h){
+	Rect* rect = ALLOCATE(Rect, 1);
+	rect->shape.type = SP_RECT;
+	rect->x = AS_NUM(x);
+	rect->y = AS_NUM(y);
+	rect->height = AS_NUM(h);
+	rect->width = AS_NUM(w);
+	
+	ObjShape* shapeObj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
+	shapeObj->shape = (Shape*) rect;
+	return shapeObj;
 }
 
 ObjString* copyString(char* chars, int length){

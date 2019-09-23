@@ -340,7 +340,6 @@ static void emitParams(int numParams, int minParams){
             }
         }else{
             consume(TK_COMMA, "Expected additional parameters.");
-            emitByte(OP_SEPARATOR);
         }
     }
     consume(TK_R_PAREN, "Expected ')'.");

@@ -31,7 +31,7 @@ struct sObjShape{
 
 bool isObjectType(Value value, OBJType type);
 ObjString* copyString(char * start, int length);
-ObjShape* createRect(int x, int y, int w, int h);
+ObjShape* createRect(Value x, Value y, Value w, Value h);
 void freeObject(Obj* obj);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
@@ -43,5 +43,5 @@ void freeObject(Obj* obj);
 #define AS_SHAPE(value) ((ObjShape*)AS_OBJ(value))
 
 #define ALLOCATE_OBJ(type, objType) \
-	(type*)allocateObject(sizeof(type), objType)
+	(type*) allocateObject(sizeof(type), objType)
 #endif
