@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "value.h"
 #include "object.h"
+#include "output.h"
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;
@@ -33,19 +34,19 @@ void printObject(Value value);
 void printValue(Value value){
 	switch(value.type){
 		case VL_NULL:
-			printf("NULL");
+			print(O_OUT, "NULL");
 			break;
 		case VL_NUM:
-			printf("%g", AS_NUM(value));
+			print(O_OUT, "%g", AS_NUM(value));
 			break;
 		case VL_BOOL:
-			printf("%s", AS_BOOL(value) ? "true" : "false");
+			print(O_OUT,"%s", AS_BOOL(value) ? "true" : "false");
 			break;
 		case VL_OBJ:
 			printObject(value);
 			break;
 		default:
-			printf("%g", AS_NUM(value));
+			print(O_OUT, "%g", AS_NUM(value));
 			break;
 	}
 }
@@ -53,7 +54,7 @@ void printValue(Value value){
 void printObject(Value value){
 	switch(OBJ_TYPE(value)){
 		case OBJ_STRING:
-			printf("%s", AS_CSTRING(value));
+			print(O_OUT, "%s", AS_CSTRING(value));
 			break;
 		default:
 			break;

@@ -8,6 +8,7 @@
 #include "compiler.h"
 #include "object.h"
 #include "hashmap.h"
+#include "output.h"
 
 VM vm;
 
@@ -55,13 +56,13 @@ static Value peek(int distance){
 static void runtimeError(char* format, ...){
 	va_list args;
 	va_start(args, format);
-	vfprintf(stderr, format, args);
+	vprint(O_ERR, format, args);
 	fputc('\n', stderr);
 	va_end(args);
 
 	size_t opIndex = vm.ip - vm.chunk->code;
 	int line = getLine(vm.chunk, opIndex);
-	fprintf(stderr, "[line %d] in script\n", line);
+	print(O_ERR, "[line %d] in script\n", line);
 
 	resetStack();
 }
@@ -88,11 +89,11 @@ static InterpretResult run() {
 
 #ifdef DEBUG_TRACE_EXECUTION
 	for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
-		printf("[ ");
+		print(O_DEBUG, "[ ");
 		printValue(*slot);
-		printf(" ]");
+		print(O_DEBUG, " ]");
 	}
-	printf("\n");
+	print(O_OUT, "\n");
 	printInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
 #define READ_BYTE() (*vm.ip++)
@@ -129,7 +130,7 @@ static InterpretResult run() {
 				break;
 			case OP_PRINT:
 				printValue(pop());
-				printf("\n");
+				print(O_OUT, "\n");
 				break;
 			case OP_RETURN:
 				return INTERPRET_OK;

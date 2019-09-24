@@ -8,15 +8,15 @@
 #include "vm.h"
 #include "hashmap.h"
 #include "object.h"
-
+#include "output.h"
 
 static void repl() {
 	char line[1024];
 	for(;;){
 
-		printf("> ");
+		print(O_OUT, "> ");
 		if(!fgets(line, sizeof(line), stdin)){
-			printf("\n");
+			print(O_OUT, "\n");
 			break;
 		}
 		interpret(line);
@@ -27,7 +27,7 @@ static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
 	
 	if(file == NULL){
-		fprintf(stderr, "Could not open file\"%s\".\n", path);
+		print(O_ERR, "Could not open file\"%s\".\n", path);
 		exit(74);
 	}
 
@@ -38,14 +38,14 @@ static char* readFile(const char* path){
 	char* buffer = (char*) malloc(fileSize + 1);
 
 	if(buffer == NULL){
-		fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+		print(O_ERR, "Not enough memory to read \"%s\".\n", path);
 		exit(74);
 	}
 	
 	size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
 
 	if(bytesRead < fileSize){
-		fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+		print(O_ERR, "Not enough memory to read \"%s\".\n", path);
 		exit(74);
 	}
 	
@@ -70,7 +70,7 @@ int main(int argc, const char* argv[]){
 	} else if(argc == 2) {
 		runFile(argv[1]);
 	} else {
-		fprintf(stderr, "Usage: scute [path]\n");
+		print(O_ERR, "Usage: scute [path]\n");
 		exit(64);
 	}
 	freeVM();

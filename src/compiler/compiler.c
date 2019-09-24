@@ -9,6 +9,7 @@
 #include "value.h"
 #include "object.h"
 #include "vm.h"
+#include "output.h"
 
 typedef struct {
     TK current;
@@ -42,16 +43,16 @@ static void emitByte(uint8_t byte){
 static void errorAt(TK* token, char* message){
     if(parser.panicMode) return;
     parser.panicMode = true;
-    fprintf(stderr, "[line %d] Error", token->line);
+    print(O_ERR, "[line %d] Error", token->line);
 
     if(token->type == TK_EOF){
-        fprintf(stderr, " at end");
+        print(O_ERR, " at end");
     } else if (token->type == TK_ERROR){
         //Nothing
     } else {
-        fprintf(stderr, " at '%.*s'", token->length, token->start);
+        print(O_ERR, " at '%.*s'", token->length, token->start);
     }
-    fprintf(stderr, ": %s\n", message);
+    print(O_ERR, ": %s\n", message);
     parser.hadError = true;
 }
 
@@ -465,16 +466,16 @@ bool compile(char* source, Chunk* chunk){
 }
 
 static void printToken(TK token){
-    printf("%4d ", token.line);
+    print(O_DEBUG, "%4d ", token.line);
     switch(token.type){
         case TK_INDENT:
-            printf("%2d '\\t' \n", token.type);
+            print(O_DEBUG, "%2d '\\t' \n", token.type);
             break;
         case TK_NEWLINE:
-            printf("%2d '\\n' \n", token.type);
+            print(O_DEBUG, "%2d '\\n' \n", token.type);
             break;
         default:
-            printf("%2d '%.*s' \n", token.type, token.length, token.start);
+            print(O_DEBUG, "%2d '%.*s' \n", token.type, token.length, token.start);
             break;
     }
 }

@@ -5,6 +5,7 @@
 #include "value.h"
 #include "memory.h"
 #include "object.h"
+#include "output.h"
 
 void initMap(HashMap* map){
 	map->numEntries = 0;
@@ -131,23 +132,23 @@ void delete(HashMap* map, ObjString* key){
 }
 
 void printMap(HashMap* map){
-	printf("[");
+	print(O_DEBUG, "[");
 	if(map->capacity == 0 || map->numEntries == 0) {
-		printf("]"); 
+		print(O_DEBUG, "]"); 
 		return;
 	}
 	if(map->entries[0].key == NULL){
-		printf("X");
+		print(O_DEBUG, "X");
 	}else{
-		printf("%g", AS_NUM((map->entries[0].value)));
+		print(O_DEBUG, "%g", AS_NUM((map->entries[0].value)));
 	}
 
 	for(int i = 1; i<map->capacity; ++i){
 		if(map->entries[i].key == NULL){
-			printf(", X");
+			print(O_DEBUG, ", X");
 		}else{
-			printf(", %g", AS_NUM((map->entries[i].value)));
+			print(O_DEBUG, ", %g", AS_NUM((map->entries[i].value)));
 		}
 	}
-	printf("]\n");
+	print(O_DEBUG, "]\n");
 }

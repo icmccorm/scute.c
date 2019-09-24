@@ -43,12 +43,12 @@ clean:
 
 -include $(DEPS)
 
-EM_FLAGS = --pre-js ./pre.js --js-library ./library.js
+EM_FLAGS = --js-library ./library.js
 EM_JS_FLAGS = -O2 $(EM_JS_EXPORTS) -s WASM=1 -s ENVIRONMENT='worker' -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=InterpreterModule
 EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]'
 EM_ENTRY = ./src/em_main.c
 
 emcc : $(SRC_FILES) $(EM_ENTRY)
-	@$(WASMC) $(FLAGS) $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) ; \
+	@$(WASMC) $(FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) ; \
 	sed -i "s#'$(EXEC_FILE).wasm'#require('./$(EXEC_FILE).wasm')#g" ./scute.js
 

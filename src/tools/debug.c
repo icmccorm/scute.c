@@ -3,9 +3,10 @@
 #include "debug.h"
 #include "value.h"
 #include "chunk.h"
+#include "output.h"
 
 void printChunk(Chunk* chunk, const char* name) {
-	printf("== %s ==\n", name);
+	print(O_DEBUG, "== %s ==\n", name);
 	for (int offset = 0; offset < chunk->count;) {
 		offset = printInstruction(chunk, offset);
 	}
@@ -16,13 +17,13 @@ static int longConstantInstruction(const char* name, Chunk* chunk, int offset);
 static int constantInstruction(const char* name, Chunk* chunk, int offset);
 
 int printInstruction(Chunk* chunk, int offset){
-	printf("%4d ", offset);
+	print(O_DEBUG, "%4d ", offset);
 	
 	int currLine = getLine(chunk, offset);
 	if(currLine == -1 || offset > 0 && getLine(chunk, offset - 1) == currLine){
-		printf("   | ");
+		print(O_DEBUG, "   | ");
 	}else{
-		printf("%4d ", currLine);
+		print(O_DEBUG, "%4d ", currLine);
 	}
 
 	uint8_t instruction = chunk->code[offset];
@@ -78,21 +79,21 @@ int printInstruction(Chunk* chunk, int offset){
 		case OP_RECT:
 			return simpleInstruction("OP_RECT", offset);
 		default:
-			printf("Unknown opcode %d\n", instruction);
+			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;
 	}
 }
 
 static int simpleInstruction(const char* name, int offset){	
-	printf("%s\n", name);
+	print(O_DEBUG, "%s\n", name);
 	return offset + 1;
 }
 
 static int constantInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t constant = chunk->code[offset + 1];
-	printf("%-16s %4d '", name, constant);
+	print(O_DEBUG, "%-16s %4d '", name, constant);
 	printValue(chunk->constants.values[constant]);
-	printf("'\n");
+	print(O_DEBUG, "'\n");
 	return offset + 2;
 }
 
@@ -105,8 +106,8 @@ static int longConstantInstruction(const char* name, Chunk* chunk, int offset){
 		int32_t append = (int32_t) currByte << i*8;
 		valIndex += append;
 	}
-	printf("%-16s %4d '", name, valIndex);
+	print(O_DEBUG, "%-16s %4d '", name, valIndex);
 	printValue(chunk->constants.values[valIndex]);
-	printf("'\n");
+	print(O_DEBUG, "'\n");
 	return offset + 4;
 }
