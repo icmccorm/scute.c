@@ -29,32 +29,32 @@ void freeValueArray(ValueArray* array){
 
 }
 
-void printObject(Value value);
+void printObject(OutType out, Value value);
 
-void printValue(Value value){
+void printValue(OutType out, Value value){
 	switch(value.type){
 		case VL_NULL:
-			print(O_OUT, "NULL");
+			print(out, "NULL");
 			break;
 		case VL_NUM:
-			print(O_OUT, "%g", AS_NUM(value));
+			print(out, "%g", AS_NUM(value));
 			break;
 		case VL_BOOL:
-			print(O_OUT,"%s", AS_BOOL(value) ? "true" : "false");
+			print(out,"%s", AS_BOOL(value) ? "true" : "false");
 			break;
 		case VL_OBJ:
-			printObject(value);
+			printObject(out, value);
 			break;
 		default:
-			print(O_OUT, "%g", AS_NUM(value));
+			print(out, "%g", AS_NUM(value));
 			break;
 	}
 }
 
-void printObject(Value value){
+void printObject(OutType out, Value value){
 	switch(OBJ_TYPE(value)){
 		case OBJ_STRING:
-			print(O_OUT, "%s", AS_CSTRING(value));
+			print(out, "%s", AS_CSTRING(value));
 			break;
 		default:
 			break;

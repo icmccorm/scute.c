@@ -92,7 +92,7 @@ static int simpleInstruction(const char* name, int offset){
 static int constantInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t constant = chunk->code[offset + 1];
 	print(O_DEBUG, "%-16s %4d '", name, constant);
-	printValue(chunk->constants.values[constant]);
+	printValue(O_DEBUG, chunk->constants.values[constant]);
 	print(O_DEBUG, "'\n");
 	return offset + 2;
 }
@@ -107,7 +107,7 @@ static int longConstantInstruction(const char* name, Chunk* chunk, int offset){
 		valIndex += append;
 	}
 	print(O_DEBUG, "%-16s %4d '", name, valIndex);
-	printValue(chunk->constants.values[valIndex]);
+	printValue(O_DEBUG, chunk->constants.values[valIndex]);
 	print(O_DEBUG, "'\n");
 	return offset + 4;
 }
