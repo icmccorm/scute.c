@@ -8,6 +8,7 @@
 
 #endif
 
+
 typedef enum {
 	SP_RECT,
 	SP_CIRC,
@@ -15,12 +16,5 @@ typedef enum {
 	SP_POLYL,
 	SP_POLYG,
 } SPType;
-
-struct sShape{
-	SPType type;
-	HashMap properties;
-};
-
-void initRect(Shape* shape, Value x, Value y, Value w, Value h);
 
 #endif

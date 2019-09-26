@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "memory.h"
 #include "value.h"
-#include "object.h"
+#include "obj.h"
 #include "output.h"
 #include "hashmap.h"
 
@@ -59,12 +59,17 @@ void printObject(OutType out, Value value){
 			break;
 		case OBJ_SHAPE: ;
 			ObjShape* svg = AS_SHAPE(value);
-			HashEntry* first = svg->shape->properties.first;
-			print(out, "--rect--");
-			while(first != NULL){
-				print(out, "%s: %d", first->key->chars, AS_NUM(first->value));
-				first = first->next;
+			switch(svg->type){
+				case SP_RECT:
+					print(out, "--<rect>--\n");
+					break;
 			}
+			printMap(O_OUT, &svg->defs);
+		case OBJ_INSTANCE:
+			
+			break;
+		case OBJ_CLOSURE:
+			break;
 		default:
 			break;
 	}

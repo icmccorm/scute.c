@@ -3,7 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
-#include "object.h"
+#include "obj.h"
 
 #define STACK_MAX 256
 #define PI ((double)3.141592653589793238462)

@@ -4,13 +4,15 @@
 #include "hashmap.h"
 #include "value.h"
 #include "memory.h"
-#include "object.h"
+#include "obj.h"
 #include "output.h"
 
 void initMap(HashMap* map){
 	map->numEntries = 0;
 	map->capacity = 0;
 	map->entries = NULL;
+	map->first = NULL;
+	map->previous = NULL;
 } 
 
 static bool isDeleted(HashEntry* entry){
@@ -131,7 +133,15 @@ void delete(HashMap* map, ObjString* key){
 	}
 }
 
-void printMap(HashMap* map){
+void printMap(OutType out, HashMap* map){
+	HashEntry* first = map->first;
+	while(first != NULL){
+		print(out, "%s: %g\n", first->key->chars, first->value.as.number);
+		first = first->next;
+	}
+}
+
+static void displayFullMap(HashMap* map){
 	print(O_DEBUG, "[");
 	if(map->capacity == 0 || map->numEntries == 0) {
 		print(O_DEBUG, "]"); 

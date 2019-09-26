@@ -1,41 +1,23 @@
-#ifndef scute_object_h
-#define scute_object_h
+#ifndef scute_obj_link_h
+#define scute_obj_link_h
 
-#include "common.h"
-#include "value.h"
+#include "obj_def.h"
 #include "svg.h"
 
-typedef enum {
-	OBJ_STRING,
-	OBJ_SHAPE
-} OBJType;
-
-//definition for Obj
-struct sObj {
-	OBJType type;
-	struct sObj* next;
-};
-
-//definition for ObjString
-struct sObjString{
-	Obj object;
-	int length;
-	char* chars;
-	uint32_t hash;
-};
-
-struct sObjShape{
-	Obj object;
-	Shape* shape;
-};
+typedef struct sObj Obj;
+typedef struct sObjString ObjString;
+typedef struct sObjShape ObjShape;
+typedef struct sObjClosure ObjClosure;
+typedef struct sObjShape ObjShape;
 
 bool isObjectType(Value value, OBJType type);
-ObjString* copyString(char * start, int length);
+ObjString* internString(char * start, int length);
 ObjShape* createRect();
 void freeObject(Obj* obj);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
 #define IS_SHAPE(value) (isObjectType(value, OBJ_SHAPE))
+#define IS_CLOSURE(value) (isObjectType(value, OBJ_CLOSURE))
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
@@ -44,4 +26,5 @@ void freeObject(Obj* obj);
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*) allocateObject(sizeof(type), objType)
+	
 #endif

@@ -3,12 +3,7 @@
 
 #include "common.h"
 #include "output.h"
-
-typedef struct sObj Obj;
-typedef struct sObjString ObjString;
-typedef struct sObjShape ObjShape;
-typedef struct sShape Shape;
-typedef struct sRect Rect;
+#include "obj.h"
 
 typedef enum {
 	VL_BOOL,

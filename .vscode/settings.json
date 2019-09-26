@@ -3,9 +3,10 @@
 		"value.h": "c",
 		"type_traits": "cpp",
 		"stdarg.h": "c",
-		"object.h": "c",
+		"obj.h": "c",
 		"stdlib.h": "c",
-		"output.h": "c"
+		"output.h": "c",
+		"obj.h": "c"
 	}
 	
 }

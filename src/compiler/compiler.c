@@ -7,7 +7,7 @@
 #include "chunk.h"
 #include "scanner.h"
 #include "value.h"
-#include "object.h"
+#include "obj.h"
 #include "vm.h"
 #include "output.h"
 
@@ -121,7 +121,7 @@ static int makeConstant(Value val){
 }
 
 static Value getTokenStringObj(){
-    return OBJ_VAL(copyString(parser.previous.start, parser.previous.length));
+    return OBJ_VAL(internString(parser.previous.start, parser.previous.length));
 }
 
 typedef enum{

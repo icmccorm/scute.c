@@ -7,7 +7,7 @@
 #include "value.h"
 #include "vm.h"
 #include "hashmap.h"
-#include "object.h"
+#include "obj.h"
 #include "output.h"
 
 static void repl() {

@@ -6,7 +6,7 @@
 #include "value.h"
 #include "debug.h"
 #include "compiler.h"
-#include "object.h"
+#include "obj.h"
 #include "hashmap.h"
 #include "output.h"
 #include "svg.h"
@@ -131,9 +131,7 @@ static InterpretResult run() {
 				break;
 			case OP_PRINT:
 				printValue(O_OUT, pop());
-				#ifndef EM_MAIN
-					print(O_OUT, "\n");
-				#endif
+				print(O_OUT, "\n");
 				break;
 			case OP_RETURN:
 				return INTERPRET_OK;
@@ -165,7 +163,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
 
-							push(OBJ_VAL(copyString(totalStr, combinedLength)));
+							push(OBJ_VAL(internString(totalStr, combinedLength)));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
@@ -176,7 +174,7 @@ static InterpretResult run() {
 							char concat[combinedLength];
 							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
 
-							push(OBJ_VAL(copyString(concat, combinedLength)));
+							push(OBJ_VAL(internString(concat, combinedLength)));
 						}else if(IS_NUM(a)){
 							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
 							char str[strLength];
@@ -186,7 +184,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
 
-							push(OBJ_VAL(copyString(totalStr, combinedLength)));
+							push(OBJ_VAL(internString(totalStr, combinedLength)));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}

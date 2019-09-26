@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "common.h"
-#include "object.h"
+#include "obj.h"
 #include "value.h"
 #include "memory.h"
 #include "vm.h"
@@ -29,9 +29,7 @@ void freeObject(Obj* obj){
 			break;
 		case(OBJ_SHAPE): ;
 			ObjShape* svg = (ObjShape*) obj;
-			Shape* shape = svg->shape;
-			freeMap(&shape->properties);
-			FREE(Shape, shape);
+			freeMap(&svg->defs);
 			FREE(ObjShape, svg);
 	}
 }
@@ -47,28 +45,30 @@ ObjString* allocateString(char* chars, int length){
 }
 
 ObjShape* allocateShape(SPType type){
-	switch(type){
-		case SP_RECT:
-			return createRect();
-			break;
-	}
+	ObjShape* obj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
+	obj->type = type;	
+	initShape(obj);
+
+	return obj;
 }
+
+/*
 ObjShape* createRect(){
-	Shape* rect = ALLOCATE(Shape, 1);
+	ObjShape* rect = ALLOCATE(Shape, 1);
 	initMap(&rect->properties);
 	rect->type = SP_RECT;
-
-	insert(&rect->properties, copyString("x", 1), NULL_VAL());
-	insert(&rect->properties, copyString("y", 1), NULL_VAL());
-	insert(&rect->properties, copyString("w", 1), NULL_VAL());
-	insert(&rect->properties, copyString("h", 1), NULL_VAL());
+	ObjString* x = internString("x", 1);
+	insert(&rect->properties, x, NULL_VAL());
+	insert(&rect->properties, internString("y", 1), NULL_VAL());
+	insert(&rect->properties, internString("w", 1), NULL_VAL());
+	insert(&rect->properties, internString("h", 1), NULL_VAL());
 	
 	ObjShape* shapeObj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
 	shapeObj->shape = rect;
 	return shapeObj;
-}
+}*/
 
-ObjString* copyString(char* chars, int length){
+ObjString* internString(char* chars, int length){
 
 	ObjString* interned = findKey(&vm.strings, chars, length);
 	if(interned != NULL) return interned;
