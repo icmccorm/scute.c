@@ -1,0 +1,11 @@
+{
+	"files.associations": {
+		"value.h": "c",
+		"type_traits": "cpp",
+		"stdarg.h": "c",
+		"object.h": "c",
+		"stdlib.h": "c",
+		"output.h": "c"
+	}
+	
+}
