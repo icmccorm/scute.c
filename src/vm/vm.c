@@ -90,10 +90,10 @@ static InterpretResult run() {
 #ifdef DEBUG_TRACE_EXECUTION
 	for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
 		print(O_DEBUG, "[ ");
-		printValue(*slot);
+		printValue(O_DEBUG, *slot);
 		print(O_DEBUG, " ]");
 	}
-	print(O_OUT, "\n");
+	print(O_DEBUG, "\n");
 	printInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
 #define READ_BYTE() (*vm.ip++)
@@ -129,8 +129,10 @@ static InterpretResult run() {
 				pop();
 				break;
 			case OP_PRINT:
-				printValue(pop());
-				print(O_OUT, "\n");
+				printValue(O_OUT, pop());
+				#ifndef EM_MAIN
+					print(O_OUT, "\n");
+				#endif
 				break;
 			case OP_RETURN:
 				return INTERPRET_OK;

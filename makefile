@@ -32,7 +32,7 @@ all : ./$(EXEC_FILE)
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
 	@$(CC) $(FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
 
-$(BUILD)/%.c.o : %.c 
+$(BUILD)/%.o : %.c 
 	@$(MKDIR) -p $(dir $@)
 	@$(CC) $(FLAGS) $(D_FLAGS) -c $< -o $@ 
 

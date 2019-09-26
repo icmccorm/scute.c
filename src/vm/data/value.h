@@ -2,6 +2,7 @@
 #define scute_value_h
 
 #include "common.h"
+#include "output.h"
 
 typedef struct sObj Obj;
 typedef struct sObjString ObjString;
@@ -50,6 +51,6 @@ typedef struct {
 void initValueArray(ValueArray* array);
 int writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
-void printValue(Value value);
+void printValue(OutType out, Value value);
 
 #endif

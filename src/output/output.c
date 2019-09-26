@@ -12,7 +12,6 @@ void vprint(OutType type, const char* c, va_list arglist){
 	#ifdef EM_MAIN
 		char line[1024];
 		vsprintf(line, c, arglist);
-
 		switch(type){
 			case O_DEBUG:
 				printDebug(line);
