@@ -9,6 +9,7 @@
 #include "object.h"
 #include "hashmap.h"
 #include "output.h"
+#include "svg.h"
 
 VM vm;
 
@@ -198,7 +199,8 @@ static InterpretResult run() {
 				Value w = pop();
 				Value h = pop();
 
-				ObjShape* newRect = createRect(x, y, w, h);
+				ObjShape* newRect = createRect();
+				initRect(newRect->shape, x, y, w, h);
 				push(OBJ_VAL(newRect));
 				break;
 			case OP_SUBTRACT:
@@ -245,7 +247,6 @@ static InterpretResult run() {
 			case OP_E:
 				push(NUM_VAL(E));
 				break;
-			
 		}	
 	}
 #undef READ_BYTE

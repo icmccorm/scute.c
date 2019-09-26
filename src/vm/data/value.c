@@ -3,6 +3,7 @@
 #include "value.h"
 #include "object.h"
 #include "output.h"
+#include "hashmap.h"
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;
@@ -56,6 +57,14 @@ void printObject(OutType out, Value value){
 		case OBJ_STRING:
 			print(out, "%s", AS_CSTRING(value));
 			break;
+		case OBJ_SHAPE: ;
+			ObjShape* svg = AS_SHAPE(value);
+			HashEntry* first = svg->shape->properties.first;
+			print(out, "--rect--");
+			while(first != NULL){
+				print(out, "%s: %d", first->key->chars, AS_NUM(first->value));
+				first = first->next;
+			}
 		default:
 			break;
 	}

@@ -31,7 +31,7 @@ struct sObjShape{
 
 bool isObjectType(Value value, OBJType type);
 ObjString* copyString(char * start, int length);
-ObjShape* createRect(Value x, Value y, Value w, Value h);
+ObjShape* createRect();
 void freeObject(Obj* obj);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))

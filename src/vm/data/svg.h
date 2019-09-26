@@ -2,6 +2,11 @@
 #define scute_svg_h
 
 #include "value.h"
+#include "hashmap.h"
+
+#ifdef EM_MAIN
+
+#endif
 
 typedef enum {
 	SP_RECT,
@@ -13,23 +18,9 @@ typedef enum {
 
 struct sShape{
 	SPType type;
+	HashMap properties;
 };
 
-struct sRect{
-	Shape shape;
-	int x;
-	int y;
-	int width;
-	int height;
-};
-
-struct sCircle{
-	Shape shape;
-	int cx;
-	int cy;
-	int r;
-};
-
-#define AS_RECT(value) ((Rect*) value)
+void initRect(Shape* shape, Value x, Value y, Value w, Value h);
 
 #endif

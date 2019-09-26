@@ -29,6 +29,9 @@ void freeObject(Obj* obj){
 			break;
 		case(OBJ_SHAPE): ;
 			ObjShape* svg = (ObjShape*) obj;
+			Shape* shape = svg->shape;
+			freeMap(&shape->properties);
+			FREE(Shape, shape);
 			FREE(ObjShape, svg);
 	}
 }
@@ -43,16 +46,25 @@ ObjString* allocateString(char* chars, int length){
 	return obj;
 }
 
-ObjShape* createRect(Value x, Value y, Value w, Value h){
-	Rect* rect = ALLOCATE(Rect, 1);
-	rect->shape.type = SP_RECT;
-	rect->x = AS_NUM(x);
-	rect->y = AS_NUM(y);
-	rect->height = AS_NUM(h);
-	rect->width = AS_NUM(w);
+ObjShape* allocateShape(SPType type){
+	switch(type){
+		case SP_RECT:
+			return createRect();
+			break;
+	}
+}
+ObjShape* createRect(){
+	Shape* rect = ALLOCATE(Shape, 1);
+	initMap(&rect->properties);
+	rect->type = SP_RECT;
+
+	insert(&rect->properties, copyString("x", 1), NULL_VAL());
+	insert(&rect->properties, copyString("y", 1), NULL_VAL());
+	insert(&rect->properties, copyString("w", 1), NULL_VAL());
+	insert(&rect->properties, copyString("h", 1), NULL_VAL());
 	
 	ObjShape* shapeObj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
-	shapeObj->shape = (Shape*) rect;
+	shapeObj->shape = rect;
 	return shapeObj;
 }
 
