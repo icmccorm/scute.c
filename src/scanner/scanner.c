@@ -306,6 +306,8 @@ TK scanTK(){
             }else{
                 return scanTK();
             }
+        case '\n':
+            return makeNewline();
         case '\t':
             if(previous() == '\n' || previous() == '\t'){
                 return makeToken(TK_INDENT);
