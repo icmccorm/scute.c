@@ -12,7 +12,7 @@
 			"program": "/mnt/c/shell/scutec/scute",
 			"args": ["./test"],
 			"stopAtEntry": true,
-			"cwd": "/mnt/c/shell/scutec/",
+			"cwd": "/mnt/c/shell/scutec",
 			"environment": [],
 			"externalConsole": false,
 			"pipeTransport": {

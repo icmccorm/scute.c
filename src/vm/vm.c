@@ -116,6 +116,14 @@ static InterpretResult run() {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
+			case OP_DRAW: ;
+				Value shapeExpr = pop();
+				if(!IS_SHAPE(shapeExpr)){
+					runtimeError("Only shape-type objects can be drawn.");
+				}else{
+					drawShape(AS_SHAPE(shapeExpr));
+				}
+				break;
 			case OP_GET_GLOBAL: ;
 				ObjString* setString = AS_STRING(pop());
 				Value stored = getValue(&vm.globals, setString);
@@ -196,9 +204,8 @@ static InterpretResult run() {
 				Value y = pop();
 				Value w = pop();
 				Value h = pop();
-
-				ObjShape* newRect = createRect();
-				initRect(newRect->shape, x, y, w, h);
+				ObjShape* newRect = RECT();
+				defineRect(newRect, x, y, w, h);
 				push(OBJ_VAL(newRect));
 				break;
 			case OP_SUBTRACT:

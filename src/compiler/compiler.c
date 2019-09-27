@@ -48,7 +48,7 @@ static void errorAt(TK* token, char* message){
     if(token->type == TK_EOF){
         print(O_ERR, " at end");
     } else if (token->type == TK_ERROR){
-        //Nothing
+        print(O_ERR, "[line %d] %.*s", token->line, token->length, token->start);
     } else {
         print(O_ERR, " at '%.*s'", token->length, token->start);
     }

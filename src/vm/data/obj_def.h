@@ -3,10 +3,12 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "common.h"
 #include "memory.h"
 #include "hashmap.h"
 #include "svg.h"
+#include "value.h"
 
 typedef enum {
 	OBJ_STRING,
@@ -34,9 +36,8 @@ struct sObjClosure{
 	bool isInstance;
 	HashMap map;
 };
-
 struct sObjShape{
-	Obj object;
+	ObjClosure closure;
 	HashMap defs;
 	SPType type;
 };

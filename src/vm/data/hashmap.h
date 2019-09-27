@@ -1,5 +1,6 @@
 #ifndef scute_hashmap_h
 #define scute_hashmap_h
+
 #include "value.h"
 #include "output.h"
 

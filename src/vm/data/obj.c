@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+
 #include "common.h"
 #include "obj.h"
 #include "value.h"
@@ -46,27 +47,11 @@ ObjString* allocateString(char* chars, int length){
 
 ObjShape* allocateShape(SPType type){
 	ObjShape* obj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
-	obj->type = type;	
-	initShape(obj);
-
+	obj->type = OBJ_SHAPE;
+	initMap(&obj->closure.map);
+	initShape(type, &obj->closure.map);
 	return obj;
 }
-
-/*
-ObjShape* createRect(){
-	ObjShape* rect = ALLOCATE(Shape, 1);
-	initMap(&rect->properties);
-	rect->type = SP_RECT;
-	ObjString* x = internString("x", 1);
-	insert(&rect->properties, x, NULL_VAL());
-	insert(&rect->properties, internString("y", 1), NULL_VAL());
-	insert(&rect->properties, internString("w", 1), NULL_VAL());
-	insert(&rect->properties, internString("h", 1), NULL_VAL());
-	
-	ObjShape* shapeObj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
-	shapeObj->shape = rect;
-	return shapeObj;
-}*/
 
 ObjString* internString(char* chars, int length){
 

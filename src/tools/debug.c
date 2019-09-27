@@ -78,6 +78,8 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_GET_GLOBAL", offset);
 		case OP_RECT:
 			return simpleInstruction("OP_RECT", offset);
+		case OP_DRAW:
+			return simpleInstruction("OP_DRAW", offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;

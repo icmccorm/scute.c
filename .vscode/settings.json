@@ -6,7 +6,8 @@
 		"obj.h": "c",
 		"stdlib.h": "c",
 		"output.h": "c",
-		"obj.h": "c"
+		"obj_def.h": "c",
+		"string.h": "c"
 	}
 	
 }

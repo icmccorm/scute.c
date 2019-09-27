@@ -59,12 +59,13 @@ void printObject(OutType out, Value value){
 			break;
 		case OBJ_SHAPE: ;
 			ObjShape* svg = AS_SHAPE(value);
+			
 			switch(svg->type){
 				case SP_RECT:
 					print(out, "--<rect>--\n");
 					break;
 			}
-			printMap(O_OUT, &svg->defs);
+			printMap(O_OUT, &svg->closure.map);
 		case OBJ_INSTANCE:
 			
 			break;

@@ -4,11 +4,6 @@
 #include "value.h"
 #include "hashmap.h"
 
-#ifdef EM_MAIN
-
-#endif
-
-
 typedef enum {
 	SP_RECT,
 	SP_CIRC,
@@ -16,5 +11,10 @@ typedef enum {
 	SP_POLYL,
 	SP_POLYG,
 } SPType;
+
+
+void initShape(SPType type, HashMap* map);
+void defineRect(ObjShape* shape, Value x, Value y, Value w, Value h);
+void drawShape(ObjShape* shape);
 
 #endif
