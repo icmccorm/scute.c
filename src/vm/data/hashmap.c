@@ -43,12 +43,13 @@ void freeMap(HashMap* map){
 }
 
 uint32_t hashFunction(char* keyString, int length){
-	int sum = 0;
-	int charIndex = 0;
+	uint32_t hash = 2166136261u;
 
 	for(int i = 0; i<length; ++i){
-		sum += (uint8_t) keyString[i];
+		hash ^= keyString[i];
+		hash *= 16777619;
 	}
+	return hash;
 }
 
 int hashIndex(HashMap* map, ObjString* obj){
