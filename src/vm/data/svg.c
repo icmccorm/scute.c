@@ -7,22 +7,23 @@
 #include "vm.h"
 
 #ifdef EM_MAIN
-extern void addProperty(char* key, double value);
+extern void addAttribute(char* key, double value);
+extern void addStyle(char* key, double value);
+extern void newShape(double id, double type);
 extern void paintShape();
 #endif
 
 void drawShape(ObjShape* shape){
 	#ifdef EM_MAIN
 		HashEntry* entry = shape->closure.map.first;
-		addProperty("type", shape->type);
 		double address = (unsigned) shape;
-		addProperty("id", address);
+		newShape(address, shape->type);
 		while(entry != NULL){
 			switch(entry->value.type){
 				case VL_OBJ:
 					break;
 				default:
-					addProperty(entry->key->chars, AS_NUM(entry->value));
+					addAttribute(entry->key->chars, AS_NUM(entry->value));
 					break;
 			}
 			entry = entry->next;
