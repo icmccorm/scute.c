@@ -54,7 +54,6 @@ ObjShape* allocateShape(SPType type){
 }
 
 ObjString* internString(char* chars, int length){
-
 	ObjString* interned = findKey(&vm.strings, chars, length);
 	if(interned != NULL) return interned;
 	

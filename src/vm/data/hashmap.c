@@ -62,10 +62,10 @@ static HashEntry* includes(HashMap* map, ObjString* key){
 	int index = hashIndex(map, key);
 	HashEntry entry = map->entries[index];
 	while(map->entries[index].key != NULL){
-		if(map->entries[index].key == key) break;
-		++index;
+		if(map->entries[index].key == key) return &(map->entries[index]);
+		index = (index + 1) % map->capacity;
 	}
-	return &(map->entries[index]);
+	return NULL;
 }
 
 void insert(HashMap* map, ObjString* key, Value value){
@@ -102,7 +102,7 @@ ObjString* findKey(HashMap* map, char* chars, int length){
 	if(map->capacity == 0 || map->numEntries == 0) return NULL;
 
 	uint32_t hash = hashFunction(chars, length);
-	uint32_t index = hashFunction(chars, length) % map->capacity;
+	uint32_t index = hash % map->capacity;
 
 	while(map->entries[index].key != NULL ){
 		HashEntry current = map->entries[index];

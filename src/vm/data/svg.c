@@ -4,6 +4,7 @@
 #include "hashmap.h"
 #include "obj.h"
 #include "value.h"
+#include "vm.h"
 
 void drawShape(ObjShape* shape){
 	#ifdef EM_MAIN
@@ -42,21 +43,25 @@ void initShape(SPType type, HashMap* map){
 
 void defineRect(ObjShape* shape, Value x, Value y, Value width, Value height){
 	HashMap* map = &shape->closure.map;
-	set(map, internString("x", 1), x);
-	set(map, internString("y", 1), y);
-	set(map, internString("width", 1), width);
-	set(map, internString("height", 1), height);
+	ObjString* xStr = internString("x", 1);
+	ObjString* yStr = internString("y", 1);
+	ObjString* wStr = internString("width", 5);
+	ObjString* hStr = internString("height", 6);
+	set(map, xStr, x);
+	set(map, yStr, y);
+	set(map, wStr, width);
+	set(map, hStr, height);
 }
 
 static void initRect(HashMap* map){
 	insert(map, internString("x", 1), NULL_VAL());
 	insert(map, internString("y", 1), NULL_VAL());
-	insert(map, internString("width", 1), NULL_VAL());
-	insert(map, internString("height", 1), NULL_VAL());
+	insert(map, internString("width", 5), NULL_VAL());
+	insert(map, internString("height", 6), NULL_VAL());
 }
 
 static void initCircle(HashMap* map){
-	insert(map, internString("cx", 1), NULL_VAL());
-	insert(map, internString("cy", 1), NULL_VAL());
+	insert(map, internString("cx", 2), NULL_VAL());
+	insert(map, internString("cy", 2), NULL_VAL());
 	insert(map, internString("r", 1), NULL_VAL());
 }
