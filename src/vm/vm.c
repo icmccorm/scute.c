@@ -88,7 +88,7 @@ static bool valuesEqual(Value a, Value b){
 
 static InterpretResult run() {
 
-#ifdef DEBUG_TRACE_EXECUTION
+#ifdef DEBUG
 	for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
 		print(O_DEBUG, "[ ");
 		printValue(O_DEBUG, *slot);
@@ -196,6 +196,8 @@ static InterpretResult run() {
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
+						break;
+					default:
 						break;
 				}
 				break;

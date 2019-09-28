@@ -6,11 +6,17 @@
 #include "value.h"
 #include "vm.h"
 
+#ifdef EM_MAIN
+extern void addProperty(char* key, double value);
+extern void paintShape();
+#endif
+
 void drawShape(ObjShape* shape){
 	#ifdef EM_MAIN
-		extern void addProperty(char* key, double value);
-		extern void paintShape();
 		HashEntry* entry = shape->closure.map.first;
+		addProperty("type", shape->type);
+		double address = (unsigned) shape;
+		addProperty("id", address);
 		while(entry != NULL){
 			switch(entry->value.type){
 				case VL_OBJ:
@@ -37,6 +43,8 @@ void initShape(SPType type, HashMap* map){
 			break;
 		case SP_CIRC:
 			initCircle(map);
+			break;
+		default:
 			break;
 	}
 }

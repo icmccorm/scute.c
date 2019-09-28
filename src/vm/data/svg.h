@@ -12,7 +12,6 @@ typedef enum {
 	SP_POLYG,
 } SPType;
 
-
 void initShape(SPType type, HashMap* map);
 void defineRect(ObjShape* shape, Value x, Value y, Value w, Value h);
 void drawShape(ObjShape* shape);

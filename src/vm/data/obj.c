@@ -32,6 +32,8 @@ void freeObject(Obj* obj){
 			ObjShape* svg = (ObjShape*) obj;
 			freeMap(&svg->defs);
 			FREE(ObjShape, svg);
+		default:
+			break;
 	}
 }
 

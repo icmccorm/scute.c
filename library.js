@@ -1,6 +1,6 @@
 mergeInto(LibraryManager.library, {
-	frames: {},
-	currentFrame: {},
+	frames: [],
+	currentFrame: [],
 	currentShape: {},
 
 	printOut: function(ptr) {
@@ -16,18 +16,17 @@ mergeInto(LibraryManager.library, {
 		let key = Module.UTF8ToString(keyPtr);
 		let value = valPtr;
 		_currentShape[key] = value;
+		console.log(key + ":" + value);
 	},
-	addProperty__deps: [
-        'currentShape'
-	],
 	paintShape: function(){
-		_currentFrame.push(_currentShape);
+		console.log(_currentShape);
 		self.postMessage({code: 4, payload: _currentShape});
-		_currentShape = {};
 	},
 	paintShape__deps: [
-		'currentFrame',
 		'currentShape'
+	],
+	addProperty__deps: [
+        'currentShape'
 	],
 	paintFrame: function(){
 		_frames.push(currentFrame);
