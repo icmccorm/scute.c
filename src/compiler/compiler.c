@@ -10,30 +10,26 @@
 #include "obj.h"
 #include "vm.h"
 #include "output.h"
-
-typedef struct {
-    TK current;
-    TK previous;
-    int indent;
-    bool hadError;
-    bool panicMode;
-} Parser;
-
-typedef struct {
-    HashMap* globals;
-} Compiler;
+#include "compiler_defs.h"
 
 Parser parser;
-Compiler currentScope;
+Compiler* current = NULL;
 Chunk* compilingChunk;
 
-void initCompiler(){
-
+void initCompiler(Compiler* compiler){
+    compiler->scopeDepth = 0;
+    compiler->scopeCapacity = 0;
+    compiler->localCount = 0;
+    compiler->locals = NULL;
+    current = compiler;
 }
-
 
 static Chunk* currentChunk() {
     return compilingChunk;
+}
+
+static Compiler* currentCompiler() {
+    return current;
 }
 
 static void emitByte(uint8_t byte){
@@ -96,6 +92,10 @@ static void emitReturn(){
     emitByte(OP_RETURN);
 }
 
+static void endLine(){
+    if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
+}
+
 static void endCompiler(){
     emitReturn();
 
@@ -123,30 +123,6 @@ static int makeConstant(Value val){
 static Value getTokenStringObj(){
     return OBJ_VAL(internString(parser.previous.start, parser.previous.length));
 }
-
-typedef enum{
-	PC_NONE,
-	PC_ASSIGN,
-	PC_OR,
-	PC_AND,
-	PC_EQUALS, // == !=
-	PC_COMPARE, // > < <= >=
-	PC_TERM, // + -
-	PC_FACTOR, // * / %
-	PC_UNARY, // - -- ++ !
-	PC_CALL, // . [] ()
-	PC_PRIMARY
-
-} PCType;
-
-typedef void (*ParseFn)();
-
-typedef struct{
-    ParseFn prefix;
-    ParseFn infix;
-    PCType precedence;
-} ParseRule;
-
 static void expression();
 static void binary();
 static void unary();
@@ -156,8 +132,8 @@ static void literal();
 static void constant();
 static void string();
 static void assign();
-static void shape();
 static void id();
+static void block();
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -213,7 +189,7 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 { NULL,	    NULL,	    PC_NONE },    // TK_IF,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-{ shape,	NULL,	    PC_NONE },    // TK_RECT,
+{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
@@ -229,6 +205,7 @@ static void printStatement();
 static void expressionStatement();
 static void drawStatement();
 static void assignStatement();
+static void frameStatement();
 static void synchronize();
 static void emitParams();
 
@@ -243,17 +220,13 @@ static void parsePrecedence(PCType precedence){
         errorAtCurrent("Expect expression.");
         return;
     }
-
     prefixRule();
-
     while(precedence <= getRule(parser.current.type)->precedence){
         advance();
         ParseFn infix = getRule(parser.previous.type)->infix;
         infix();
     }
 }
-
-
 
 static void statement(){
     advance();
@@ -267,14 +240,17 @@ static void statement(){
         case TK_LET:
             assignStatement();
             break;
+        case TK_INTEGER:
+        case TK_T:
+            frameStatement();
+            break;
         default:
             expressionStatement();
             break;
+            
     }
     if(parser.panicMode){
         synchronize();
-    }else{
-        if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
     }
 }
 
@@ -319,6 +295,27 @@ static void literal() {
     }    
 }
 
+static int getIndentation (){
+    int indentCount = 0;
+    while(parser.current.type == TK_INDENT){
+        consume(TK_INDENT, "");
+        ++indentCount;
+    }
+    return indentCount;
+}
+
+static void block(){
+    ++currentCompiler()->scopeDepth;
+    while(parser.current.type != TK_EOF && getIndentation() >= currentCompiler()->scopeDepth){
+        statement();
+    }
+}
+
+static void frameStatement(){
+    consume(TK_NEWLINE, "");
+    block();
+}
+
 static void string(){
     emitConstant(getTokenStringObj());
 }
@@ -333,6 +330,9 @@ static void circ(){
     emitByte(OP_CIRC);
 }
 
+static void ifStatement(){
+
+}
 static void emitParams(int numParams, int minParams){
     consume(TK_L_PAREN, "Expected '('.");
     for(int i = 0; i<numParams; ++i){
@@ -354,16 +354,19 @@ static void emitParams(int numParams, int minParams){
 static void printStatement(){
     expression();
     emitByte(OP_PRINT);
+    endLine();
 }
 
 static void drawStatement(){
     emitParams(1, 1);
     emitByte(OP_DRAW);
+    endLine();
 }
 
 static void expressionStatement(){
     expression();
     emitByte(OP_POP);
+    endLine();
 }
 
 static Value parseIdentifier(char* message){
@@ -382,6 +385,7 @@ static void assignStatement(){
 
     emitConstant(idString);
     emitByte(OP_DEF_GLOBAL);
+    endLine();
 }
 
 static void id(){
@@ -452,14 +456,18 @@ static void grouping(){
     consume(TK_R_PAREN, "Expect ')' after expression.");
 }
 
+static void printToken();
+
 bool compile(char* source, Chunk* chunk){
     initScanner(source);
-    initCompiler();
+    Compiler comp;
+    initCompiler(&comp);
+    TK test;
+    addLocal(currentCompiler(), test);
     parser.hadError = false;
     parser.panicMode = false;
 
     compilingChunk = chunk;
-
     advance();
     while(parser.current.type != TK_EOF){
         statement();
@@ -468,19 +476,4 @@ bool compile(char* source, Chunk* chunk){
     consume(TK_EOF, "Expected end of expression.");
     endCompiler();
     return !parser.hadError;
-}
-
-static void printToken(TK token){
-    print(O_DEBUG, "%4d ", token.line);
-    switch(token.type){
-        case TK_INDENT:
-            print(O_DEBUG, "%2d '\\t' \n", token.type);
-            break;
-        case TK_NEWLINE:
-            print(O_DEBUG, "%2d '\\n' \n", token.type);
-            break;
-        default:
-            print(O_DEBUG, "%2d '%.*s' \n", token.type, token.length, token.start);
-            break;
-    }
 }

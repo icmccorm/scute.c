@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "scanner.h"
-
+#include "output.h"
 typedef struct {
     char* start;
     char* current;
@@ -79,7 +79,6 @@ static TK makeNewline(){
     while(peek() == '\n'){
         advance();
     }
-
     token.length = (int) (scanner.current - scanner.start);
     scanner.lastScanned = scanner.start;
     return token;
@@ -309,8 +308,10 @@ TK scanTK(){
         case '\n':
             return makeNewline();
         case '\t':
-            if(previous() == '\n' || previous() == '\t'){
+            /* \r is included to handle Windows' \r\n. */
+            if(previous() == '\n' || previous() == '\t' || previous() == '\r'){
                 return makeToken(TK_INDENT);
+
             }else{
                 return scanTK();
             }
@@ -318,6 +319,21 @@ TK scanTK(){
             if(isDigit(c)) return number();
             if(isAlpha(c)) return identifier();
             return errorToken("Unrecognized character.");
+            break;
+    }
+}
+
+static void printToken(TK token){
+    print(O_DEBUG, "%4d ", token.line);
+    switch(token.type){
+        case TK_INDENT:
+            print(O_DEBUG, "%2d '\\t' \n", token.type);
+            break;
+        case TK_NEWLINE:
+            print(O_DEBUG, "%2d '\\n' \n", token.type);
+            break;
+        default:
+            print(O_DEBUG, "%2d '%.*s' \n", token.type, token.length, token.start);
             break;
     }
 }
