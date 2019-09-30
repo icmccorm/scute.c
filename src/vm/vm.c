@@ -210,7 +210,7 @@ static InterpretResult run() {
 				defineRect(newRect, x, y, w, h);
 				push(OBJ_VAL(newRect));
 				break;
-			case OP_CIRC:
+			case OP_CIRC: ;
 				Value r = pop();
 				Value cy = pop();
 				Value cx = pop();
@@ -269,20 +269,40 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
+CompiledCode* runCompiler(char* source);
+static void freeCompilationPackage(CompiledCode* code);
+static CompiledCode* initCompilationPackage();
+
 InterpretResult interpret(char* source){
-	Chunk chunk;
-	initChunk(&chunk);
+	CompiledCode* code = runCompiler(source);
 
-	if(!compile(source, &chunk)){
-		freeChunk(&chunk);
-		return INTERPRET_COMPILE_ERROR;
-	}
-
-	vm.chunk = &chunk;
+	vm.chunk = code->compiled;
 	vm.ip = vm.chunk->code;
 
 	InterpretResult result = run();
 
-	freeChunk(&chunk);
+	freeCompilationPackage(code);
 	return result;
+}
+
+CompiledCode* runCompiler(char* source){
+	CompiledCode* code = initCompilationPackage();
+	initChunk(code->compiled);
+
+	if(!compile(source, code->compiled)){
+		freeChunk(code->compiled);
+		code->result = INTERPRET_COMPILE_ERROR;
+	}
+	return code;
+}
+
+static CompiledCode* initCompilationPackage(){
+	CompiledCode* code = ALLOCATE(CompiledCode, 1);
+	code->compiled = ALLOCATE(Chunk, 1);
+	return code;
+}
+
+static void freeCompilationPackage(CompiledCode* code){
+	FREE(Chunk, code->compiled);
+	FREE(CompiledCode, code);
 }

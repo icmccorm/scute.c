@@ -35,7 +35,8 @@ typedef enum {
 	OP_POP,
 	OP_DEF_GLOBAL,
 	OP_GET_GLOBAL,
-	OP_DEF_LOCAL
+	OP_DEF_LOCAL,
+	OP_JMP_FALSE
 } OpCode;
 
 typedef struct {

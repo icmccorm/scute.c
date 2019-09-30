@@ -62,7 +62,7 @@ void defineRect(ObjShape* shape, Value x, Value y, Value width, Value height){
 	set(map, hStr, height);
 }
 
-void defineCircle(ObjShape* shape, Value cx, Value cy, Value r){
+void defineCirc(ObjShape* shape, Value cx, Value cy, Value r){
 	HashMap* map = &shape->closure.map;
 	ObjString* cxStr = internString("cx", 2);
 	ObjString* cyStr = internString("cy", 2);
