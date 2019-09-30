@@ -14,6 +14,7 @@ typedef enum {
 
 void initShape(SPType type, HashMap* map);
 void defineRect(ObjShape* shape, Value x, Value y, Value w, Value h);
+void defineCirc(ObjShape* shape, Value cx, Value cy, Value r);
 void drawShape(ObjShape* shape);
 
 #endif

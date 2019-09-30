@@ -210,6 +210,14 @@ static InterpretResult run() {
 				defineRect(newRect, x, y, w, h);
 				push(OBJ_VAL(newRect));
 				break;
+			case OP_CIRC:
+				Value r = pop();
+				Value cy = pop();
+				Value cx = pop();
+				ObjShape* newCirc = CIRC();
+				defineCirc(newCirc, cx, cy, r);
+				push(OBJ_VAL(newCirc));
+				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
 				break;

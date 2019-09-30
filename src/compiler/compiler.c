@@ -323,9 +323,14 @@ static void string(){
     emitConstant(getTokenStringObj());
 }
 
-static void shape(){
+static void rect(){
     emitParams(4, 4);
     emitByte(OP_RECT);
+}
+
+static void circ(){
+    emitParams(3,3);
+    emitByte(OP_CIRC);
 }
 
 static void emitParams(int numParams, int minParams){

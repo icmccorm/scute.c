@@ -31,6 +31,7 @@ typedef enum {
 	OP_E,
 	OP_DRAW,
 	OP_RECT,
+	OP_CIRC,
 	OP_POP,
 	OP_DEF_GLOBAL,
 	OP_GET_GLOBAL,
