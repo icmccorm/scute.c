@@ -4,6 +4,7 @@
 #include "common.h"
 #include "scanner.h"
 #include "output.h"
+
 typedef struct {
     char* start;
     char* current;
@@ -132,6 +133,8 @@ static TKType checkKeyword(int start, int length, char* rest, TKType type){
 
 static TKType findIdentifier(){
     switch(scanner.start[0]){
+        case 'a':
+            return checkKeyword(1, 2, "nd", TK_AND);
         case 'd':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -167,6 +170,7 @@ static TKType findIdentifier(){
             }else{
                 return TK_T;
             }
+        case 'o': return checkKeyword(1, 1, "r", TK_OR);
         case 'p': 
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -194,6 +198,7 @@ static TKType findIdentifier(){
                 return TK_E;
             }
         case 'n': return checkKeyword(1, 3, "ull", TK_NULL);
+        case 'v': return checkKeyword(1, 2, "ar", TK_VAR);
         default:
             return TK_ID;
     }

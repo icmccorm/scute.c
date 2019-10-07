@@ -9,9 +9,10 @@ void addLocal(Compiler* compiler, TK idName){
 		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->scopeCapacity);
     }
     Local target = compiler->locals[compiler->localCount];
-    target.depth = compiler->scopeDepth;
+    target.depth = -1;
     target.id = idName;
 }
+
 
 void freeCompiler(Compiler* compiler){
 	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);

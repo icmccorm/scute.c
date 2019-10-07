@@ -59,13 +59,18 @@ void freeChunk(Chunk* chunk){
 }
 
 void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, int line){
-	int numBytes = value <= 1 ? 1 : ceil((double)(log(value)/log(2)) / 8); 	
 	writeChunk(chunk, op, line);
+	writeVariableData(chunk, value);
+}
+
+int writeVariableData(Chunk* chunk, uint64_t value){
+	int numBytes = value <= 1 ? 1 : ceil((double)(log(value)/log(2)) / 8); 	
 	writeChunk(chunk, (uint8_t) numBytes, -1);
 	for(int i = 0; i<numBytes; ++i){
 		uint8_t byteAtIndex = (value >> 8*i) & 0xFF;
 		writeChunk(chunk, (uint8_t) byteAtIndex, -1);
 	}
+	return 1 + numBytes;
 }
 
 void writeConstant(Chunk* chunk, Value value, int line){

@@ -17,6 +17,9 @@ typedef struct {
 	Obj* objects;
 	HashMap strings;
 	HashMap globals;
+	uint32_t frameIndex;
+	int upperLimit;
+    int lowerLimit;
 } VM;
 
 typedef enum {

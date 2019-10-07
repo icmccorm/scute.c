@@ -9,8 +9,6 @@
 #include "svg.h"
 #include "output.h"
 
-extern void hello();
-
 void runCode(const char* code){
 	initVM();
 	InterpretResult result = interpret(code);

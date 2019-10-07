@@ -1,5 +1,6 @@
 #ifndef scute_compiler_defs_h
 #define scute_compiler_defs_h
+#include "common.h"
 #include "scanner.h"
 #include "hashmap.h"
 
@@ -23,7 +24,6 @@ typedef struct {
     int scopeCapacity;
 } Compiler;
 
-
 typedef enum{
 	PC_NONE,
 	PC_ASSIGN,
@@ -39,7 +39,7 @@ typedef enum{
 
 } PCType;
 
-typedef void (*ParseFn)();
+typedef void (*ParseFn)(bool canAssign);
 
 typedef struct{
     ParseFn prefix;

@@ -35,6 +35,7 @@ mergeInto(LibraryManager.library, {
 
 	paintShape: function(){
 		console.log(_currentShape);
+		_currentFrame.push(_currentShape);
 		self.postMessage({code: 4, payload: _currentShape});
 	},
 

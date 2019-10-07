@@ -36,7 +36,9 @@ typedef enum {
 	OP_GET_GLOBAL,
 	OP_DEF_LOCAL,
 	OP_GET_LOCAL,
-	OP_JMP_FALSE
+	OP_JMP_FALSE,
+	OP_LIMIT,
+	OP_T
 } OpCode;
 
 typedef struct {
@@ -61,5 +63,5 @@ int getLine(Chunk* chunk, int opIndex);
 void writeConstant(Chunk* chunk, Value value, int line);
 void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, int line);
 uint64_t writeValue(Chunk* chunk, Value value, int line);
-
+int writeVariableData(Chunk* chunk, uint64_t value);
 #endif

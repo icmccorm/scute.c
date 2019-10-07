@@ -13,7 +13,6 @@
 static void repl() {
 	char line[1024];
 	for(;;){
-
 		print(O_OUT, "> ");
 		if(!fgets(line, sizeof(line), stdin)){
 			print(O_OUT, "\n");
