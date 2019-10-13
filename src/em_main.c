@@ -9,13 +9,15 @@
 #include "svg.h"
 #include "output.h"
 
-extern void hello();
-
-void runCode(const char* code){
+void runCode(CompiledCode* code, int index){
 	initVM();
-	InterpretResult result = interpret(code);
+	InterpretResult result = interpretCompiled(code, index);
 	freeVM();
 
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
+}
+
+CompiledCode* compileCode(const char* code){
+	return runCompiler(code);
 }

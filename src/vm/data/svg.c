@@ -8,7 +8,9 @@
 
 <<<<<<< Updated upstream
 #ifdef EM_MAIN
-extern void addProperty(char* key, double value);
+extern void addAttribute(char* key, double value);
+extern void addStyle(char* key, double value);
+extern void newShape(double id, double type);
 extern void paintShape();
 #endif
 
@@ -17,15 +19,14 @@ extern void paintShape();
 void drawShape(ObjShape* shape){
 	#ifdef EM_MAIN
 		HashEntry* entry = shape->closure.map.first;
-		addProperty("type", shape->type);
 		double address = (unsigned) shape;
-		addProperty("id", address);
+		newShape(address, shape->type);
 		while(entry != NULL){
 			switch(entry->value.type){
 				case VL_OBJ:
 					break;
 				default:
-					addProperty(entry->key->chars, AS_NUM(entry->value));
+					addAttribute(entry->key->chars, AS_NUM(entry->value));
 					break;
 			}
 			entry = entry->next;
@@ -62,6 +63,16 @@ void defineRect(ObjShape* shape, Value x, Value y, Value width, Value height){
 	set(map, yStr, y);
 	set(map, wStr, width);
 	set(map, hStr, height);
+}
+
+void defineCirc(ObjShape* shape, Value cx, Value cy, Value r){
+	HashMap* map = &shape->closure.map;
+	ObjString* cxStr = internString("cx", 2);
+	ObjString* cyStr = internString("cy", 2);
+	ObjString* rStr = internString("r", 1);
+	set(map, cxStr, cx);
+	set(map, cyStr, cy);
+	set(map, rStr, r);
 }
 
 static void initRect(HashMap* map){

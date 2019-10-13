@@ -8,7 +8,6 @@
 typedef enum {
 	OP_RETURN,
 	OP_CONSTANT,
-	OP_CONSTANT_LONG,
 	OP_NEGATE,
 	OP_MULTIPLY,
 	OP_DIVIDE,
@@ -31,10 +30,15 @@ typedef enum {
 	OP_E,
 	OP_DRAW,
 	OP_RECT,
+	OP_CIRC,
 	OP_POP,
 	OP_DEF_GLOBAL,
 	OP_GET_GLOBAL,
-	OP_DEF_LOCAL
+	OP_DEF_LOCAL,
+	OP_GET_LOCAL,
+	OP_JMP_FALSE,
+	OP_LIMIT,
+	OP_T
 } OpCode;
 
 typedef struct {
@@ -57,6 +61,7 @@ void freeChunk(Chunk* chunk);
 int getLine(Chunk* chunk, int opIndex);
 
 void writeConstant(Chunk* chunk, Value value, int line);
-void writeVar(Chunk* chunk, char* key, Value value, int line);
-
+void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, int line);
+uint64_t writeValue(Chunk* chunk, Value value, int line);
+int writeVariableData(Chunk* chunk, uint64_t value);
 #endif

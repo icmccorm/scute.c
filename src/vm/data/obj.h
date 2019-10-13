@@ -19,6 +19,7 @@ void freeObject(Obj* obj);
 
 #define AS_SHAPE(value) ((ObjShape*)AS_OBJ(value))
 #define RECT() ((ObjShape*)allocateShape(SP_RECT))
+#define CIRC() ((ObjShape*)allocateShape(SP_CIRC))
 #define SHAPE(type) ((ObjShape*)(allocateShape(type))
 
 #define ALLOCATE_OBJ(type, objType) \

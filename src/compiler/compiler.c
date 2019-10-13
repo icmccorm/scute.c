@@ -10,154 +10,163 @@
 #include "obj.h"
 #include "vm.h"
 #include "output.h"
-
-typedef struct {
-    TK current;
-    TK previous;
-    int indent;
-    bool hadError;
-    bool panicMode;
-} Parser;
-
-typedef struct {
-    HashMap* globals;
-} Compiler;
+#include "compiler_defs.h"
+#include "debug.h"
 
 Parser parser;
-Compiler currentScope;
+Compiler* current = NULL;
 Chunk* compilingChunk;
 
-void initCompiler(){
-
+void initCompiler(Compiler* compiler){
+	compiler->scopeDepth = 0;
+	compiler->scopeCapacity = 0;
+	compiler->localCount = 0;
+	compiler->locals = NULL;
+	current = compiler;
 }
 
-
 static Chunk* currentChunk() {
-    return compilingChunk;
+	return compilingChunk;
+}
+
+static Compiler* currentCompiler() {
+	return current;
+}
+
+static void beginScope(){
+	++currentCompiler()->scopeDepth;
+}
+
+static void endScope(){
+	--currentCompiler()->scopeDepth;
 }
 
 static void emitByte(uint8_t byte){
-    writeChunk(currentChunk(), byte, parser.previous.line);
-}
-
-static void errorAt(TK* token, char* message){
-    if(parser.panicMode) return;
-    parser.panicMode = true;
-    print(O_ERR, "[line %d] Error", token->line);
-
-    if(token->type == TK_EOF){
-        print(O_ERR, " at end");
-    } else if (token->type == TK_ERROR){
-        print(O_ERR, "[line %d] %.*s", token->line, token->length, token->start);
-    } else {
-        print(O_ERR, " at '%.*s'", token->length, token->start);
-    }
-    print(O_ERR, ": %s\n", message);
-    parser.hadError = true;
-}
-
-static void errorAtCurrent(char* message){
-    errorAt(&parser.current, message);
-}
-
-static void error(char* message){
-    errorAt(&parser.previous, message);
-}
-
-static void advance() {
-    parser.previous = parser.current;
-
-    for(;;){
-        parser.current = scanTK();
-        if(parser.current.type != TK_ERROR) break;
-        errorAtCurrent(parser.current.start);
-    }
-}
-
-static void consume(TKType type, char* message){
-    if(parser.current.type == type){
-        advance();
-        return;
-    }
-    errorAtCurrent(message);
-}
-
-static bool check(TKType type){
-    return parser.current.type == type;
-}
-
-static bool match(TKType type){
-    if(!check(type)) return false;
-    advance();
-    return true;
-}
-
-static void emitReturn(){
-    emitByte(OP_RETURN);
-}
-
-static void endCompiler(){
-    emitReturn();
-
-    #ifdef DEBUG_PRINT_CODE
-    #include "debug.h"
-    if(!parser.hadError){
-        printChunk(currentChunk(), "code");
-    }
-    #endif
+	writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2){
-    emitByte(byte1);
-    emitByte(byte2);
+	emitByte(byte1);
+	emitByte(byte2);
+}
+
+static void emitReturn(){
+	emitByte(OP_RETURN);
+}
+
+static void emitBundle(uint8_t opCode, Value index){
+	writeOperatorBundle(currentChunk(), opCode, AS_NUM(index), parser.previous.line);
+}
+
+static int emitLimit(int low, int high){
+	emitByte(OP_LIMIT);
+	int offset = 0;
+	offset += writeVariableData(currentChunk(), low);
+	offset += writeVariableData(currentChunk(), high);
+	emitByte(0xFF);
+	emitByte(0xFF);
+	return currentChunk()->count - 2;
 }
 
 static void emitConstant(Value value){
-    writeConstant(currentChunk(), value, parser.previous.line);
+	writeConstant(currentChunk(), value, parser.previous.line);
 }
 
-static int makeConstant(Value val){
-    return writeValueArray(&currentChunk()->constants, val);
+static void errorAt(TK* token, char* message){
+	if(parser.panicMode) return;
+	parser.panicMode = true;
+	print(O_ERR, "[line %d] Error", token->line);
+
+	if(token->type == TK_EOF){
+		print(O_ERR, " at end");
+	} else if (token->type == TK_ERROR){
+		print(O_ERR, "[line %d] %.*s", token->line, token->length, token->start);
+	} else {
+		print(O_ERR, " at '%.*s'", token->length, token->start);
+	}
+	print(O_ERR, ": %s\n", message);
+	parser.hadError = true;
 }
 
-static Value getTokenStringObj(){
-    return OBJ_VAL(internString(parser.previous.start, parser.previous.length));
+static void errorAtCurrent(char* message){
+	errorAt(&parser.current, message);
 }
 
-typedef enum{
-	PC_NONE,
-	PC_ASSIGN,
-	PC_OR,
-	PC_AND,
-	PC_EQUALS, // == !=
-	PC_COMPARE, // > < <= >=
-	PC_TERM, // + -
-	PC_FACTOR, // * / %
-	PC_UNARY, // - -- ++ !
-	PC_CALL, // . [] ()
-	PC_PRIMARY
+static void error(char* message){
+	errorAt(&parser.previous, message);
+}
 
-} PCType;
+static void advance() {
+	parser.previous = parser.current;
 
-typedef void (*ParseFn)();
+	for(;;){
+		parser.current = scanTK();
+		if(parser.current.type != TK_ERROR) break;
+		errorAtCurrent(parser.current.start);
+	}
+}
 
-typedef struct{
-    ParseFn prefix;
-    ParseFn infix;
-    PCType precedence;
-} ParseRule;
+static void consume(TKType type, char* message){
+	if(parser.current.type == type){
+		advance();
+		return;
+	}
+	errorAtCurrent(message);
+}
+
+static bool check(TKType type){
+	return parser.current.type == type;
+}
+
+static bool match(TKType type){
+	if(!check(type)) return false;
+	advance();
+	return true;
+}
+
+static bool tokensEqual(TK one, TK two){
+	if(one.length != two.length) return false;
+	return memcmp(one.start, two.start, one.length) == 0;
+}
+
+static void endLine(){
+	if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
+}
+
+static void endCompiler(){
+	emitReturn();
+
+	#ifdef DEBUG_PRINT_CODE
+	#include "debug.h"
+	if(!parser.hadError){
+		printChunk(currentChunk(), "code");
+	}
+	#endif
+}
+
+static Value getTokenStringObj(TK* token){
+	return OBJ_VAL(internString(token->start, token->length));
+}
+
+static uint32_t getStringObjectIndex(TK* token){
+	return writeValue(currentChunk(), getTokenStringObj(token), parser.previous.line);
+}
 
 static void expression();
-static void binary();
-static void unary();
-static void grouping();
-static void number();
-static void literal();
-static void constant();
-static void string();
-static void assign();
-static void shape();
-static void id();
+static void block();
+
+
+static void and_(bool canAssign);
+static void binary(bool canAssign);
+static void unary(bool canAssign);
+static void grouping(bool canAssign);
+static void number(bool canAssign);
+static void literal(bool canAssign);
+static void constant(bool canAssign);
+static void string(bool canAssign);
+static void variable(bool canAssign);
+static void rect(bool canAssign);
+static void timeStep(bool canAssign);
 
 ParseRule rules[] = {
 { NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -188,9 +197,9 @@ ParseRule rules[] = {
 { literal,	NULL,	    PC_NONE },    // TK_FALSE,
 { literal,	NULL,	    PC_NONE },    // TK_NULL,
 { string,	NULL,	    PC_NONE },    // TK_STRING,
-{ id,       NULL,	    PC_NONE },    // TK_ID,
+{ variable, NULL,	    PC_NONE },    // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
-{ NULL,	    NULL,	    PC_NONE },    // TK_AND,
+{ NULL,	    and_,	    PC_AND },    // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
 { NULL,	    NULL,	    PC_NONE },    // TK_PRE,
 { literal,	NULL,	    PC_NONE },    // TK_PI,
@@ -213,14 +222,15 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 { NULL,	    NULL,	    PC_NONE },    // TK_IF,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-{ shape,	NULL,	    PC_NONE },    // TK_RECT,
+{ rect,	    NULL,	    PC_NONE },    // TK_RECT,
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
+{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
 { NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
 { NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
 { NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
-{ NULL,	    NULL,	    PC_NONE },    // TK_T,
+{ timeStep,	NULL,		PC_NONE },    // TK_T,
 { NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
 { NULL,     NULL,       PC_NONE }     // TK_EOF
 };
@@ -228,254 +238,394 @@ ParseRule rules[] = {
 static void printStatement();
 static void expressionStatement();
 static void drawStatement();
-static void assignStatement();
+static void assignStatement(bool enforceGlobal);
+static void frameStatement();
 static void synchronize();
 static void emitParams();
 
 static ParseRule* getRule(TKType type){
-    return &rules[type];
+	return &rules[type];
 }
 
 static void parsePrecedence(PCType precedence){
-    advance();
-    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-    if(prefixRule == NULL){
-        errorAtCurrent("Expect expression.");
-        return;
-    }
-
-    prefixRule();
-
-    while(precedence <= getRule(parser.current.type)->precedence){
-        advance();
-        ParseFn infix = getRule(parser.previous.type)->infix;
-        infix();
-    }
+	advance();
+	ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+	if(prefixRule == NULL){
+		errorAtCurrent("Expect expression.");
+		return;
+	}
+	bool canAssign = precedence <= PC_ASSIGN;
+	prefixRule(canAssign);
+	while(precedence <= getRule(parser.current.type)->precedence){
+		advance();
+		ParseFn infix = getRule(parser.previous.type)->infix;
+		infix(canAssign);
+	}
+	if(!canAssign && match(TK_ASSIGN)){
+		error("Invalid assignment target.");
+		expression();
+	}
 }
 
-
-
 static void statement(){
-    advance();
-    switch(parser.previous.type){
-        case TK_PRINT:
-            printStatement();
-            break;
-        case TK_DRAW:
-            drawStatement();
-            break;
-        case TK_LET:
-            assignStatement();
-            break;
-        default:
-            expressionStatement();
-            break;
-    }
-    if(parser.panicMode){
-        synchronize();
-    }else{
-        if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
-    }
+	switch(parser.current.type){
+		case TK_PRINT:
+			advance();
+			printStatement();
+			break;
+		case TK_DRAW:
+			advance();
+			drawStatement();
+			break;
+		case TK_LET:
+			advance();
+			assignStatement(false);
+			break;
+		case TK_VAR:
+			advance();
+			assignStatement(true);
+			break;
+		case TK_INTEGER:
+		case TK_T:
+			advance();
+			frameStatement();
+			break;
+		default:
+			expressionStatement();
+			break;
+	}
+	if(parser.panicMode){
+		synchronize();
+	}
 }
 
 static void synchronize(){
-    parser.panicMode = false;
-    while(parser.current.type != TK_EOF){
-        if(parser.previous.type == TK_NEWLINE) return;
-        switch(parser.current.type){
-            case TK_PRINT:
-            case TK_DRAW:
-            case TK_LET:
-                return;
-            default: ;
-        }
-        advance();
-    }
+	parser.panicMode = false;
+	while(parser.current.type != TK_EOF){
+		if(parser.previous.type == TK_NEWLINE) return;
+		switch(parser.current.type){
+			case TK_PRINT:
+			case TK_DRAW:
+			case TK_LET:
+				return;
+			default: ;
+		}
+		advance();
+	}
 }
 
 static void expression() {
-    parsePrecedence(PC_ASSIGN);
+	parsePrecedence(PC_ASSIGN);
 }
 
-static void number() {
-    double value = strtod(parser.previous.start, NULL);
-    emitConstant(NUM_VAL(value));
+static void number(bool canAssign) {
+	double value = strtod(parser.previous.start, NULL);
+	emitConstant(NUM_VAL(value));
 }
 
-static void literal() {
-    switch(parser.previous.type){
-        case TK_FALSE:  emitByte(OP_FALSE); break;
-        case TK_TRUE:   emitByte(OP_TRUE); break;
-        case TK_NULL:   emitByte(OP_NULL); break;
-        case TK_TAU:    emitByte(OP_TAU); break;
-        case TK_PI:     emitByte(OP_PI); break;
-        case TK_E:      emitByte(OP_E); break;
-        case TK_INTEGER:
-        case TK_REAL:
-            number();
-            break;
-        default:
-            return;
-    }    
+static void literal(bool canAssign) {
+	switch(parser.previous.type){
+		case TK_FALSE:  emitByte(OP_FALSE); break;
+		case TK_TRUE:   emitByte(OP_TRUE); break;
+		case TK_NULL:   emitByte(OP_NULL); break;
+		case TK_TAU:    emitByte(OP_TAU); break;
+		case TK_PI:     emitByte(OP_PI); break;
+		case TK_E:      emitByte(OP_E); break;
+		case TK_INTEGER:
+		case TK_REAL:
+			number(canAssign);
+			break;
+		default:
+			return;
+	}    
 }
 
-static void string(){
-    emitConstant(getTokenStringObj());
+static int getIndentation (){
+	int indentCount = 0;
+	while(parser.current.type == TK_INDENT){
+		consume(TK_INDENT, "");
+		++indentCount;
+	}
+	return indentCount;
 }
 
-static void shape(){
-    emitParams(4, 4);
-    emitByte(OP_RECT);
+static void block(){
+	beginScope();
+	while(parser.current.type != TK_EOF && getIndentation() >= currentCompiler()->scopeDepth){
+		statement();
+	}
+	endScope();
+
+	Compiler* currentComp = currentCompiler();
+	while(currentComp->localCount > 0
+			&& currentComp->locals[currentComp->localCount-1].depth 
+				> currentComp->scopeDepth){
+		emitByte(OP_POP);
+		--currentComp->localCount;
+	}
 }
 
+static int emitJump(OpCode op){
+	emitByte(op);
+	emitByte(0xFF);
+	emitByte(0xFF);
+	return currentChunk()->count - 2;
+}
+
+static void patchJump(int jumpIndex){
+	uint16_t backIndex = currentChunk()->count - jumpIndex - 2;
+
+	currentChunk()->code[jumpIndex] = (backIndex >> 8) & 0xFF;
+	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
+}
+
+static void frameStatement() {
+	if(parser.previous.type = TK_T){
+		consume(TK_R_LIMIT, "Expected right limit.");
+	}
+	consume(TK_INTEGER, "Expected upper-bound");
+	TK upper = parser.previous;
+	int upperVal = (strtod(parser.previous.start, NULL));	
+	
+	if((upperVal) <= 0){
+		error("Invalid upper bound.");
+	}
+	if((upperVal) > vm.upperLimit) vm.upperLimit = upperVal;
+
+	int jumpIndex = emitLimit(vm.lowerLimit, upperVal);
+	endLine();
+	block();
+	patchJump(jumpIndex);
+}
+
+static void and_(bool canAssign){
+	int endJump = emitJump(OP_JMP_FALSE);
+	emitByte(OP_POP);
+	parsePrecedence(PC_AND);
+
+	patchJump(endJump);
+}
+
+static void string(bool canAssign){
+	emitConstant(getTokenStringObj(&parser.previous));
+}
+
+static void rect(bool canAssign){
+	emitParams(4, 4);
+	emitByte(OP_RECT);
+}
+
+static void circ(bool canAssign){
+	emitParams(3,3);
+	emitByte(OP_CIRC);
+}
+
+static void timeStep(bool canAssign){
+	emitByte(OP_T);
+}
+
+static void ifStatement(){
+
+}
 static void emitParams(int numParams, int minParams){
-    consume(TK_L_PAREN, "Expected '('.");
-    for(int i = 0; i<numParams; ++i){
-        expression();
-        if(i + 1 == minParams) {
-            if(parser.current.type == TK_COMMA){
-                advance();
-                emitByte(OP_SEPARATOR);
-            }else{
-                break;
-            }
-        }else{
-            consume(TK_COMMA, "Expected additional parameters.");
-        }
-    }
-    consume(TK_R_PAREN, "Expected ')'.");
+	consume(TK_L_PAREN, "Expected '('.");
+	for(int i = 0; i<numParams; ++i){
+		expression();
+		if(i + 1 == minParams) {
+			if(parser.current.type == TK_COMMA){
+				advance();
+				emitByte(OP_SEPARATOR);
+			}else{
+				break;
+			}
+		}else{
+			consume(TK_COMMA, "Expected additional parameters.");
+		}
+	}
+	consume(TK_R_PAREN, "Expected ')'.");
 }
 
 static void printStatement(){
-    expression();
-    emitByte(OP_PRINT);
+	expression();
+	emitByte(OP_PRINT);
+	endLine();
 }
 
 static void drawStatement(){
-    emitParams(1, 1);
-    emitByte(OP_DRAW);
+	emitParams(1, 1);
+	emitByte(OP_DRAW);
+	endLine();
 }
 
 static void expressionStatement(){
-    expression();
-    emitByte(OP_POP);
+	expression();
+	emitByte(OP_POP);
+	endLine();
 }
 
-static Value parseIdentifier(char* message){
-    consume(TK_ID, message);
-    return getTokenStringObj();
+static void parseAssignment(){
+	if(match(TK_ASSIGN)){
+		expression();
+	}else{
+		emitByte(OP_NULL);
+	}
 }
 
-static void assignStatement(){
-    Value idString = parseIdentifier("Expected an identifier.");
-    char* contents = AS_CSTRING(idString);
-    if(match(TK_ASSIGN)){
-        expression();
-    }else{
-       emitByte(OP_NULL);
-    }
-
-    emitConstant(idString);
-    emitByte(OP_DEF_GLOBAL);
+static uint32_t resolveLocal(TK*id){
+	Compiler* comp = currentCompiler();
+	for(int i = comp->localCount-1; i>=0; --i){
+		Local* currentLocal = &comp->locals[i];
+		if(tokensEqual(*id, currentLocal->id)){
+			return i;
+		}
+	}
+	return -1;
 }
 
-static void id(){
-    Value idString = getTokenStringObj();
-    emitConstant(idString);
-    emitByte(OP_GET_GLOBAL);
+static void namedVariable(TK* id, bool canAssign){
+	uint8_t get, def;
+	uint32_t index = resolveLocal(id);
+	if(index > -1){
+		def = OP_DEF_LOCAL;
+		get = OP_GET_LOCAL;
+	}else{	
+		get = OP_GET_GLOBAL;
+		def = OP_DEF_GLOBAL;
+		index = getStringObjectIndex(id);
+	}
+
+	if(canAssign && match(TK_ASSIGN)){
+		expression();
+		emitBundle(def, NUM_VAL(index));
+	}else{
+		emitBundle(get, NUM_VAL(index));
+	}
 }
 
-static void binary(){
-    TKType op = parser.previous.type;
-
-    ParseRule* rule = getRule(op);
-    parsePrecedence((PCType) (rule->precedence + 1));
-
-    switch(op){
-        case TK_PLUS: 
-            emitByte(OP_ADD); 
-            break;
-        case TK_MINUS: 
-            emitByte(OP_SUBTRACT); 
-            break;
-        case TK_TIMES: 
-            emitByte(OP_MULTIPLY); 
-            break;
-        case TK_DIVIDE: 
-            emitByte(OP_DIVIDE); 
-            break;
-        case TK_MODULO: 
-            emitByte(OP_MODULO); 
-            break;
-        case TK_LESS:
-            emitByte(OP_LESS);
-            break;
-        case TK_GREATER:
-            emitByte(OP_GREATER);
-            break;
-        case TK_LESS_EQUALS:
-            emitByte(OP_LESS_EQUALS);
-            break;
-        case TK_GREATER_EQUALS:
-            emitByte(OP_GREATER_EQUALS);
-            break;
-        case TK_EQUALS:
-            emitByte(OP_EQUALS);
-            break;
-        case TK_BANG_EQUALS:
-            emitBytes(OP_EQUALS, OP_NOT);
-            break;
-        default: 
-            break;
-    }
+static void variable(bool canAssign){
+	namedVariable(&parser.previous, canAssign);
 }
 
-static void unary(){
-    TKType op = parser.previous.type;
-
-    parsePrecedence(PC_UNARY);
-
-    switch(op){
-        case TK_MINUS: emitByte(OP_NEGATE); break;
-        case TK_BANG: emitByte(OP_NOT); break;
-        default: return;
-    }
+static void markInitialized(){
+	Compiler * comp = currentCompiler();
+	if(comp->scopeDepth == 0) return;
+	comp->locals[comp->localCount-1].depth = 
+		comp->scopeDepth;
 }
 
-static void grouping(){
-    expression();
-    consume(TK_R_PAREN, "Expect ')' after expression.");
+static void assignStatement(bool enforceGlobal){
+	consume(TK_ID, "Expected an identifier.");
+	Compiler* currentComp = currentCompiler();
+	TK idToken = parser.previous;
+
+	if(currentComp->scopeDepth > 0 && !enforceGlobal){
+
+		for(int i = currentComp->localCount-1; i>=0; --i){
+			Local currentVar = currentComp->locals[i];
+			if(currentVar.depth > -1 && currentVar.depth < currentComp->scopeDepth){
+				break;
+			}
+			if(tokensEqual(currentVar.id, currentComp->locals[i].id)){
+				error("Variable has already been declared in this scope.");
+			}
+		}
+		addLocal(currentCompiler(), idToken);
+		parseAssignment();
+		markInitialized(idToken);
+	}else{
+		parseAssignment();
+		Value stringIndex = NUM_VAL(getStringObjectIndex(&idToken));
+		emitBundle(OP_DEF_GLOBAL, stringIndex);
+	}
+	endLine();
 }
+
+static void binary(bool canAssign){
+	TKType op = parser.previous.type;
+
+	ParseRule* rule = getRule(op);
+	parsePrecedence((PCType) (rule->precedence + 1));
+
+	switch(op){
+		case TK_PLUS: 
+			emitByte(OP_ADD); 
+			break;
+		case TK_MINUS: 
+			emitByte(OP_SUBTRACT); 
+			break;
+		case TK_TIMES: 
+			emitByte(OP_MULTIPLY); 
+			break;
+		case TK_DIVIDE: 
+			emitByte(OP_DIVIDE); 
+			break;
+		case TK_MODULO: 
+			emitByte(OP_MODULO); 
+			break;
+		case TK_LESS:
+			emitByte(OP_LESS);
+			break;
+		case TK_GREATER:
+			emitByte(OP_GREATER);
+			break;
+		case TK_LESS_EQUALS:
+			emitByte(OP_LESS_EQUALS);
+			break;
+		case TK_GREATER_EQUALS:
+			emitByte(OP_GREATER_EQUALS);
+			break;
+		case TK_EQUALS:
+			emitByte(OP_EQUALS);
+			break;
+		case TK_BANG_EQUALS:
+			emitBytes(OP_EQUALS, OP_NOT);
+			break;
+		default: 
+			break;
+	}
+}
+
+static void unary(bool canAssign){
+	TKType op = parser.previous.type;
+
+	parsePrecedence(PC_UNARY);
+
+	switch(op){
+		case TK_MINUS: emitByte(OP_NEGATE); break;
+		case TK_BANG: emitByte(OP_NOT); break;
+		default: return;
+	}
+}
+
+static void grouping(bool canAssign){
+	expression();
+	consume(TK_R_PAREN, "Expect ')' after expression.");
+}
+
+static void printToken();
 
 bool compile(char* source, Chunk* chunk){
-    initScanner(source);
-    initCompiler();
-    parser.hadError = false;
-    parser.panicMode = false;
+	initScanner(source);
+	Compiler comp;
+	initCompiler(&comp);
+	TK test;
+	addLocal(currentCompiler(), test);
+	parser.hadError = false;
+	parser.panicMode = false;
 
-    compilingChunk = chunk;
+	compilingChunk = chunk;
+	advance();
+	while(parser.current.type != TK_EOF){
+		statement();
+	}
 
-    advance();
-    while(parser.current.type != TK_EOF){
-        statement();
-    }
+	consume(TK_EOF, "Expected end of expression.");
+	endCompiler();
 
-    consume(TK_EOF, "Expected end of expression.");
-    endCompiler();
-    return !parser.hadError;
-}
-
-static void printToken(TK token){
-    print(O_DEBUG, "%4d ", token.line);
-    switch(token.type){
-        case TK_INDENT:
-            print(O_DEBUG, "%2d '\\t' \n", token.type);
-            break;
-        case TK_NEWLINE:
-            print(O_DEBUG, "%2d '\\n' \n", token.type);
-            break;
-        default:
-            print(O_DEBUG, "%2d '%.*s' \n", token.type, token.length, token.start);
-            break;
-    }
+	#ifdef DEBUG
+		if(!parser.hadError){
+			printChunk(chunk, "result");
+		}
+	#endif
+	return !parser.hadError;
 }

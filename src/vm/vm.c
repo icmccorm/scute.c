@@ -27,6 +27,9 @@ void initVM() {
 	vm.objects = NULL;	
 	initMap(&vm.strings);
 	initMap(&vm.globals);
+	vm.frameIndex = 0;
+	vm.lowerLimit = 0;
+	vm.upperLimit = 0;
 }
 
 static void freeObjects(){
@@ -91,8 +94,17 @@ static bool valuesEqual(Value a, Value b){
 	}	
 }
 
-static InterpretResult run() {
+#define READ_BYTE() (*vm.ip++)
+static uint32_t readInteger() {
+	uint8_t numBytes = READ_BYTE();
+	uint32_t index = 0; 
+	for(int i = 0; i<numBytes; ++i) { 
+		index = index | (READ_BYTE() << (8*i)); 
+	}
+	return index;
+}
 
+static InterpretResult run() {
 #ifdef DEBUG
 	for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
 		print(O_DEBUG, "[ ");
@@ -100,12 +112,11 @@ static InterpretResult run() {
 		print(O_DEBUG, " ]");
 	}
 	print(O_DEBUG, "\n");
-	printInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
-#define READ_BYTE() (*vm.ip++)
-#define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define READ_CONSTANT_LONG() ()
 
+#define READ_BYTE() (*vm.ip++)
+#define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+#define READ_CONSTANT() (vm.chunk->constants.values[readInteger()])
 #define BINARY_OP(op, valueType, operandType) \
 	do { \
 		if(!IS_NUM(peek(0)) || !IS_NUM(peek(1))){ \
@@ -121,6 +132,18 @@ static InterpretResult run() {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
+			case OP_JMP_FALSE: ;
+				uint16_t offset = READ_SHORT();
+				if(isFalsey(peek(0))) vm.ip += offset;
+				break;
+			case OP_LIMIT: ;
+				uint32_t lowerBound = readInteger();
+				uint32_t upperBound = readInteger();
+				uint16_t limitOffset = READ_SHORT();
+				if(vm.frameIndex < lowerBound || vm.frameIndex > upperBound){
+					vm.ip += limitOffset;
+				}
+				break;
 			case OP_DRAW: ;
 				Value shapeExpr = pop();
 				if(!IS_SHAPE(shapeExpr)){
@@ -129,15 +152,22 @@ static InterpretResult run() {
 					drawShape(AS_SHAPE(shapeExpr));
 				}
 				break;
-			case OP_GET_GLOBAL: ;
-				ObjString* setString = AS_STRING(pop());
-				Value stored = getValue(&vm.globals, setString);
-				push(stored);
+			case OP_GET_GLOBAL: ;		
+				uint32_t idIndex = readInteger();	
 				break;
 			case OP_DEF_GLOBAL: ;
-				ObjString* getString = AS_STRING(pop());
+				ObjString* setString = AS_STRING(READ_CONSTANT());
 				Value expr = pop();
-				insert(&vm.globals, getString, expr);
+				insert(&vm.globals, setString, expr);
+				break;
+			case OP_GET_LOCAL: ;
+				uint32_t stackIndexGet = readInteger();
+				Value val = vm.stack[stackIndexGet];
+				push(val);
+				break;
+			case OP_DEF_LOCAL: ;
+				uint32_t stackIndexDef = readInteger();
+				vm.stack[stackIndexDef] = peek(0);
 				break;
 			case OP_POP:
 				pop();
@@ -149,8 +179,8 @@ static InterpretResult run() {
 			case OP_RETURN:
 				return INTERPRET_OK;
 			case OP_CONSTANT: ;
-				Value test = READ_CONSTANT();
-				push(test);
+				Value cons = READ_CONSTANT();
+				push(cons);
 				break;
 			case OP_NEGATE:
 				if(!IS_NUM(peek(0))){
@@ -215,6 +245,14 @@ static InterpretResult run() {
 				defineRect(newRect, x, y, w, h);
 				push(OBJ_VAL(newRect));
 				break;
+			case OP_CIRC: ;
+				Value r = pop();
+				Value cy = pop();
+				Value cx = pop();
+				ObjShape* newCirc = CIRC();
+				defineCirc(newCirc, cx, cy, r);
+				push(OBJ_VAL(newCirc));
+				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
 				break;
@@ -259,19 +297,28 @@ static InterpretResult run() {
 			case OP_E:
 				push(NUM_VAL(E));
 				break;
+			case OP_T:
+				push(NUM_VAL(vm.frameIndex));
+				break;
 		}	
 	}
+	
 #undef READ_BYTE
+#undef READ_SHORT
 #undef READ_CONSTANT
 #undef BINARY_OP
 }
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> d586e579038b4bd0d5f730d010d26e16b95e2e19
 CompiledCode* runCompiler(char* source);
 static void freeCompilationPackage(CompiledCode* code);
 static CompiledCode* initCompilationPackage();
 
+<<<<<<< HEAD
 InterpretResult executeCompiled(CompiledCode* code){
 	InterpretResult result;
 	for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
@@ -286,20 +333,67 @@ InterpretResult executeCompiled(CompiledCode* code){
 }
 
 >>>>>>> Stashed changes
-InterpretResult interpret(char* source){
-	Chunk chunk;
-	initChunk(&chunk);
-
-	if(!compile(source, &chunk)){
-		freeChunk(&chunk);
-		return INTERPRET_COMPILE_ERROR;
+=======
+InterpretResult executeCompiled(CompiledCode* code, int index){
+	InterpretResult result;
+	if(index > -1){
+		vm.frameIndex = index;
+		vm.chunk = code->compiled;
+		vm.ip = vm.chunk->code;
+		result = run();
+	}else{
+		for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
+			vm.frameIndex = i;
+			vm.chunk = code->compiled;
+			vm.ip = vm.chunk->code;
+			result = run();
+		}
 	}
-
-	vm.chunk = &chunk;
-	vm.ip = vm.chunk->code;
-
-	InterpretResult result = run();
-
-	freeChunk(&chunk);
 	return result;
+}
+
+>>>>>>> d586e579038b4bd0d5f730d010d26e16b95e2e19
+InterpretResult interpret(char* source){
+	CompiledCode* code = runCompiler(source);
+	InterpretResult result = code->result;
+
+	if(result != INTERPRET_COMPILE_ERROR) {
+		executeCompiled(code, -1);
+	}
+	freeCompilationPackage(code);
+
+	return result;
+}
+
+InterpretResult interpretCompiled(CompiledCode* code, int index){
+	InterpretResult result = code->result;
+
+	if(result != INTERPRET_COMPILE_ERROR) {
+		executeCompiled(code, index);
+	}
+	freeCompilationPackage(code);
+
+	return result;
+}
+
+CompiledCode* runCompiler(char* source){
+	CompiledCode* code = initCompilationPackage();
+	initChunk(code->compiled);
+
+	if(!compile(source, code->compiled)){
+		freeChunk(code->compiled);
+		code->result = INTERPRET_COMPILE_ERROR;
+	}
+	return code;
+}
+
+static CompiledCode* initCompilationPackage(){
+	CompiledCode* code = ALLOCATE(CompiledCode, 1);
+	code->compiled = ALLOCATE(Chunk, 1);
+	return code;
+}
+
+static void freeCompilationPackage(CompiledCode* code){
+	FREE(Chunk, code->compiled);
+	FREE(CompiledCode, code);
 }

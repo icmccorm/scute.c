@@ -51,11 +51,11 @@ typedef enum {
     TK_CIRC,
     TK_ELLIP,
     TK_LET,
+    TK_VAR,
     TK_PRINT,
     TK_DRAW,
     TK_TEXT,
     TK_T,
-
     TK_ERROR,
     TK_EOF
 
