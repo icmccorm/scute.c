@@ -308,13 +308,20 @@ CompiledCode* runCompiler(char* source);
 static void freeCompilationPackage(CompiledCode* code);
 static CompiledCode* initCompilationPackage();
 
-InterpretResult executeCompiled(CompiledCode* code){
+InterpretResult executeCompiled(CompiledCode* code, int index){
 	InterpretResult result;
-	for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
-		vm.frameIndex = i;
+	if(index > -1){
+		vm.frameIndex = index;
 		vm.chunk = code->compiled;
 		vm.ip = vm.chunk->code;
 		result = run();
+	}else{
+		for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
+			vm.frameIndex = i;
+			vm.chunk = code->compiled;
+			vm.ip = vm.chunk->code;
+			result = run();
+		}
 	}
 	return result;
 }
@@ -324,7 +331,18 @@ InterpretResult interpret(char* source){
 	InterpretResult result = code->result;
 
 	if(result != INTERPRET_COMPILE_ERROR) {
-		executeCompiled(code);
+		executeCompiled(code, -1);
+	}
+	freeCompilationPackage(code);
+
+	return result;
+}
+
+InterpretResult interpretCompiled(CompiledCode* code, int index){
+	InterpretResult result = code->result;
+
+	if(result != INTERPRET_COMPILE_ERROR) {
+		executeCompiled(code, index);
 	}
 	freeCompilationPackage(code);
 

@@ -42,5 +42,7 @@ void push(Value value);
 Value pop();
 
 InterpretResult interpret(char* source);
+InterpretResult interpretCompiled(CompiledCode* code, int index);
+CompiledCode* runCompiler(char* source);
 
 #endif
