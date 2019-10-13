@@ -11,6 +11,11 @@
 #include "output.h"
 #include "svg.h"
 
+#ifdef EM_MAIN
+	extern void sendFrames();
+	extern void paintFrame();
+#endif
+
 VM vm;
 
 static void resetStack(){
@@ -261,6 +266,26 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
+<<<<<<< Updated upstream
+=======
+CompiledCode* runCompiler(char* source);
+static void freeCompilationPackage(CompiledCode* code);
+static CompiledCode* initCompilationPackage();
+
+InterpretResult executeCompiled(CompiledCode* code){
+	InterpretResult result;
+	for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
+		vm.frameIndex = i;
+		vm.chunk = code->compiled;
+		vm.ip = vm.chunk->code;
+		result = run();
+		paintFrame();
+	}
+	sendFrames();
+	return result;
+}
+
+>>>>>>> Stashed changes
 InterpretResult interpret(char* source){
 	Chunk chunk;
 	initChunk(&chunk);

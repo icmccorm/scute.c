@@ -6,11 +6,14 @@
 #include "value.h"
 #include "vm.h"
 
+<<<<<<< Updated upstream
 #ifdef EM_MAIN
 extern void addProperty(char* key, double value);
 extern void paintShape();
 #endif
 
+=======
+>>>>>>> Stashed changes
 void drawShape(ObjShape* shape){
 	#ifdef EM_MAIN
 		HashEntry* entry = shape->closure.map.first;

@@ -19,9 +19,23 @@ mergeInto(LibraryManager.library, {
 		console.log(key + ":" + value);
 	},
 	paintShape: function(){
-		console.log(_currentShape);
-		self.postMessage({code: 4, payload: _currentShape});
+		if(_currentShape != undefined) _currentFrame.push(_currentShape);
 	},
+
+	paintFrame: function(){
+		if(_currentFrame != []) _frames.push(_currentFrame);
+		_currentFrame = [];
+	},
+
+	sendFrames: function(){
+		console.log(_frames);
+		self.postMessage({code: 4, payload: _frames});
+		_frames = [];
+	},
+
+	newShape__deps: [
+		'currentShape'
+	],
 	paintShape__deps: [
 		'currentShape'
 	],
@@ -36,5 +50,8 @@ mergeInto(LibraryManager.library, {
 	paintFrame__deps: [
         'frames',
         'currentFrame'
+	],
+	sendFrames__deps: [
+        'frames',
 	],
 });
