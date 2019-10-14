@@ -148,7 +148,9 @@ static InterpretResult run() {
 				}
 				break;
 			case OP_GET_GLOBAL: ;		
-				uint32_t idIndex = readInteger();	
+				ObjString* getString = AS_STRING(READ_CONSTANT());	
+				Value stored = getValue(&vm.globals, getString);
+				push(stored);
 				break;
 			case OP_DEF_GLOBAL: ;
 				ObjString* setString = AS_STRING(READ_CONSTANT());
