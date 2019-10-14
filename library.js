@@ -39,12 +39,6 @@ mergeInto(LibraryManager.library, {
 		self.postMessage({code: 4, payload: _currentShape});
 	},
 
-	paintFrame: function(){
-		_frames.push(currentFrame);
-		self.postMessage({code: 4, payload: _currentFrame});
-		_currentFrame = {};
-	},
-
 	newShape__deps: [
 		'currentShape'
 	],
@@ -56,9 +50,5 @@ mergeInto(LibraryManager.library, {
 	],
 	addAttribute__deps: [
 		'currentShape'
-	],
-	paintFrame__deps: [
-        'frames',
-        'currentFrame'
 	],
 });
