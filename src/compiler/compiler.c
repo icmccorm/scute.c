@@ -482,24 +482,31 @@ static uint32_t resolveLocal(TK*id){
 	return -1;
 }
 
-static void namedVariable(TK* id, bool canAssign){
-	uint8_t get, def;
-	uint32_t index = resolveLocal(id);
-	if(index > -1){
-		def = OP_DEF_LOCAL;
-		get = OP_GET_LOCAL;
-	}else{	
-		get = OP_GET_GLOBAL;
-		def = OP_DEF_GLOBAL;
-		index = getStringObjectIndex(id);
-	}
-
+static void namedLocal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
-		emitBundle(def, NUM_VAL(index));
+		emitBundle(OP_DEF_LOCAL, NUM_VAL(index));
 	}else{
-		emitBundle(get, NUM_VAL(index));
+		emitBundle(OP_GET_LOCAL, NUM_VAL(index));
 	}
+}
+
+static void namedGlobal(TK* id, bool canAssign, uint32_t index){
+	if(canAssign && match(TK_ASSIGN)){
+		expression();
+		emitBundle(OP_DEF_GLOBAL, NUM_VAL(index));
+	}else{
+		emitBundle(OP_GET_GLOBAL, NUM_VAL(index));
+	}
+}
+
+static void namedVariable(TK* id, bool canAssign){
+	uint32_t index = resolveLocal(id);
+	if(index >= 0){
+		namedLocal(id, canAssign, index);
+	}else{
+		namedGlobal(id, canAssign, getStringObjectIndex(id));
+	}	
 }
 
 static void variable(bool canAssign){
@@ -608,12 +615,11 @@ bool compile(char* source, Chunk* chunk){
 	initScanner(source);
 	Compiler comp;
 	initCompiler(&comp);
-	TK test;
-	addLocal(currentCompiler(), test);
+
 	parser.hadError = false;
 	parser.panicMode = false;
-
 	compilingChunk = chunk;
+
 	advance();
 	while(parser.current.type != TK_EOF){
 		statement();

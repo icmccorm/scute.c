@@ -8,9 +8,10 @@ void addLocal(Compiler* compiler, TK idName){
 		compiler->scopeCapacity = GROW_CAPACITY(oldCapacity);
 		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->scopeCapacity);
     }
-    Local target = compiler->locals[compiler->localCount];
-    target.depth = -1;
-    target.id = idName;
+    Local* target = &(compiler->locals[compiler->localCount]);
+    target->depth = -1;
+    target->id = idName;
+    ++compiler->localCount;
 }
 
 
