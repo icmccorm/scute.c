@@ -12,8 +12,7 @@
 #include "svg.h"
 
 #ifdef EM_MAIN
-	extern void sendFrames();
-	extern void paintFrame();
+	extern void setMaxFrameIndex(int index);
 #endif
 
 VM vm;
@@ -63,16 +62,15 @@ static Value peek(int distance){
 }
 
 static void runtimeError(char* format, ...){
+	size_t opIndex = vm.ip - vm.chunk->code;
+	int line = getLine(vm.chunk, opIndex);
+	print(O_ERR, "[line %d] ", line);
+	
 	va_list args;
 	va_start(args, format);
 	vprint(O_ERR, format, args);
 	fputc('\n', stderr);
 	va_end(args);
-
-	size_t opIndex = vm.ip - vm.chunk->code;
-	int line = getLine(vm.chunk, opIndex);
-	print(O_ERR, "[line %d] in script\n", line);
-
 	resetStack();
 }
 
@@ -153,7 +151,9 @@ static InterpretResult run() {
 				}
 				break;
 			case OP_GET_GLOBAL: ;		
-				uint32_t idIndex = readInteger();	
+				ObjString* getString = AS_STRING(READ_CONSTANT());	
+				Value stored = getValue(&vm.globals, getString);
+				push(stored);
 				break;
 			case OP_DEF_GLOBAL: ;
 				ObjString* setString = AS_STRING(READ_CONSTANT());
@@ -309,31 +309,10 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> d586e579038b4bd0d5f730d010d26e16b95e2e19
 CompiledCode* runCompiler(char* source);
 static void freeCompilationPackage(CompiledCode* code);
 static CompiledCode* initCompilationPackage();
 
-<<<<<<< HEAD
-InterpretResult executeCompiled(CompiledCode* code){
-	InterpretResult result;
-	for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
-		vm.frameIndex = i;
-		vm.chunk = code->compiled;
-		vm.ip = vm.chunk->code;
-		result = run();
-		paintFrame();
-	}
-	sendFrames();
-	return result;
-}
-
->>>>>>> Stashed changes
-=======
 InterpretResult executeCompiled(CompiledCode* code, int index){
 	InterpretResult result;
 	if(index > -1){
@@ -352,7 +331,6 @@ InterpretResult executeCompiled(CompiledCode* code, int index){
 	return result;
 }
 
->>>>>>> d586e579038b4bd0d5f730d010d26e16b95e2e19
 InterpretResult interpret(char* source){
 	CompiledCode* code = runCompiler(source);
 	InterpretResult result = code->result;
@@ -384,6 +362,9 @@ CompiledCode* runCompiler(char* source){
 		freeChunk(code->compiled);
 		code->result = INTERPRET_COMPILE_ERROR;
 	}
+	#ifdef EM_MAIN
+	setMaxFrameIndex(vm.upperLimit);
+	#endif
 	return code;
 }
 

@@ -43,7 +43,7 @@ clean:
 
 -include $(DEPS)
 
-EM_FLAGS = --js-library ./library.js
+EM_FLAGS = --js-library ./library.js --pre-js ./pre.js
 EM_JS_FLAGS = -O2 $(EM_JS_EXPORTS) -s WASM=1 -s ENVIRONMENT='worker' -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=InterpreterModule
 EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode", "_compileCode"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]'
 EM_ENTRY = ./src/em_main.c
