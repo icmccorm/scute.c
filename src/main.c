@@ -9,18 +9,7 @@
 #include "hashmap.h"
 #include "obj.h"
 #include "output.h"
-
-static void repl() {
-	char line[1024];
-	for(;;){
-		print(O_OUT, "> ");
-		if(!fgets(line, sizeof(line), stdin)){
-			print(O_OUT, "\n");
-			break;
-		}
-		interpret(line);
-	}
-}
+#include "package.h"
 
 static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
@@ -56,22 +45,24 @@ static char* readFile(const char* path){
 
 static void runFile(const char* path){
 	char* source = readFile(path);
-	InterpretResult result = interpret(source);
+	CompilePackage* compiled = initCompilationPackage();
+	
+	runCompiler(compiled, source);
+	InterpretResult result = interpretCompiled(compiled, -1);
+	
+	freeCompilationPackage(compiled);
 	free(source);
+
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
 int main(int argc, const char* argv[]){
-	initVM();
-	if(argc == 1){
-		repl();
-	} else if(argc == 2) {
+	if(argc == 2) {
 		runFile(argv[1]);
 	} else {
 		print(O_ERR, "Usage: scute [path]\n");
 		exit(64);
 	}
-	freeVM();
 	return 0;
 }

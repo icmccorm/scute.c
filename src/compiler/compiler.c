@@ -12,16 +12,19 @@
 #include "output.h"
 #include "compiler_defs.h"
 #include "debug.h"
+#include "vm.h"
+#include "package.h"
 
 Parser parser;
 Compiler* current = NULL;
 Chunk* compilingChunk;
 
-void initCompiler(Compiler* compiler){
+void initCompiler(Compiler* compiler, CompilePackage* package){
 	compiler->scopeDepth = 0;
 	compiler->scopeCapacity = 0;
 	compiler->localCount = 0;
 	compiler->locals = NULL;
+	compiler->result = package;
 	current = compiler;
 }
 
@@ -31,6 +34,10 @@ static Chunk* currentChunk() {
 
 static Compiler* currentCompiler() {
 	return current;
+}
+
+CompilePackage* currentResult(){
+	return currentCompiler()->result;
 }
 
 static void beginScope(){
@@ -390,9 +397,9 @@ static void frameStatement() {
 	if((upperVal) <= 0){
 		error("Invalid upper bound.");
 	}
-	if((upperVal) > vm.upperLimit) vm.upperLimit = upperVal;
+	if((upperVal) > currentResult()->upperLimit) currentResult()->upperLimit = upperVal;
 
-	int jumpIndex = emitLimit(vm.lowerLimit, upperVal);
+	int jumpIndex = emitLimit(currentResult()->lowerLimit, upperVal);
 	endLine();
 	block();
 	patchJump(jumpIndex);
@@ -611,14 +618,14 @@ static void grouping(bool canAssign){
 
 static void printToken();
 
-bool compile(char* source, Chunk* chunk){
+bool compile(char* source, CompilePackage* package){
 	initScanner(source);
 	Compiler comp;
-	initCompiler(&comp);
+	initCompiler(&comp, package);
 
 	parser.hadError = false;
 	parser.panicMode = false;
-	compilingChunk = chunk;
+	compilingChunk = package->compiled;
 
 	advance();
 	while(parser.current.type != TK_EOF){
@@ -630,7 +637,7 @@ bool compile(char* source, Chunk* chunk){
 
 	#ifdef DEBUG
 		if(!parser.hadError){
-			printChunk(chunk, "result");
+			printChunk(package->compiled, "result");
 		}
 	#endif
 	return !parser.hadError;

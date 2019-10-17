@@ -3,6 +3,8 @@
 #include "common.h"
 #include "scanner.h"
 #include "hashmap.h"
+#include "vm.h"
+#include "package.h"
 
 typedef struct {
     TK current;
@@ -22,6 +24,7 @@ typedef struct {
     int localCount;
     int scopeDepth;
     int scopeCapacity;
+    CompilePackage* result;
 } Compiler;
 
 typedef enum{

@@ -8,16 +8,19 @@
 #include "vm.h"
 #include "svg.h"
 #include "output.h"
+#include "package.h"
 
-void runCode(CompiledCode* code, int index){
+void runCode(CompilePackage* code, int index){
 	initVM();
 	InterpretResult result = interpretCompiled(code, index);
 	freeVM();
 
-	if(result == INTERPRET_COMPILE_ERROR) exit(65);
-	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
+	//if(result == INTERPRET_COMPILE_ERROR) exit(65);
+	//if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
-CompiledCode* compileCode(const char* code){
-	return runCompiler(code);
+CompilePackage* compileCode(const char* code){
+	CompilePackage* package = initCompilationPackage();
+	runCompiler(package, code);
+	return package;
 }

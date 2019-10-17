@@ -8,6 +8,7 @@
 #include "vm.h"
 #include "hashmap.h"
 #include "svg.h"
+#include "compiler.h"
 
 bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
@@ -16,8 +17,8 @@ bool isObjectType(Value value, OBJType type){
 Obj* allocateObject(size_t size, OBJType type){
 	Obj* obj = (Obj*) reallocate(NULL, 0, size);
 	obj->type = type;
-	obj->next = vm.objects;
-	vm.objects = obj;
+	obj->next = currentResult()->objects;
+	currentResult()->objects = obj;
 	return obj;
 }
 
@@ -43,7 +44,7 @@ ObjString* allocateString(char* chars, int length){
 	obj->length = length;
 	obj->hash = hashFunction(chars, length);
 
-	insert(&vm.strings, obj, NULL_VAL());
+	insert(&currentResult()->strings, obj, NULL_VAL());
 	return obj;
 }
 
@@ -56,7 +57,7 @@ ObjShape* allocateShape(SPType type){
 }
 
 ObjString* internString(char* chars, int length){
-	ObjString* interned = findKey(&vm.strings, chars, length);
+	ObjString* interned = findKey(&currentResult()->strings, chars, length);
 	if(interned != NULL) return interned;
 	
 	char* heapChars = ALLOCATE(char, length + 1);

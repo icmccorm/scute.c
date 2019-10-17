@@ -10,6 +10,7 @@
 #include "hashmap.h"
 #include "output.h"
 #include "svg.h"
+#include "package.h"
 
 #ifdef EM_MAIN
 	extern void setMaxFrameIndex(int index);
@@ -21,30 +22,18 @@ static void resetStack(){
 	vm.stackTop = vm.stack;
 }
 
-void initVM() {
-	resetStack();		
-	vm.objects = NULL;	
-	initMap(&vm.strings);
+void initVM(CompilePackage* code, int frameIndex) {
+	resetStack();
 	initMap(&vm.globals);
-	vm.frameIndex = 0;
-	vm.lowerLimit = 0;
-	vm.upperLimit = 0;
-}
-
-static void freeObjects(){
-	
-	Obj* list = vm.objects;
-
-	while(list != NULL){
-		Obj* next = list->next;
-		freeObject(list);
-		list = next;
-	}
+	vm.frameIndex = frameIndex;
+	vm.chunk = code->compiled;
+	vm.ip = vm.chunk->code;
+	vm.frameIndex = frameIndex;
+	vm.chunk = code->compiled;
 }
 
 void freeVM() {
-	freeObjects();
-	freeMap(&vm.strings);
+	freeMap(&vm.globals);
 }
 
 void push(Value value) {
@@ -309,72 +298,39 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-CompiledCode* runCompiler(char* source);
-static void freeCompilationPackage(CompiledCode* code);
-static CompiledCode* initCompilationPackage();
+void runCompiler(CompilePackage* package, char* source);
+void freeCompilationPackage(CompilePackage* code);
+CompilePackage* initCompilationPackage();
 
-InterpretResult executeCompiled(CompiledCode* code, int index){
+InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
 	if(index > -1){
-		vm.frameIndex = index;
-		vm.chunk = code->compiled;
-		vm.ip = vm.chunk->code;
+		initVM(code, index);
 		result = run();
+		freeVM();
 	}else{
-		for(int i = vm.lowerLimit; i<=vm.upperLimit; ++i){
-			vm.frameIndex = i;
-			vm.chunk = code->compiled;
-			vm.ip = vm.chunk->code;
+		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
+			initVM(code, i);
 			result = run();
+			freeVM();
 		}
 	}
 	return result;
 }
 
-InterpretResult interpret(char* source){
-	CompiledCode* code = runCompiler(source);
+InterpretResult interpretCompiled(CompilePackage* code, int index){
 	InterpretResult result = code->result;
-
-	if(result != INTERPRET_COMPILE_ERROR) {
-		executeCompiled(code, -1);
-	}
-	freeCompilationPackage(code);
-
-	return result;
-}
-
-InterpretResult interpretCompiled(CompiledCode* code, int index){
-	InterpretResult result = code->result;
-
 	if(result != INTERPRET_COMPILE_ERROR) {
 		executeCompiled(code, index);
 	}
-	freeCompilationPackage(code);
-
 	return result;
 }
 
-CompiledCode* runCompiler(char* source){
-	CompiledCode* code = initCompilationPackage();
-	initChunk(code->compiled);
-
-	if(!compile(source, code->compiled)){
-		freeChunk(code->compiled);
-		code->result = INTERPRET_COMPILE_ERROR;
+void runCompiler(CompilePackage* package, char* source){
+	if(!compile(source, package)){
+		package->result = INTERPRET_COMPILE_ERROR;
 	}
 	#ifdef EM_MAIN
-	setMaxFrameIndex(vm.upperLimit);
+		setMaxFrameIndex(code->upperLimit);
 	#endif
-	return code;
-}
-
-static CompiledCode* initCompilationPackage(){
-	CompiledCode* code = ALLOCATE(CompiledCode, 1);
-	code->compiled = ALLOCATE(Chunk, 1);
-	return code;
-}
-
-static void freeCompilationPackage(CompiledCode* code){
-	FREE(Chunk, code->compiled);
-	FREE(CompiledCode, code);
 }

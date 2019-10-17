@@ -3,7 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
-#include "obj.h"
+#include "package.h"
 
 #define STACK_MAX 256
 #define PI ((double)3.141592653589793238462)
@@ -14,35 +14,16 @@ typedef struct {
 	uint8_t* ip;
 	Value stack[STACK_MAX];
 	Value* stackTop;
-	Obj* objects;
-	HashMap strings;
 	HashMap globals;
 	uint32_t frameIndex;
-	int upperLimit;
-    int lowerLimit;
 } VM;
 
-typedef enum {
-	INTERPRET_OK,
-	INTERPRET_COMPILE_ERROR,
-	INTERPRET_RUNTIME_ERROR,
-} InterpretResult;
-
-typedef struct {
-	Chunk* compiled;
-	InterpretResult result;
-} CompiledCode;
-
 extern VM vm;
-
-void initVM();
-void freeVM();
 
 void push(Value value);
 Value pop();
 
-InterpretResult interpret(char* source);
-InterpretResult interpretCompiled(CompiledCode* code, int index);
-CompiledCode* runCompiler(char* source);
+InterpretResult interpretCompiled(CompilePackage* code, int index);
+void runCompiler(CompilePackage* package, char* source);
 
 #endif
