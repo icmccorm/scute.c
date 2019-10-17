@@ -11,9 +11,7 @@
 #include "package.h"
 
 void runCode(CompilePackage* code, int index){
-	initVM();
 	InterpretResult result = interpretCompiled(code, index);
-	freeVM();
 
 	//if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	//if(result == INTERPRET_RUNTIME_ERROR) exit(70);

@@ -331,6 +331,6 @@ void runCompiler(CompilePackage* package, char* source){
 		package->result = INTERPRET_COMPILE_ERROR;
 	}
 	#ifdef EM_MAIN
-		setMaxFrameIndex(code->upperLimit);
+		setMaxFrameIndex(package->upperLimit);
 	#endif
 }
