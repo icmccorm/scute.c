@@ -14,7 +14,7 @@ typedef struct {
 	uint8_t* ip;
 	Value stack[STACK_MAX];
 	Value* stackTop;
-	HashMap globals;
+	HashMap* globals;
 	uint32_t frameIndex;
 } VM;
 

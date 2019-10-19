@@ -31,7 +31,7 @@ void freeObject(Obj* obj){
 			break;
 		case(OBJ_SHAPE): ;
 			ObjShape* svg = (ObjShape*) obj;
-			freeMap(&svg->defs);
+			freeMap(svg->defs);
 			FREE(ObjShape, svg);
 		default:
 			break;
@@ -44,7 +44,7 @@ ObjString* allocateString(char* chars, int length){
 	obj->length = length;
 	obj->hash = hashFunction(chars, length);
 
-	insert(&currentResult()->strings, obj, NULL_VAL());
+	insert(currentResult()->strings, obj, NULL_VAL());
 	return obj;
 }
 
@@ -52,12 +52,13 @@ ObjShape* allocateShape(SPType type){
 	ObjShape* obj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
 	obj->type = OBJ_SHAPE;
 	initMap(&obj->closure.map);
-	initShape(type, &obj->closure.map);
+	initMap(&obj->defs);
+	initShape(type, obj->closure.map);
 	return obj;
 }
 
 ObjString* internString(char* chars, int length){
-	ObjString* interned = findKey(&currentResult()->strings, chars, length);
+	ObjString* interned = findKey(currentResult()->strings, chars, length);
 	if(interned != NULL) return interned;
 	
 	char* heapChars = ALLOCATE(char, length + 1);

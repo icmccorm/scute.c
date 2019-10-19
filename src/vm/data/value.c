@@ -66,7 +66,7 @@ void printObject(OutType out, Value value){
 				default:
 					break;
 			}
-			printMap(O_OUT, &svg->closure.map);
+			printMap(O_OUT, svg->closure.map);
 		case OBJ_INSTANCE:
 			
 			break;

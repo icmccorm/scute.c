@@ -6,12 +6,12 @@
 #include "value.h"
 
 typedef struct {
-	Chunk* compiled;
 	InterpretResult result;
 	Obj* objects;
-	HashMap strings;
+	Chunk* compiled;
 	int lowerLimit;
 	int upperLimit;
+	HashMap* strings;
 } CompilePackage;
 
 void freeCompilationPackage(CompilePackage* code);

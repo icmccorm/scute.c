@@ -18,13 +18,13 @@
 Parser parser;
 Compiler* current = NULL;
 Chunk* compilingChunk;
+CompilePackage* result;
 
 void initCompiler(Compiler* compiler, CompilePackage* package){
 	compiler->scopeDepth = 0;
 	compiler->scopeCapacity = 0;
 	compiler->localCount = 0;
 	compiler->locals = NULL;
-	compiler->result = package;
 	current = compiler;
 }
 
@@ -37,7 +37,7 @@ static Compiler* currentCompiler() {
 }
 
 CompilePackage* currentResult(){
-	return currentCompiler()->result;
+	return result;
 }
 
 static void beginScope(){
@@ -478,7 +478,7 @@ static void parseAssignment(){
 	}
 }
 
-static uint32_t resolveLocal(TK*id){
+static int32_t resolveLocal(TK*id){
 	Compiler* comp = currentCompiler();
 	for(int i = comp->localCount-1; i>=0; --i){
 		Local* currentLocal = &comp->locals[i];
@@ -486,7 +486,7 @@ static uint32_t resolveLocal(TK*id){
 			return i;
 		}
 	}
-	return -1;
+	return (int32_t) -1;
 }
 
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
@@ -508,7 +508,7 @@ static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 }
 
 static void namedVariable(TK* id, bool canAssign){
-	uint32_t index = resolveLocal(id);
+	int32_t index = resolveLocal(id);
 	if(index >= 0){
 		namedLocal(id, canAssign, index);
 	}else{
@@ -626,6 +626,7 @@ bool compile(char* source, CompilePackage* package){
 	parser.hadError = false;
 	parser.panicMode = false;
 	compilingChunk = package->compiled;
+	result = package;
 
 	advance();
 	while(parser.current.type != TK_EOF){

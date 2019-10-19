@@ -7,12 +7,13 @@
 #include "obj.h"
 #include "output.h"
 
-void initMap(HashMap* map){
-	map->numEntries = 0;
-	map->capacity = 0;
-	map->entries = NULL;
-	map->first = NULL;
-	map->previous = NULL;
+void initMap(HashMap** map){
+	*map = ALLOCATE(HashMap, 1);
+	(*map)->numEntries = 0;
+	(*map)->capacity = 0;
+	(*map)->entries = NULL;
+	(*map)->first = NULL;
+	(*map)->previous = NULL;
 } 
 
 static bool isDeleted(HashEntry* entry){

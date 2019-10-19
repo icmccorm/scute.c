@@ -13,10 +13,8 @@ CompilePackage* initCompilationPackage(){
 	code->lowerLimit = 0;
 	code->upperLimit = 0;
 	code->objects = NULL;
-
-	initChunk(code->compiled);
 	initMap(&code->strings);
-
+	initChunk(code->compiled);
 	return code;
 }
 
@@ -30,7 +28,7 @@ static void freeObjects(Obj* list){
 
 void freeCompilationPackage(CompilePackage* code){
 	freeObjects(code->objects);
-	freeMap(&code->strings);
+	freeMap(code->strings);
 	FREE(Chunk, code->compiled);
 	FREE(CompilePackage, code);
 }

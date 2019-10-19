@@ -34,11 +34,11 @@ struct sObjString{
 struct sObjClosure{
 	Obj object;
 	bool isInstance;
-	HashMap map;
+	HashMap* map;
 };
 struct sObjShape{
 	ObjClosure closure;
-	HashMap defs;
+	HashMap* defs;
 	SPType type;
 };
 

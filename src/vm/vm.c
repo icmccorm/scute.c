@@ -33,7 +33,7 @@ void initVM(CompilePackage* code, int frameIndex) {
 }
 
 void freeVM() {
-	freeMap(&vm.globals);
+	freeMap(vm.globals);
 }
 
 void push(Value value) {
@@ -141,13 +141,13 @@ static InterpretResult run() {
 				break;
 			case OP_GET_GLOBAL: ;		
 				ObjString* getString = AS_STRING(READ_CONSTANT());	
-				Value stored = getValue(&vm.globals, getString);
+				Value stored = getValue(vm.globals, getString);
 				push(stored);
 				break;
 			case OP_DEF_GLOBAL: ;
 				ObjString* setString = AS_STRING(READ_CONSTANT());
 				Value expr = pop();
-				insert(&vm.globals, setString, expr);
+				insert(vm.globals, setString, expr);
 				break;
 			case OP_GET_LOCAL: ;
 				uint32_t stackIndexGet = readInteger();

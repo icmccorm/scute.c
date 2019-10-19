@@ -20,7 +20,7 @@ typedef struct {
 	HashEntry* previous;
 } HashMap;
 
-void initMap(HashMap* map);
+void initMap(HashMap** map);
 void freeMap(HashMap* map);
 void insert(HashMap* map, ObjString* key, Value value);
 Value getValue(HashMap* map, ObjString* key);

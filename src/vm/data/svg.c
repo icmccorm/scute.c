@@ -23,7 +23,7 @@ void drawShape(ObjShape* shape){
 		}	
 		paintShape();
 	#else
-	printMap(O_OUT, &shape->closure.map);
+	printMap(O_OUT, shape->closure.map);
 	#endif
 }
 
@@ -44,7 +44,7 @@ void initShape(SPType type, HashMap* map){
 }
 
 void defineRect(ObjShape* shape, Value x, Value y, Value width, Value height){
-	HashMap* map = &shape->closure.map;
+	HashMap* map = shape->closure.map;
 	ObjString* xStr = internString("x", 1);
 	ObjString* yStr = internString("y", 1);
 	ObjString* wStr = internString("width", 5);
@@ -56,7 +56,7 @@ void defineRect(ObjShape* shape, Value x, Value y, Value width, Value height){
 }
 
 void defineCirc(ObjShape* shape, Value cx, Value cy, Value r){
-	HashMap* map = &shape->closure.map;
+	HashMap* map = shape->closure.map;
 	ObjString* cxStr = internString("cx", 2);
 	ObjString* cyStr = internString("cy", 2);
 	ObjString* rStr = internString("r", 1);
