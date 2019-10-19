@@ -8,7 +8,7 @@
 
 void drawShape(ObjShape* shape){
 	#ifdef EM_MAIN
-		HashEntry* entry = shape->closure.map.first;
+		HashEntry* entry = shape->closure.map->first;
 		double address = (unsigned) shape;
 		newShape(address, shape->type);
 		while(entry != NULL){
