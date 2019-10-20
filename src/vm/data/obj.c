@@ -17,8 +17,14 @@ bool isObjectType(Value value, OBJType type){
 Obj* allocateObject(size_t size, OBJType type){
 	Obj* obj = (Obj*) reallocate(NULL, 0, size);
 	obj->type = type;
-	obj->next = currentResult()->objects;
-	currentResult()->objects = obj;
+	#ifdef INTERPRETING
+		obj->next = vm.runtimeObjects;
+		vm.runtimeObjects = obj;
+	#else
+		obj->next = currentResult()->objects;
+		currentResult()->objects = obj;
+	#endif
+	
 	return obj;
 }
 

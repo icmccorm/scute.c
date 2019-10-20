@@ -16,6 +16,7 @@ typedef struct {
 
 void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
+void freeObjects(Obj* list);
 
 #endif
 

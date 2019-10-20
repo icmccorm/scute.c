@@ -18,7 +18,7 @@ CompilePackage* initCompilationPackage(){
 	return code;
 }
 
-static void freeObjects(Obj* list){
+void freeObjects(Obj* list){
 	while(list != NULL){
 		Obj* next = list->next;
 		freeObject(list);

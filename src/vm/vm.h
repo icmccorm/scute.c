@@ -15,6 +15,7 @@ typedef struct {
 	Value stack[STACK_MAX];
 	Value* stackTop;
 	HashMap* globals;
+	Obj* runtimeObjects;
 	uint32_t frameIndex;
 } VM;
 
