@@ -29,8 +29,6 @@ typedef enum {
 	OP_TAU,
 	OP_E,
 	OP_DRAW,
-	OP_RECT,
-	OP_CIRC,
 	OP_POP,
 	OP_DEF_GLOBAL,
 	OP_GET_GLOBAL,
@@ -38,7 +36,9 @@ typedef enum {
 	OP_GET_LOCAL,
 	OP_JMP_FALSE,
 	OP_LIMIT,
-	OP_T
+	OP_T,
+	OP_SHAPE,
+	OP_CLOSURE
 } OpCode;
 
 typedef struct {

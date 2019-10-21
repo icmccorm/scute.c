@@ -57,12 +57,14 @@ typedef enum {
     TK_TEXT,
     TK_T,
     TK_ERROR,
-    TK_EOF
-
-} TKType;
+    TK_EOF,
+    TK_AS,
+    TK_SHAPE
+} TKType;  
 
 typedef struct{
     TKType type;
+    TKType subtype;
     char* start;
     int length;
     int line;

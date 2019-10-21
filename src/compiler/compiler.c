@@ -75,6 +75,12 @@ static int emitLimit(int low, int high){
 	return currentChunk()->count - 2;
 }
 
+static void emitShape(int id, TKType shapeType){
+	emitByte(OP_SHAPE);
+	writeVariableData(currentChunk(), id);
+	emitByte(shapeType);
+}
+
 static void emitConstant(Value value){
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
@@ -162,7 +168,6 @@ static uint32_t getStringObjectIndex(TK* token){
 static void expression();
 static void block();
 
-
 static void and_(bool canAssign);
 static void binary(bool canAssign);
 static void unary(bool canAssign);
@@ -206,7 +211,7 @@ ParseRule rules[] = {
 { string,	NULL,	    PC_NONE },    // TK_STRING,
 { variable, NULL,	    PC_NONE },    // TK_ID,
 { NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
-{ NULL,	    and_,	    PC_AND },    // TK_AND,
+{ NULL,	    and_,	    PC_AND },     // TK_AND,
 { NULL,	    NULL,	    PC_NONE },    // TK_OR,
 { NULL,	    NULL,	    PC_NONE },    // TK_PRE,
 { literal,	NULL,	    PC_NONE },    // TK_PI,
@@ -229,7 +234,7 @@ ParseRule rules[] = {
 { NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 { NULL,	    NULL,	    PC_NONE },    // TK_IF,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-{ rect,	    NULL,	    PC_NONE },    // TK_RECT,
+{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
 { NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 { NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 { NULL,	    NULL,	    PC_NONE },    // TK_LET,
@@ -386,6 +391,36 @@ static void patchJump(int jumpIndex){
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
+static void createInstance(TK idToken, TK superToken){
+
+}
+
+static void defStatement(){
+	Compiler* currentComp = currentCompiler();
+
+	consume(TK_ID, "Expected an identifier.");
+	TK idToken = parser.previous;
+
+	uint32_t idIndex = getStringObjectIndex(&idToken);
+
+	if(parser.current.type == TK_AS){
+		advance();
+		TK classToken = parser.previous;
+		switch(classToken.type){
+			case TK_SHAPE:
+				emitShape(idIndex, classToken.subtype);
+				break;
+			case TK_ID:
+				break;
+			default:
+				errorAt(&parser.previous, "Expected a shape or class identifier.");
+				break;
+		}
+	}
+	endline();
+	block();
+}
+
 static void frameStatement() {
 	if(parser.previous.type = TK_T){
 		consume(TK_R_LIMIT, "Expected right limit.");
@@ -417,23 +452,13 @@ static void string(bool canAssign){
 	emitConstant(getTokenStringObj(&parser.previous));
 }
 
-static void rect(bool canAssign){
-	emitParams(4, 4);
-	emitByte(OP_RECT);
-}
-
-static void circ(bool canAssign){
-	emitParams(3,3);
-	emitByte(OP_CIRC);
-}
-
 static void timeStep(bool canAssign){
 	emitByte(OP_T);
 }
 
 static void ifStatement(){
-
 }
+
 static void emitParams(int numParams, int minParams){
 	consume(TK_L_PAREN, "Expected '('.");
 	for(int i = 0; i<numParams; ++i){

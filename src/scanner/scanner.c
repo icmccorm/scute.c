@@ -30,6 +30,13 @@ static TK makeToken(TKType type){
     token.start = scanner.start;
     token.length = (int) (scanner.current - scanner.start);
     scanner.lastScanned = scanner.start;
+    token.subtype = -1;
+    return token;
+}
+
+static TK makeDualToken(TKType primary, TKType secondary){
+    TK token = makeToken(primary);
+    token.subtype = secondary;
     return token;
 }
 
@@ -128,13 +135,14 @@ static TKType checkKeyword(int start, int length, char* rest, TKType type){
         memcmp(scanner.start + start, rest, length) == 0){
             return type;
     }
-    return TK_ID;
+    return TK_ID; 
 }
 
 static TKType findIdentifier(){
     switch(scanner.start[0]){
         case 'a':
             return checkKeyword(1, 2, "nd", TK_AND);
+            return checkKeyword(1, 1, "s", TK_AS);
         case 'd':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -206,8 +214,15 @@ static TKType findIdentifier(){
 
 static TK identifier(){
     while(isAlpha(peek())) advance();
-
-    return makeToken(findIdentifier());
+    TKType type = findIdentifier();
+    switch(type){
+        case TK_RECT:
+        case TK_CIRC:
+        case TK_ELLIP:
+            return makeDualToken(type, TK_SHAPE);
+        default:
+            return makeToken(type);
+    }
 }
 
 static TK string(char c){
