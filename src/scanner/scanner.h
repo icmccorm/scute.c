@@ -56,6 +56,8 @@ typedef enum {
     TK_DRAW,
     TK_TEXT,
     TK_T,
+    TK_DIMS,
+    TK_POS,
     TK_ERROR,
     TK_EOF,
     TK_AS,

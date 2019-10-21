@@ -148,6 +148,7 @@ static TKType findIdentifier(){
                 switch(scanner.start[1]){
                     case 'o': return TK_DO;
                     case 'r': return checkKeyword(2, 2, "aw", TK_DRAW);
+                    case 'i': return checkKeyword(2, 2, "ms", TK_DIMS);
                 }
             }else{
                 return TK_ID;
@@ -183,6 +184,7 @@ static TKType findIdentifier(){
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
                     case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
+                    case 'o': return checkKeyword(2, 1, "s", TK_POS);
                     case 'i': return TK_PI;
                 }
             }else{

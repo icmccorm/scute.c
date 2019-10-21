@@ -13,10 +13,12 @@ typedef struct {
 	Chunk* chunk;
 	uint8_t* ip;
 	Value stack[STACK_MAX];
+	int stackSize;
 	Value* stackTop;
 	HashMap* globals;
 	Obj* runtimeObjects;
-	uint32_t frameIndex;
+	Value* stackBottom;
+	int frameIndex;
 } VM;
 
 extern VM vm;

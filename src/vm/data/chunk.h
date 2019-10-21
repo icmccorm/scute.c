@@ -38,7 +38,9 @@ typedef enum {
 	OP_LIMIT,
 	OP_T,
 	OP_SHAPE,
-	OP_CLOSURE
+	OP_CLOSURE,
+	OP_DIMS,
+	OP_POS
 } OpCode;
 
 typedef struct {
