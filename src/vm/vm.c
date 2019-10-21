@@ -36,6 +36,7 @@ void initVM(CompilePackage* code, int frameIndex) {
 void freeVM() {
 	freeMap(vm.globals);
 	freeObjects(vm.runtimeObjects);
+	vm.chunk = NULL;
 }
 
 void push(Value value) {
@@ -95,7 +96,6 @@ static uint32_t readInteger() {
 
 static InterpretResult run() {
 
-#define INTERPRETING
 #ifdef DEBUG
 	for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
 		print(O_DEBUG, "[ ");
@@ -295,7 +295,6 @@ static InterpretResult run() {
 				break;
 		}	
 	}
-#undef INTERPRETING
 #undef READ_BYTE
 #undef READ_SHORT
 #undef READ_CONSTANT
@@ -331,6 +330,8 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 }
 
 void runCompiler(CompilePackage* package, char* source){
+	vm.runtimeObjects = NULL;
+	
 	if(!compile(source, package)){
 		package->result = INTERPRET_COMPILE_ERROR;
 	}
