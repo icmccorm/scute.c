@@ -173,73 +173,74 @@ static void constant(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
 static void rect(bool canAssign);
-static void timeStep(bool canAssign);
 
 ParseRule rules[] = {
-{ NULL,     binary,     PC_TERM },    // TK_PLUS,
-{ unary,    binary,     PC_TERM },    // TK_MINUS,
-{ NULL,     binary,     PC_FACTOR },  // TK_TIMES,
-{ NULL,     binary,     PC_FACTOR },  // TK_DIVIDE,
-{ NULL,     binary,     PC_FACTOR },  // TK_MODULO,
-{ NULL,     binary,     PC_EQUALS },  // TK_EQUALS,
-{ NULL,	    binary,	    PC_EQUALS },  // TK_BANG_EQUALS,
-{ NULL,	    binary,	    PC_COMPARE }, // TK_LESS_EQUALS,
-{ NULL,	    binary,	    PC_COMPARE }, // TK_GREATER_EQUALS,
-{ NULL,	    binary,	    PC_COMPARE }, // TK_LESS,
-{ NULL,	    binary,	    PC_COMPARE }, // TK_GREATER,
-{ NULL,     binary,     PC_ASSIGN },  // TK_ASSIGN,
-{ NULL,     binary,     PC_ASSIGN },  // TK_INCR_ASSIGN,
-{ NULL,     binary,     PC_ASSIGN },  // TK_DECR_ASSIGN,
-{ unary,    NULL,       PC_UNARY },   // TK_BANG,
-{ NULL,	    NULL,	    PC_UNARY },   // TK_INCR, 
-{ NULL,	    NULL,	    PC_UNARY },   // TK_DECR,
-{ NULL,	    NULL,	    PC_NONE },    // TK_COLON,
-{ NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
-{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
-{ NULL,	    NULL,	    PC_NONE },    // TK_L_LIMIT, 
-{ NULL,	    NULL,	    PC_NONE },    // TK_R_LIMIT,
-{ literal,  NULL,       PC_NONE },    // TK_REAL,
-{ literal,  NULL,       PC_NONE },    // TK_INTEGER,
-{ literal,	NULL,	    PC_NONE },    // TK_TRUE,
-{ literal,	NULL,	    PC_NONE },    // TK_FALSE,
-{ literal,	NULL,	    PC_NONE },    // TK_NULL,
-{ string,	NULL,	    PC_NONE },    // TK_STRING,
-{ variable, NULL,	    PC_NONE },    // TK_ID,
-{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
-{ NULL,	    and_,	    PC_AND },    // TK_AND,
-{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
-{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
-{ literal,	NULL,	    PC_NONE },    // TK_PI,
-{ literal,	NULL,	    PC_NONE },    // TK_E,
-{ literal,	NULL,	    PC_NONE },    // TK_TAU,
-{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
-{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
-{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
-{ grouping, NULL,       PC_NONE },    // TK_L_PAREN,
-{ NULL,	    NULL,	    PC_NONE },    // TK_R_PAREN, 
-{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACK,
-{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
-{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
-{ NULL,	    NULL,	    PC_NONE },    // TK_DEREF, 
-{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
-{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
-{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
-{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
-{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
-{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
-{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
-{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-{ rect,	    NULL,	    PC_NONE },    // TK_RECT,
-{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
-{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
-{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
-{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
-{ NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
-{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
-{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
-{ timeStep,	NULL,		PC_NONE },    // TK_T,
-{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
-{ NULL,     NULL,       PC_NONE }     // TK_EOF
+	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
+	{ unary,    binary,     PC_TERM },    // TK_MINUS,
+	{ NULL,     binary,     PC_FACTOR },  // TK_TIMES,
+	{ NULL,     binary,     PC_FACTOR },  // TK_DIVIDE,
+	{ NULL,     binary,     PC_FACTOR },  // TK_MODULO,
+	{ NULL,     binary,     PC_EQUALS },  // TK_EQUALS,
+	{ NULL,	    binary,	    PC_EQUALS },  // TK_BANG_EQUALS,
+	{ NULL,	    binary,	    PC_COMPARE }, // TK_LESS_EQUALS,
+	{ NULL,	    binary,	    PC_COMPARE }, // TK_GREATER_EQUALS,
+	{ NULL,	    binary,	    PC_COMPARE }, // TK_LESS,
+	{ NULL,	    binary,	    PC_COMPARE }, // TK_GREATER,
+	{ NULL,     binary,     PC_ASSIGN },  // TK_ASSIGN,
+	{ NULL,     binary,     PC_ASSIGN },  // TK_INCR_ASSIGN,
+	{ NULL,     binary,     PC_ASSIGN },  // TK_DECR_ASSIGN,
+	{ unary,    NULL,       PC_UNARY },   // TK_BANG,
+	{ NULL,	    NULL,	    PC_UNARY },   // TK_INCR, 
+	{ NULL,	    NULL,	    PC_UNARY },   // TK_DECR,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_COLON,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_L_LIMIT, 
+	{ NULL,	    NULL,	    PC_NONE },    // TK_R_LIMIT,
+	{ literal,  NULL,       PC_NONE },    // TK_REAL,
+	{ literal,  NULL,       PC_NONE },    // TK_INTEGER,
+	{ literal,	NULL,	    PC_NONE },    // TK_TRUE,
+	{ literal,	NULL,	    PC_NONE },    // TK_FALSE,
+	{ literal,	NULL,	    PC_NONE },    // TK_NULL,
+	{ string,	NULL,	    PC_NONE },    // TK_STRING,
+	{ variable, NULL,	    PC_NONE },    // TK_ID,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
+	{ NULL,	    and_,	    PC_AND },     // TK_AND,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
+	{ literal,	NULL,	    PC_NONE },    // TK_PI,
+	{ literal,	NULL,	    PC_NONE },    // TK_E,
+	{ literal,	NULL,	    PC_NONE },    // TK_TAU,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
+	{ grouping, NULL,       PC_NONE },    // TK_L_PAREN,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_R_PAREN, 
+	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACK,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_DEREF, 
+	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
+	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
+	{ rect,	    NULL,	    PC_NONE },    // TK_RECT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
+	{ NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
+	{ NULL,		NULL,		PC_NONE },    // TK_T,
+	{ NULL, 	NULL, 		PC_NONE },	  // TK_DIMS
+	{ NULL,		NULL,		PC_NONE }, 	  // TK_POS
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
+	{ NULL,     NULL,       PC_NONE }     // TK_EOF
 };
 
 static void printStatement();
@@ -249,6 +250,7 @@ static void assignStatement(bool enforceGlobal);
 static void frameStatement();
 static void synchronize();
 static void emitParams();
+static void attr();
 
 static ParseRule* getRule(TKType type){
 	return &rules[type];
@@ -276,6 +278,11 @@ static void parsePrecedence(PCType precedence){
 
 static void statement(){
 	switch(parser.current.type){
+		case TK_POS:
+		case TK_DIMS:
+			advance();
+			attr();
+			break;
 		case TK_PRINT:
 			advance();
 			printStatement();
@@ -345,6 +352,23 @@ static void literal(bool canAssign) {
 		default:
 			return;
 	}    
+}
+
+static void attr(){
+	TK attrType = parser.previous;
+	uint8_t attrOp;
+
+	switch(attrType.type){
+		case TK_DIMS:
+			attrOp = OP_DIMS;
+			break;
+		case TK_POS:
+			attrOp = OP_POS;
+			break;
+	}
+	emitParams();
+	emitByte(attrOp);
+	endLine();
 }
 
 static int getIndentation (){
@@ -418,36 +442,25 @@ static void string(bool canAssign){
 }
 
 static void rect(bool canAssign){
-	emitParams(4, 4);
+	emitParams();
 	emitByte(OP_RECT);
 }
 
 static void circ(bool canAssign){
-	emitParams(3,3);
+	emitParams();
 	emitByte(OP_CIRC);
-}
-
-static void timeStep(bool canAssign){
-	emitByte(OP_T);
 }
 
 static void ifStatement(){
 
 }
-static void emitParams(int numParams, int minParams){
+
+static void emitParams(){
 	consume(TK_L_PAREN, "Expected '('.");
-	for(int i = 0; i<numParams; ++i){
+	expression();
+	while(parser.current.type == TK_COMMA){
+		advance();
 		expression();
-		if(i + 1 == minParams) {
-			if(parser.current.type == TK_COMMA){
-				advance();
-				emitByte(OP_SEPARATOR);
-			}else{
-				break;
-			}
-		}else{
-			consume(TK_COMMA, "Expected additional parameters.");
-		}
 	}
 	consume(TK_R_PAREN, "Expected ')'.");
 }
@@ -459,7 +472,7 @@ static void printStatement(){
 }
 
 static void drawStatement(){
-	emitParams(1, 1);
+	emitParams();
 	emitByte(OP_DRAW);
 	endLine();
 }

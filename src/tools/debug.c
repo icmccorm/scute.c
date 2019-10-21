@@ -87,14 +87,17 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_DRAW", offset);
 		case OP_POP:
 			return simpleInstruction("OP_POP", offset);
-		
+		case OP_T:
+			return simpleInstruction("OP_T", offset);
+		case OP_DIMS:
+			return simpleInstruction("OP_DIMS", offset);
+		case OP_POS:
+			return simpleInstruction("OP_POS", offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;
 	}
 }
-
-
 
 static int simpleInstruction(const char* name, int offset){	
 	print(O_DEBUG, "%s\n", name);

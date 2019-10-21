@@ -28,9 +28,9 @@ void initVM(CompilePackage* code, int frameIndex) {
 	vm.frameIndex = frameIndex;
 	vm.chunk = code->compiled;
 	vm.ip = vm.chunk->code;
-	vm.frameIndex = frameIndex;
 	vm.chunk = code->compiled;
 	vm.runtimeObjects = NULL;
+	vm.stackSize = 0;
 }
 
 void freeVM() {
@@ -42,6 +42,10 @@ void freeVM() {
 void push(Value value) {
 	*vm.stackTop = value;
 	vm.stackTop++;
+}
+
+int stackSize(){
+	return vm.stackTop - vm.stackBottom;
 }
 
 Value pop(){

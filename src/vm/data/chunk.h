@@ -38,7 +38,9 @@ typedef enum {
 	OP_GET_LOCAL,
 	OP_JMP_FALSE,
 	OP_LIMIT,
-	OP_T
+	OP_T,
+	OP_DIMS,
+	OP_POS
 } OpCode;
 
 typedef struct {
