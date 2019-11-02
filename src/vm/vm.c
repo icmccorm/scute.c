@@ -336,17 +336,16 @@ CompilePackage* initCompilationPackage();
 
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
-	if(index > -1){
+	if(index < 0){
 		initVM(code, index);
 		result = run();
+		renderFrame(vm.shapes);
 		freeVM();
 	}else{
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
 			result = run();
-			#ifdef EM_MAIN
-				renderFrame(vm.shapes);
-			#endif
+			renderFrame(vm.shapes);
 			freeVM();
 		}
 	}

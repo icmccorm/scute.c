@@ -72,6 +72,7 @@ void printObject(OutType out, Value value){
 
 void printShape(OutType out, Shape* shape){
 	if(shape){
+		drawShape(shape);
 		switch(shape->shapeType){
 			case TK_RECT: {
 					Rect *r = AS_RECT(shape);
@@ -80,6 +81,8 @@ void printShape(OutType out, Shape* shape){
 					print(out, "w: %g\n", AS_NUM(r->w));
 					print(out, "h: %g\n", AS_NUM(r->h));
 				} break;
+			default:
+				break;
 		}
 	}
 }

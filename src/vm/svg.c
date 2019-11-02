@@ -7,23 +7,21 @@
 #include "vm.h"
 #include "scanner.h"
 
-static void addValue(char* name, Value val){
-	#ifdef EM_MAIN
-		addAttribute(name, AS_NUM(val), val.charIndex);
-	#endif
-}
-
 void drawShape(Shape* shape){
 		#ifdef EM_MAIN
+			#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex));
+
 			unsigned address = (unsigned) shape;
 			newShape(address, shape->shapeType);
 			switch(shape->shapeType){
-				case TK_RECT:
+				case TK_RECT: {
 					Rect* rect = AS_RECT(shape);
-					addValue("x", rect->x);
-					addValue("y", rect->y);
-					addValue("w", rect->w);
-					addValue("h", rect->h);
+					ATTR("x", rect->x);
+					ATTR("y", rect->y);
+					ATTR("width", rect->w);
+					ATTR("height", rect->h);
+				} break;
+				default:
 					break;
 			}
 			paintShape();

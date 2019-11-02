@@ -370,6 +370,8 @@ static void attr(){
 		case TK_POS:
 			attrOp = OP_POS;
 			break;
+		default:
+			break;
 	}
 	uint8_t paramCount = emitParams();
 	emitBytes(attrOp, paramCount);
@@ -483,7 +485,7 @@ static void defStatement(){
 }
 
 static void frameStatement() {
-	if(parser.previous.type = TK_T){
+	if(parser.previous.type == TK_T){
 		consume(TK_R_LIMIT, "Expected right limit.");
 	}
 	consume(TK_INTEGER, "Expected upper-bound");
@@ -633,7 +635,7 @@ static void assignStatement(bool enforceGlobal){
 		}
 		addLocal(currentCompiler(), idToken);
 		parseAssignment();
-		markInitialized(idToken);
+		markInitialized(/*idToken*/);
 	}else{
 		parseAssignment();
 		Value stringIndex = NUM_VAL(getStringObjectIndex(&idToken), getTokenIndex(idToken.start));
