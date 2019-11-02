@@ -16,6 +16,9 @@ static int simpleInstruction(const char* name, int offset);
 static int embeddedInstruction(const char* name, Chunk* chunk, int offset);
 static int jumpInstruction(const char* name, Chunk* chunk, int offset);
 static int limitInstruction(const char* name, Chunk* chunk, int offset);
+static int closureInstruction(const char* name, Chunk* chunk, int offset);
+static int paramInstruction(const char* name, Chunk* chunk, int offset);
+
 
 int printInstruction(Chunk* chunk, int offset){
 	print(O_DEBUG, "%4d ", offset);
@@ -81,18 +84,18 @@ int printInstruction(Chunk* chunk, int offset){
 			return jumpInstruction("OP_JMP_FALSE", chunk, offset);
 		case OP_LIMIT:
 			return limitInstruction("OP_LIMIT", chunk, offset);
-		case OP_RECT:
-			return simpleInstruction("OP_RECT", offset);
 		case OP_DRAW:
 			return simpleInstruction("OP_DRAW", offset);
 		case OP_POP:
 			return simpleInstruction("OP_POP", offset);
 		case OP_T:
 			return simpleInstruction("OP_T", offset);
+		case OP_CLOSURE:
+			return closureInstruction("OP_CLOSURE", chunk, offset);
 		case OP_DIMS:
-			return simpleInstruction("OP_DIMS", offset);
+			return paramInstruction("OP_DIMS", chunk, offset);
 		case OP_POS:
-			return simpleInstruction("OP_POS", offset);
+			return paramInstruction("OP_POS", chunk, offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;
@@ -102,6 +105,11 @@ int printInstruction(Chunk* chunk, int offset){
 static int simpleInstruction(const char* name, int offset){	
 	print(O_DEBUG, "%s\n", name);
 	return offset + 1;
+}
+
+static int paramInstruction(const char* name, Chunk* chunk, int offset){
+	print(O_DEBUG, "%s(%d)\n", name, chunk->code[offset + 1]);
+	return offset + 2;
 }
 
 static uint32_t readEmbeddedInteger(Chunk* chunk, int numBytes, int offset){
@@ -135,4 +143,29 @@ static int embeddedInstruction(const char* name, Chunk* chunk, int offset){
 	printValue(O_DEBUG, chunk->constants.values[valIndex]);
 	print(O_DEBUG, "'\n");
 	return offset + 2 + numBytes;
+}
+
+static int closureInstruction(const char* name, Chunk* chunk, int offset){
+	uint8_t numBytes = chunk->code[offset + 1];
+	uint32_t idIndex = readEmbeddedInteger(chunk, numBytes, offset);
+
+	offset = offset + 1 + numBytes;
+
+	uint8_t numSuperBytes = chunk->code[offset + 1];
+	uint32_t superIndex = readEmbeddedInteger(chunk, numSuperBytes, offset);
+
+	offset = offset + 1 + numSuperBytes;
+
+	uint8_t shapeType = chunk->code[offset + 1];
+
+	print(O_DEBUG, "%-16s (%d)", name, idIndex);
+	printValue(O_DEBUG, chunk->constants.values[idIndex]);
+	print(O_DEBUG, " from ");
+	if(superIndex != 0) print(O_DEBUG, "(%d)", superIndex);
+	printValue(O_DEBUG, chunk->constants.values[superIndex]);
+	print(O_DEBUG, " as ");
+	printShapeType(O_DEBUG, shapeType);
+	print(O_DEBUG, "\n");
+
+	return offset + numBytes + numSuperBytes + 1;
 }

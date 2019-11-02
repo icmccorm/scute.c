@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "hashmap.h"
 #include "value.h"
 #include "memory.h"
@@ -69,7 +70,7 @@ static HashEntry* includes(HashMap* map, ObjString* key){
 	return NULL;
 }
 
-void insert(HashMap* map, ObjString* key, Value value){
+HashEntry* insert(HashMap* map, ObjString* key, Value value){
 	if(map->numEntries + 1 > map->capacity) grow(map);
 	int index = hashIndex(map, key);
 	while(map->entries[index].key != NULL){
@@ -87,6 +88,7 @@ void insert(HashMap* map, ObjString* key, Value value){
 		map->previous = &(map->entries[index]);
 	}
 	++map->numEntries;
+	return &map->entries[index];
 }
 
 Value getValue(HashMap* map, ObjString* key){
@@ -131,7 +133,7 @@ void delete(HashMap* map, ObjString* key){
 	HashEntry* entry = includes(map, key);
 	if(entry != NULL){
 		entry->key = NULL;
-		entry->value = BOOL_VAL(true);
+		entry->value = BOOL_VAL(true, -1);
 	}
 }
 

@@ -22,7 +22,7 @@ typedef struct {
 
 void initMap(HashMap** map);
 void freeMap(HashMap* map);
-void insert(HashMap* map, ObjString* key, Value value);
+HashEntry* insert(HashMap* map, ObjString* key, Value value);
 Value getValue(HashMap* map, ObjString* key);
 void set(HashMap* map, ObjString* key, Value value);
 void grow(HashMap* map);

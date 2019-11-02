@@ -17,7 +17,9 @@ typedef struct {
 	Value* stackTop;
 	HashMap* globals;
 	Obj* runtimeObjects;
+	Shape* shapes;
 	Value* stackBottom;
+	ObjClosure* currentClosure;
 	int frameIndex;
 } VM;
 

@@ -16,6 +16,9 @@ void initChunk(Chunk* chunk){
 	chunk -> lineCount = -1;
 	chunk -> lineCapacity = 0;
 	chunk -> previousLine = 0;
+
+	//provides a default value index of 0 for opcodes that include optional arguments
+	writeValue(chunk, NULL_VAL(), -1);
 }
 
 void writeChunk(Chunk* chunk, uint8_t byte, int line){

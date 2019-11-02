@@ -3,9 +3,11 @@
 
 #include "svg.h"
 #include "obj_def.h"
+#include "scanner.h"
 
 Obj* allocateObject(size_t size, OBJType type);
-ObjShape* allocateShape(SPType type);
+ObjChunk* allocateChunkObject();
+ObjClosure* allocateClosure();
 bool isObjectType(Value value, OBJType type);
 ObjString* internString(char * start, int length);
 void freeObject(Obj* obj);
@@ -16,11 +18,10 @@ void freeObject(Obj* obj);
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
+#define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
 
-#define AS_SHAPE(value) ((ObjShape*)AS_OBJ(value))
-#define RECT() ((ObjShape*)allocateShape(SP_RECT))
-#define CIRC() ((ObjShape*)allocateShape(SP_CIRC))
-#define SHAPE(type) ((ObjShape*)(allocateShape(type))
+#define AS_SHAPE(value) ((Shape*)(value))
+#define AS_RECT(value) ((Rect*)(value))
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*) allocateObject(sizeof(type), objType)

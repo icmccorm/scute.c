@@ -11,6 +11,7 @@ typedef struct {
     TK previous;
     bool hadError;
     bool panicMode;
+    char* codeStart;
 } Parser;
 
 typedef struct{
@@ -25,6 +26,7 @@ typedef struct {
     int scopeDepth;
     int scopeCapacity;
     CompilePackage* result;
+    TKType shapeType;
 } Compiler;
 
 typedef enum{
@@ -52,5 +54,4 @@ typedef struct{
 
 void addLocal(Compiler* compiler, TK idName);
 void freeCompiler(Compiler* compiler);
-
 #endif

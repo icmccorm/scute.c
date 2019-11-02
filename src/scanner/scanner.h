@@ -61,7 +61,8 @@ typedef enum {
     TK_ERROR,
     TK_EOF,
     TK_AS,
-    TK_SHAPE
+    TK_SHAPE,
+    TK_DEF,
 } TKType;  
 
 typedef struct{

@@ -9,6 +9,7 @@
 #include "hashmap.h"
 #include "svg.h"
 #include "compiler.h"
+#include "scanner.h"
 
 bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
@@ -34,10 +35,16 @@ void freeObject(Obj* obj){
 			FREE_ARRAY(char, string->chars, string->length);
 			FREE(ObjString, string);
 			break;
-		case(OBJ_SHAPE): ;
-			ObjShape* svg = (ObjShape*) obj;
-			freeMap(svg->defs);
-			FREE(ObjShape, svg);
+		case(OBJ_CLOSURE): ;
+			ObjClosure* close = (ObjClosure*) obj;
+			freeMap(close->map);
+			FREE(Shape, close->shape);
+			FREE(ObjClosure, close);
+			break;
+		case(OBJ_CHUNK): ;
+			ObjChunk* chunk = (ObjChunk*) obj;
+			freeChunk(chunk->chunk);
+			FREE(ObjChunk, close);
 		default:
 			break;
 	}
@@ -53,13 +60,20 @@ ObjString* allocateString(char* chars, int length){
 	return obj;
 }
 
-ObjShape* allocateShape(SPType type){
-	ObjShape* obj = ALLOCATE_OBJ(ObjShape, OBJ_SHAPE);
-	obj->type = OBJ_SHAPE;
-	initMap(&obj->closure.map);
-	initMap(&obj->defs);
-	initShape(type, obj->closure.map);
+ObjChunk* allocateChunkObject(){
+	ObjChunk* obj = ALLOCATE_OBJ(ObjChunk, OBJ_CHUNK);
+	initChunk(obj->chunk);
 	return obj;
+}
+
+static Shape* allocateShape(TKType shapeType);
+
+ObjClosure* allocateClosure(Value shapeType){
+	ObjClosure* close = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+	initMap(&close->map);
+	TKType shapeToken = (TKType) AS_NUM(shapeType);
+	close->shape = allocateShape(shapeToken);
+	return close;
 }
 
 ObjString* internString(char* chars, int length){
@@ -73,3 +87,28 @@ ObjString* internString(char* chars, int length){
 	return allocateString(heapChars, length);
 }
 
+static Shape* initRect();
+
+static Shape* allocateShape(TKType type){
+	
+	switch(type){
+		case TK_RECT:
+			return initRect();
+		default:
+			return NULL;
+	}
+}
+
+static Shape* initRect(){
+	Rect* rect = ALLOCATE(Rect, 1);
+	rect->x = NUM_VAL(0, -1);
+	rect->y = NUM_VAL(0, -1);
+	rect->w = NUM_VAL(10, -1);
+	rect ->h = NUM_VAL(10,-1);
+	rect->shape.shapeType = TK_RECT;
+
+	Shape* shape = AS_SHAPE(rect);
+	shape->next = vm.shapes;
+	vm.shapes = shape;
+	return shape;
+}

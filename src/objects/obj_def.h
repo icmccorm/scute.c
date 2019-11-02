@@ -9,12 +9,14 @@
 #include "hashmap.h"
 #include "svg.h"
 #include "value.h"
+#include "chunk.h"
 
 typedef enum {
 	OBJ_STRING,
 	OBJ_SHAPE,
 	OBJ_CLOSURE,
 	OBJ_INSTANCE,
+	OBJ_CHUNK,
 } OBJType;
 
 //definition for Obj
@@ -33,13 +35,25 @@ struct sObjString{
 
 struct sObjClosure{
 	Obj object;
-	bool isInstance;
 	HashMap* map;
-};
-struct sObjShape{
-	ObjClosure closure;
-	HashMap* defs;
-	SPType type;
+	Shape* shape;
 };
 
+struct sObjChunk{
+	Obj object;
+	Chunk* chunk;
+};
+
+struct sShape {
+	TKType shapeType;
+	Shape* next;
+};
+
+struct sRect {
+	Shape shape;
+	Value x;
+	Value y;
+	Value w;
+	Value h;
+};
 #endif

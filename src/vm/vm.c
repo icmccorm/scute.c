@@ -31,6 +31,8 @@ void initVM(CompilePackage* code, int frameIndex) {
 	vm.chunk = code->compiled;
 	vm.runtimeObjects = NULL;
 	vm.stackSize = 0;
+	vm.currentClosure = NULL;
+	vm.shapes = NULL;
 }
 
 void freeVM() {
@@ -112,6 +114,7 @@ static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
 #define READ_CONSTANT() (vm.chunk->constants.values[readInteger()])
+#define CONSTANT(index) (vm.chunk->constants.values[index])
 #define BINARY_OP(op, valueType, operandType) \
 	do { \
 		if(!IS_NUM(peek(0)) || !IS_NUM(peek(1))){ \
@@ -120,13 +123,52 @@ static InterpretResult run() {
 		} \
 		operandType b = AS_NUM(pop()); \
 		operandType a = AS_NUM(pop()); \
-		push(valueType(a op b)); \
-	} while(false); 
+		push(valueType(a op b, -1)); \
+	} while(false);
 
 	for(;;) {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
+			case OP_DIMS: {
+				uint8_t numParams = READ_BYTE();
+				Value params[numParams];
+				for(int i = 0; i< numParams; ++i){
+					params[i] = pop();
+				}
+				assignDimensions(vm.currentClosure, params, numParams);
+			} break;
+			case OP_POS: {
+				uint8_t numParams = READ_BYTE();
+				Value params[numParams];
+				for(int i = 0; i< numParams; ++i){
+					params[i] = pop();
+				}
+				assignPosition(vm.currentClosure, params, numParams);
+			} break;
+			case OP_DEREF: {
+				uint32_t valIndex = readInteger();
+				Value superString = CONSTANT(valIndex-1);
+				Value idString = CONSTANT(valIndex);
+
+				Value closeVal = pop();
+				if(IS_NULL(closeVal)) runtimeError("Cannot dereference null scope '%s'.", AS_STRING(superString));
+
+				ObjClosure* closure = (ObjClosure*) AS_OBJ(closeVal);
+				Value innerVal = getValue(closure->map, AS_STRING(idString));
+				push(innerVal);
+			} break;
+			case OP_CLOSURE: {
+				//def "id"
+				ObjString* idString = AS_STRING(READ_CONSTANT());
+				//from "super"
+				ObjString* superString = AS_STRING(READ_CONSTANT());
+				//as "shape"
+				Value shapeType = NUM_VAL(READ_BYTE(), -1);
+				ObjClosure* close = allocateClosure(shapeType);
+				insert(vm.globals, idString, OBJ_VAL(close, -1));
+				vm.currentClosure = close;
+			} break;
 			case OP_JMP_FALSE: ;
 				uint16_t offset = READ_SHORT();
 				if(isFalsey(peek(0))) vm.ip += offset;
@@ -137,26 +179,27 @@ static InterpretResult run() {
 				uint16_t limitOffset = READ_SHORT();
 				if(vm.frameIndex < lowerBound || vm.frameIndex > upperBound){
 					vm.ip += limitOffset;
-				}
-				break;
-			case OP_DRAW: ;
-				Value shapeExpr = pop();
-				if(!IS_SHAPE(shapeExpr)){
-					runtimeError("Only shape-type objects can be drawn.");
-				}else{
-					drawShape(AS_SHAPE(shapeExpr));
-				}
-				break;
-			case OP_GET_GLOBAL: ;		
+			} break;
+			case OP_GET_CLOSURE: {
+				ObjString* getString = AS_STRING(READ_CONSTANT());	
+				Value stored = getValue(vm.currentClosure->map, getString);
+				push(stored);
+			} break;
+			case OP_DEF_CLOSURE: {
+				ObjString* setString = AS_STRING(READ_CONSTANT());	
+				Value expr = pop();
+				insert(vm.currentClosure->map, setString, expr);
+			} break;
+			case OP_GET_GLOBAL: {
 				ObjString* getString = AS_STRING(READ_CONSTANT());	
 				Value stored = getValue(vm.globals, getString);
 				push(stored);
-				break;
-			case OP_DEF_GLOBAL: ;
+			} break;
+			case OP_DEF_GLOBAL: {
 				ObjString* setString = AS_STRING(READ_CONSTANT());
 				Value expr = pop();
 				insert(vm.globals, setString, expr);
-				break;
+			} break;
 			case OP_GET_LOCAL: ;
 				uint32_t stackIndexGet = readInteger();
 				Value val = vm.stack[stackIndexGet];
@@ -184,16 +227,15 @@ static InterpretResult run() {
 					runtimeError("Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
-				push(NUM_VAL(-AS_NUM(pop())));
+				push(NUM_VAL(-AS_NUM(pop()), -1));
 				break;	
 			case OP_ADD: ;
 				b = pop();
 				a = pop();
-				
 				switch(b.type){
 					case VL_NUM:
 						if(IS_NUM(a)){
-							push(NUM_VAL(AS_NUM(a) + AS_NUM(b)));
+							push(NUM_VAL(AS_NUM(a) + AS_NUM(b), -1));
 						}else if(IS_STRING(a)){
 							int strLength = (int)((ceil(log10(AS_NUM(b)))+1)*sizeof(char));
 							char str[strLength];
@@ -203,7 +245,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
 
-							push(OBJ_VAL(internString(totalStr, combinedLength)));
+							push(OBJ_VAL(internString(totalStr, combinedLength), -1));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
@@ -214,7 +256,7 @@ static InterpretResult run() {
 							char concat[combinedLength];
 							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
 
-							push(OBJ_VAL(internString(concat, combinedLength)));
+							push(OBJ_VAL(internString(concat, combinedLength), -1));
 						}else if(IS_NUM(a)){
 							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
 							char str[strLength];
@@ -224,7 +266,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
 
-							push(OBJ_VAL(internString(totalStr, combinedLength)));
+							push(OBJ_VAL(internString(totalStr, combinedLength), -1));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
@@ -232,23 +274,6 @@ static InterpretResult run() {
 					default:
 						break;
 				}
-				break;
-			case OP_RECT: ;
-				Value x = pop();
-				Value y = pop();
-				Value w = pop();
-				Value h = pop();
-				ObjShape* newRect = RECT();
-				defineRect(newRect, x, y, w, h);
-				push(OBJ_VAL(newRect));
-				break;
-			case OP_CIRC: ;
-				Value r = pop();
-				Value cy = pop();
-				Value cx = pop();
-				ObjShape* newCirc = CIRC();
-				defineCirc(newCirc, cx, cy, r);
-				push(OBJ_VAL(newCirc));
 				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
@@ -265,7 +290,7 @@ static InterpretResult run() {
 			case OP_EQUALS: ;
 				b = pop();
 				a = pop();
-				push(BOOL_VAL(valuesEqual(a, b)));
+				push(BOOL_VAL(valuesEqual(a, b), -1));
 				break;
 			case OP_LESS:
 				BINARY_OP(<, BOOL_VAL, double);
@@ -274,28 +299,28 @@ static InterpretResult run() {
 				BINARY_OP(>, BOOL_VAL, double);
 				break;
 			case OP_TRUE:
-				push(BOOL_VAL(true));
+				push(BOOL_VAL(true, -1));
 				break;
 			case OP_FALSE:
-				push(BOOL_VAL(false));
+				push(BOOL_VAL(false, -1));
 				break;
 			case OP_NULL:
 				push(NULL_VAL());
 				break;
 			case OP_NOT:
-				push(BOOL_VAL(isFalsey(pop())));
+				push(BOOL_VAL(isFalsey(pop()), -1));
 				break;
 			case OP_PI:
-				push(NUM_VAL(PI));
+				push(NUM_VAL(PI, -1));
 				break;
 			case OP_TAU:
-				push(NUM_VAL(2*PI));
+				push(NUM_VAL(2*PI, -1));
 				break;
 			case OP_E:
-				push(NUM_VAL(E));
+				push(NUM_VAL(E, -1));
 				break;
 			case OP_T:
-				push(NUM_VAL(vm.frameIndex));
+				push(NUM_VAL(vm.frameIndex, -1));
 				break;
 		}	
 	}
@@ -319,6 +344,9 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
 			result = run();
+			#ifdef EM_MAIN
+				renderFrame(vm.shapes);
+			#endif
 			freeVM();
 		}
 	}

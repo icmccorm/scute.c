@@ -3,13 +3,16 @@
 
 #include "common.h"
 #include "output.h"
+#include "scanner.h"
 
 typedef struct sObj Obj;
 typedef struct sObjString ObjString;
-typedef struct sObjShape ObjShape;
 typedef struct sObjClosure ObjClosure;
-typedef struct sObjShape ObjShape;
+typedef struct sObjChunk ObjChunk;
+
 typedef struct sShape Shape;
+typedef struct sRect Rect;
+typedef struct sCircle Circle;
 
 typedef enum {
 	VL_BOOL,
@@ -25,6 +28,7 @@ typedef struct {
 		double number;
 		Obj* obj;
 	} as;
+	int charIndex;
 } Value;
 
 typedef struct {
@@ -33,10 +37,10 @@ typedef struct {
 	Value * values;
 } ValueArray;	
 
-#define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}})
-#define NULL_VAL() ((Value){VL_NULL, {.number = 0}})
-#define NUM_VAL(value) ((Value){VL_NUM, {.number = value}})
-#define OBJ_VAL(value) ((Value){VL_OBJ, {.obj = (Obj*)(value)}})
+#define BOOL_VAL(value, index) ((Value){VL_BOOL, {.boolean = value}, index})
+#define NULL_VAL(index) ((Value){VL_NULL, {.number = 0}, index})
+#define NUM_VAL(value, index) ((Value){VL_NUM, {.number = value}, index})
+#define OBJ_VAL(value, index) ((Value){VL_OBJ, {.obj = (Obj*)(value)}, index})
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUM(value) ((value).as.number)
@@ -53,5 +57,6 @@ void initValueArray(ValueArray* array);
 int writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(OutType out, Value value);
+void printShapeType(OutType out, TKType type);
 
 #endif

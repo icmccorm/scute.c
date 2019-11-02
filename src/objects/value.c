@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include "memory.h"
+#include "scanner.h"
 #include "value.h"
 #include "obj.h"
 #include "output.h"
 #include "hashmap.h"
+
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;
@@ -52,27 +54,42 @@ void printValue(OutType out, Value value){
 	}
 }
 
+void printShape(OutType out, Shape* shape);
+
 void printObject(OutType out, Value value){
 	switch(OBJ_TYPE(value)){
 		case OBJ_STRING:
 			print(out, "%s", AS_CSTRING(value));
 			break;
-		case OBJ_SHAPE: ;
-			ObjShape* svg = AS_SHAPE(value);
-			switch(svg->type){
-				case SP_RECT:
-					print(out, "--<rect>--\n");
-					break;
-				default:
-					break;
-			}
-			printMap(O_OUT, svg->closure.map);
-		case OBJ_INSTANCE:
-			
-			break;
 		case OBJ_CLOSURE:
+			printMap(O_OUT, AS_CLOSURE(value)->map);
+			printShape(O_OUT, AS_CLOSURE(value)->shape);
 			break;
 		default:
 			break;
+	}
+}
+
+void printShape(OutType out, Shape* shape){
+	if(shape){
+		switch(shape->shapeType){
+			case TK_RECT: {
+					Rect *r = AS_RECT(shape);
+					print(out, "x: %g\n", AS_NUM(r->x));
+					print(out, "y: %g\n", AS_NUM(r->y));
+					print(out, "w: %g\n", AS_NUM(r->w));
+					print(out, "h: %g\n", AS_NUM(r->h));
+				} break;
+		}
+	}
+}
+
+void printShapeType(OutType out, TKType type){
+	switch(type){
+		case TK_RECT:
+			print(out, "rect");
+			break;
+		default:
+			print(out, "none");
 	}
 }

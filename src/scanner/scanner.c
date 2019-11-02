@@ -141,14 +141,19 @@ static TKType checkKeyword(int start, int length, char* rest, TKType type){
 static TKType findIdentifier(){
     switch(scanner.start[0]){
         case 'a':
-            return checkKeyword(1, 2, "nd", TK_AND);
-            return checkKeyword(1, 1, "s", TK_AS);
+            if(scanner.current - scanner.start > 1){
+                switch(scanner.start[1]){
+                    case 'n': return checkKeyword(2, 1, "d", TK_AND);
+                    case 's': return TK_AS;
+                }
+            }
         case 'd':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
                     case 'o': return TK_DO;
                     case 'r': return checkKeyword(2, 2, "aw", TK_DRAW);
                     case 'i': return checkKeyword(2, 2, "ms", TK_DIMS);
+                    case 'e': return checkKeyword(2, 1, "f", TK_DEF);
                 }
             }else{
                 return TK_ID;
@@ -221,7 +226,7 @@ static TK identifier(){
         case TK_RECT:
         case TK_CIRC:
         case TK_ELLIP:
-            return makeDualToken(type, TK_SHAPE);
+            return makeDualToken(TK_SHAPE, type);
         default:
             return makeToken(type);
     }

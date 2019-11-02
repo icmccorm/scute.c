@@ -20,12 +20,17 @@ Compiler* current = NULL;
 Chunk* compilingChunk;
 CompilePackage* result;
 
+int getTokenIndex(char* tokenStart){
+	return (unsigned) (tokenStart - parser.codeStart);
+}
+
 void initCompiler(Compiler* compiler, CompilePackage* package){
 	compiler->scopeDepth = 0;
 	compiler->scopeCapacity = 0;
 	compiler->localCount = 0;
 	compiler->locals = NULL;
 	current = compiler;
+	compiler->shapeType = 0;
 }
 
 static Chunk* currentChunk() {
@@ -75,12 +80,6 @@ static int emitLimit(int low, int high){
 	return currentChunk()->count - 2;
 }
 
-static void emitShape(int id, TKType shapeType){
-	emitByte(OP_SHAPE);
-	writeVariableData(currentChunk(), id);
-	emitByte(shapeType);
-}
-
 static void emitConstant(Value value){
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
@@ -109,12 +108,13 @@ static void error(char* message){
 	errorAt(&parser.previous, message);
 }
 
-static void advance() {
+static TKType advance() {
 	parser.previous = parser.current;
-
 	for(;;){
 		parser.current = scanTK();
-		if(parser.current.type != TK_ERROR) break;
+		if(parser.current.type != TK_ERROR) {
+			return parser.current.type;
+		}
 		errorAtCurrent(parser.current.start);
 	}
 }
@@ -158,7 +158,7 @@ static void endCompiler(){
 }
 
 static Value getTokenStringObj(TK* token){
-	return OBJ_VAL(internString(token->start, token->length));
+	return OBJ_VAL(internString(token->start, token->length), getTokenIndex(token->start));
 }
 
 static uint32_t getStringObjectIndex(TK* token){
@@ -177,7 +177,6 @@ static void literal(bool canAssign);
 static void constant(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
-static void rect(bool canAssign);
 
 ParseRule rules[] = {
 	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -233,7 +232,7 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-	{ rect,	    NULL,	    PC_NONE },    // TK_RECT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
@@ -250,11 +249,11 @@ ParseRule rules[] = {
 
 static void printStatement();
 static void expressionStatement();
-static void drawStatement();
 static void assignStatement(bool enforceGlobal);
+static void defStatement();
 static void frameStatement();
 static void synchronize();
-static void emitParams();
+static uint8_t emitParams();
 static void attr();
 
 static ParseRule* getRule(TKType type){
@@ -280,9 +279,15 @@ static void parsePrecedence(PCType precedence){
 		expression();
 	}
 }
-
 static void statement(){
+	while(parser.current.type == TK_NEWLINE || parser.current.type == TK_INDENT){
+		advance();
+	}
 	switch(parser.current.type){
+		case TK_DEF:
+			advance();
+			defStatement();
+			break;
 		case TK_POS:
 		case TK_DIMS:
 			advance();
@@ -291,10 +296,6 @@ static void statement(){
 		case TK_PRINT:
 			advance();
 			printStatement();
-			break;
-		case TK_DRAW:
-			advance();
-			drawStatement();
 			break;
 		case TK_LET:
 			advance();
@@ -336,10 +337,9 @@ static void synchronize(){
 static void expression() {
 	parsePrecedence(PC_ASSIGN);
 }
-
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
-	emitConstant(NUM_VAL(value));
+	emitConstant(NUM_VAL(value, getTokenIndex(parser.previous.start)));
 }
 
 static void literal(bool canAssign) {
@@ -371,23 +371,32 @@ static void attr(){
 			attrOp = OP_POS;
 			break;
 	}
-	emitParams();
-	emitByte(attrOp);
+	uint8_t paramCount = emitParams();
+	emitBytes(attrOp, paramCount);
 	endLine();
 }
 
+
+
 static int getIndentation (){
 	int indentCount = 0;
-	while(parser.current.type == TK_INDENT){
-		consume(TK_INDENT, "");
-		++indentCount;
+	 while(parser.current.type == TK_INDENT || parser.current.type == TK_NEWLINE){
+		if(parser.current.type == TK_INDENT){
+			++indentCount;
+		}else{
+			indentCount = 0;
+		}
+		advance();
 	}
 	return indentCount;
 }
 
 static void block(){
 	beginScope();
-	while(parser.current.type != TK_EOF && getIndentation() >= currentCompiler()->scopeDepth){
+	while(parser.current.type != TK_EOF 
+			&& getIndentation() >= currentCompiler()->scopeDepth
+		){
+
 		statement();
 	}
 	endScope();
@@ -399,6 +408,16 @@ static void block(){
 		emitByte(OP_POP);
 		--currentComp->localCount;
 	}
+}
+
+static ObjChunk* chunkBlock(){
+	ObjChunk* chunkObj = allocateChunkObject();
+	Chunk* originalChunk = compilingChunk;
+	compilingChunk = chunkObj->chunk;
+	
+	block();
+
+	return chunkObj;
 }
 
 static int emitJump(OpCode op){
@@ -415,33 +434,51 @@ static void patchJump(int jumpIndex){
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
-static void createInstance(TK idToken, TK superToken){
+static void emitClosure(TK* idToken, TK* superToken, TKType type){
+	emitByte(OP_CLOSURE);
 
+	uint32_t idIndex = getStringObjectIndex(idToken);
+	writeVariableData(currentChunk(), idIndex);
+	if(superToken != NULL){
+		uint32_t idIndex = getStringObjectIndex(superToken);
+		writeVariableData(currentChunk(), idIndex);
+	}else{
+		emitByte(0);
+	}
+	emitByte(type);
+}
+
+static void emitShapeClosure(TK* idToken, TKType shapeType){
+	emitByte(OP_CLOSURE);
+
+	uint32_t idIndex = getStringObjectIndex(idToken);
+	writeVariableData(currentChunk(), idIndex);
+	emitByte(0);
+	emitByte(0);	
 }
 
 static void defStatement(){
 	Compiler* currentComp = currentCompiler();
-
 	consume(TK_ID, "Expected an identifier.");
+
 	TK idToken = parser.previous;
+	advance();
 
-	uint32_t idIndex = getStringObjectIndex(&idToken);
-
-	if(parser.current.type == TK_AS){
+	if(parser.previous.type == TK_AS){
 		advance();
-		TK classToken = parser.previous;
-		switch(classToken.type){
+		TK shapeToken = parser.previous;
+		switch(shapeToken.type){
 			case TK_SHAPE:
-				emitShape(idIndex, classToken.subtype);
-				break;
-			case TK_ID:
+				emitClosure(&idToken, NULL, shapeToken.subtype);
 				break;
 			default:
-				errorAt(&parser.previous, "Expected a shape or class identifier.");
+				errorAt(&parser.current, "Expected a shape identifier.");
 				break;
 		}
+	}else{
+		emitClosure(&idToken, NULL, 0);
 	}
-	endline();
+	endLine();
 	block();
 }
 
@@ -483,14 +520,18 @@ static void timeStep(bool canAssign){
 static void ifStatement(){
 }
 
-static void emitParams(){
+static uint8_t emitParams(){
+	uint8_t paramCount = 0;
 	consume(TK_L_PAREN, "Expected '('.");
 	expression();
+	if(!parser.panicMode) ++paramCount;
 	while(parser.current.type == TK_COMMA){
 		advance();
 		expression();
+		if(!parser.panicMode) ++paramCount;
 	}
 	consume(TK_R_PAREN, "Expected ')'.");
+	return paramCount;
 }
 
 static void printStatement(){
@@ -499,9 +540,15 @@ static void printStatement(){
 	endLine();
 }
 
-static void drawStatement(){
-	emitParams();
-	emitByte(OP_DRAW);
+static void dimsStatement(){
+	uint8_t numParams = emitParams();
+	emitBytes(OP_DIMS, numParams);
+	endLine();
+}
+
+static void posStatement(){
+	uint8_t numParams = emitParams();
+	emitBytes(OP_POS, numParams);
 	endLine();
 }
 
@@ -533,18 +580,18 @@ static int32_t resolveLocal(TK*id){
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
-		emitBundle(OP_DEF_LOCAL, NUM_VAL(index));
+		emitBundle(OP_DEF_LOCAL, NUM_VAL(index, getTokenIndex(id->start)));
 	}else{
-		emitBundle(OP_GET_LOCAL, NUM_VAL(index));
+		emitBundle(OP_GET_LOCAL, NUM_VAL(index, getTokenIndex(id->start)));
 	}
 }
 
 static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
-		emitBundle(OP_DEF_GLOBAL, NUM_VAL(index));
+		emitBundle(OP_DEF_GLOBAL, NUM_VAL(index, getTokenIndex(id->start)));
 	}else{
-		emitBundle(OP_GET_GLOBAL, NUM_VAL(index));
+		emitBundle(OP_GET_GLOBAL, NUM_VAL(index, getTokenIndex(id->start)));
 	}
 }
 
@@ -589,7 +636,7 @@ static void assignStatement(bool enforceGlobal){
 		markInitialized(idToken);
 	}else{
 		parseAssignment();
-		Value stringIndex = NUM_VAL(getStringObjectIndex(&idToken));
+		Value stringIndex = NUM_VAL(getStringObjectIndex(&idToken), getTokenIndex(idToken.start));
 		emitBundle(OP_DEF_GLOBAL, stringIndex);
 	}
 	endLine();
@@ -666,6 +713,7 @@ bool compile(char* source, CompilePackage* package){
 
 	parser.hadError = false;
 	parser.panicMode = false;
+	parser.codeStart = source;
 	compilingChunk = package->compiled;
 	result = package;
 
