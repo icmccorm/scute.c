@@ -43,8 +43,8 @@ clean:
 
 -include $(DEPS)
 
-EM_FLAGS = --js-library ./library.js --pre-js ./pre.js
-EM_JS_FLAGS = -O2 $(EM_JS_EXPORTS) -s WASM=1 -s ENVIRONMENT='worker' -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=InterpreterModule -Wincompatible-pointer-types-discards-qualifiers
+EM_FLAGS = --js-library ./library.js --pre-js ./pre.js --closure 1 -Os
+EM_JS_FLAGS = $(EM_JS_EXPORTS) -s WASM=1 -s MODULARIZE=1 -s STRICT=1 -s FILESYSTEM=0 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0 -s ENVIRONMENT='worker' -s EXPORT_NAME="'Scute'"
 EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]' -s ALLOW_MEMORY_GROWTH=1
 EM_ENTRY = ./src/em_main.c
 

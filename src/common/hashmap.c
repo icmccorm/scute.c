@@ -133,7 +133,7 @@ void delete(HashMap* map, ObjString* key){
 	HashEntry* entry = includes(map, key);
 	if(entry != NULL){
 		entry->key = NULL;
-		entry->value = BOOL_VAL(true, -1);
+		entry->value = BOOL_VAL(true);
 	}
 }
 

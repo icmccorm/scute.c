@@ -13,7 +13,7 @@ typedef struct {
 void assignPosition(ObjClosure* close, Value* values, uint8_t numValues);
 void assignDimensions(ObjClosure* close, Value* values, uint8_t numValues);
 
-extern void addAttribute(char* key, double value, double index);
+extern void addAttribute(char* key, double value, double index, double line);
 extern void addStyle(char* key, double value);
 extern void newShape(double id, double type);
 extern void paintShape();

@@ -158,7 +158,10 @@ static void endCompiler(){
 }
 
 static Value getTokenStringObj(TK* token){
-	return OBJ_VAL(internString(token->start, token->length), getTokenIndex(token->start));
+	Value strObj = OBJ_VAL(internString(token->start, token->length));
+	strObj.charIndex = getTokenIndex(token->start);
+	strObj.line = token->line;
+	return strObj;
 }
 
 static uint32_t getStringObjectIndex(TK* token){
@@ -339,7 +342,10 @@ static void expression() {
 }
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
-	emitConstant(NUM_VAL(value, getTokenIndex(parser.previous.start)));
+	Value val = NUM_VAL(value);
+	val.charIndex = getTokenIndex(parser.previous.start);
+	val.line = parser.previous.line;
+	emitConstant(val);
 }
 
 static void literal(bool canAssign) {
@@ -580,20 +586,27 @@ static int32_t resolveLocal(TK*id){
 }
 
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
+	Value indexVal = NUM_VAL(index);
+	indexVal.charIndex = getTokenIndex(id->start);
+	indexVal.line = id->line;
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
-		emitBundle(OP_DEF_LOCAL, NUM_VAL(index, getTokenIndex(id->start)));
+		emitBundle(OP_DEF_LOCAL, indexVal);
 	}else{
-		emitBundle(OP_GET_LOCAL, NUM_VAL(index, getTokenIndex(id->start)));
+		emitBundle(OP_GET_LOCAL, indexVal);
 	}
 }
 
 static void namedGlobal(TK* id, bool canAssign, uint32_t index){
+	Value indexVal = NUM_VAL(index);
+	indexVal.charIndex = getTokenIndex(id->start);
+	indexVal.line = id->line;
+
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
-		emitBundle(OP_DEF_GLOBAL, NUM_VAL(index, getTokenIndex(id->start)));
+		emitBundle(OP_DEF_GLOBAL, indexVal);
 	}else{
-		emitBundle(OP_GET_GLOBAL, NUM_VAL(index, getTokenIndex(id->start)));
+		emitBundle(OP_GET_GLOBAL, indexVal);
 	}
 }
 
@@ -638,7 +651,10 @@ static void assignStatement(bool enforceGlobal){
 		markInitialized(/*idToken*/);
 	}else{
 		parseAssignment();
-		Value stringIndex = NUM_VAL(getStringObjectIndex(&idToken), getTokenIndex(idToken.start));
+		
+		Value stringIndex = NUM_VAL(getStringObjectIndex(&idToken));
+		stringIndex.charIndex = getTokenIndex(idToken.start);
+		stringIndex.line = idToken.line;
 		emitBundle(OP_DEF_GLOBAL, stringIndex);
 	}
 	endLine();

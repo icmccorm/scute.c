@@ -101,10 +101,10 @@ static Shape* allocateShape(TKType type){
 
 static Shape* initRect(){
 	Rect* rect = ALLOCATE(Rect, 1);
-	rect->x = NUM_VAL(0, -1);
-	rect->y = NUM_VAL(0, -1);
-	rect->w = NUM_VAL(10, -1);
-	rect ->h = NUM_VAL(10,-1);
+	rect->x = NUM_VAL(0);
+	rect->y = NUM_VAL(0);
+	rect->w = NUM_VAL(10);
+	rect ->h = NUM_VAL(10);
 	rect->shape.shapeType = TK_RECT;
 
 	Shape* shape = AS_SHAPE(rect);

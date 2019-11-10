@@ -9,7 +9,7 @@
 
 void drawShape(Shape* shape){
 		#ifdef EM_MAIN
-			#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex));
+			#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex, value.line));
 
 			unsigned address = (unsigned) shape;
 			newShape(address, shape->shapeType);
@@ -26,7 +26,7 @@ void drawShape(Shape* shape){
 			}
 			paintShape();
 		#else
-			printValue(O_OUT, OBJ_VAL(shape, -1));
+			printValue(O_OUT, OBJ_VAL(shape));
 		#endif
 }
 

@@ -123,7 +123,7 @@ static InterpretResult run() {
 		} \
 		operandType b = AS_NUM(pop()); \
 		operandType a = AS_NUM(pop()); \
-		push(valueType(a op b, -1)); \
+		push(valueType(a op b)); \
 	} while(false);
 
 	for(;;) {
@@ -164,9 +164,9 @@ static InterpretResult run() {
 				//from "super"
 				ObjString* superString = AS_STRING(READ_CONSTANT());
 				//as "shape"
-				Value shapeType = NUM_VAL(READ_BYTE(), -1);
+				Value shapeType = NUM_VAL(READ_BYTE());
 				ObjClosure* close = allocateClosure(shapeType);
-				insert(vm.globals, idString, OBJ_VAL(close, -1));
+				insert(vm.globals, idString, OBJ_VAL(close));
 				vm.currentClosure = close;
 			} break;
 			case OP_JMP_FALSE: ;
@@ -227,7 +227,7 @@ static InterpretResult run() {
 					runtimeError("Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
-				push(NUM_VAL(-AS_NUM(pop()), -1));
+				push(NUM_VAL(-AS_NUM(pop())));
 				break;	
 			case OP_ADD: ;
 				b = pop();
@@ -235,7 +235,7 @@ static InterpretResult run() {
 				switch(b.type){
 					case VL_NUM:
 						if(IS_NUM(a)){
-							push(NUM_VAL(AS_NUM(a) + AS_NUM(b), -1));
+							push(NUM_VAL(AS_NUM(a) + AS_NUM(b)));
 						}else if(IS_STRING(a)){
 							int strLength = (int)((ceil(log10(AS_NUM(b)))+1)*sizeof(char));
 							char str[strLength];
@@ -245,7 +245,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
 
-							push(OBJ_VAL(internString(totalStr, combinedLength), -1));
+							push(OBJ_VAL(internString(totalStr, combinedLength)));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
@@ -256,7 +256,7 @@ static InterpretResult run() {
 							char concat[combinedLength];
 							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
 
-							push(OBJ_VAL(internString(concat, combinedLength), -1));
+							push(OBJ_VAL(internString(concat, combinedLength)));
 						}else if(IS_NUM(a)){
 							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
 							char str[strLength];
@@ -266,7 +266,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
 
-							push(OBJ_VAL(internString(totalStr, combinedLength), -1));
+							push(OBJ_VAL(internString(totalStr, combinedLength)));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
@@ -290,7 +290,7 @@ static InterpretResult run() {
 			case OP_EQUALS: ;
 				b = pop();
 				a = pop();
-				push(BOOL_VAL(valuesEqual(a, b), -1));
+				push(BOOL_VAL(valuesEqual(a, b)));
 				break;
 			case OP_LESS:
 				BINARY_OP(<, BOOL_VAL, double);
@@ -299,28 +299,28 @@ static InterpretResult run() {
 				BINARY_OP(>, BOOL_VAL, double);
 				break;
 			case OP_TRUE:
-				push(BOOL_VAL(true, -1));
+				push(BOOL_VAL(true));
 				break;
 			case OP_FALSE:
-				push(BOOL_VAL(false, -1));
+				push(BOOL_VAL(false));
 				break;
 			case OP_NULL:
 				push(NULL_VAL());
 				break;
 			case OP_NOT:
-				push(BOOL_VAL(isFalsey(pop()), -1));
+				push(BOOL_VAL(isFalsey(pop())));
 				break;
 			case OP_PI:
-				push(NUM_VAL(PI, -1));
+				push(NUM_VAL(PI));
 				break;
 			case OP_TAU:
-				push(NUM_VAL(2*PI, -1));
+				push(NUM_VAL(2*PI));
 				break;
 			case OP_E:
-				push(NUM_VAL(E, -1));
+				push(NUM_VAL(E));
 				break;
 			case OP_T:
-				push(NUM_VAL(vm.frameIndex, -1));
+				push(NUM_VAL(vm.frameIndex));
 				break;
 		}	
 	}

@@ -10,12 +10,8 @@ mergeInto(LibraryManager.library, {
 	printError: function(ptr){
 		self.postMessage({code: 3, payload: Module.UTF8ToString(ptr)})
 	},
-	hello: function(){
-		console.log("hello");
-	},
 	
 	newShape: function(idPtr, tagPtr){
-		console.log("Newshape");
 		_currentShape = {
 			"id": idPtr,
 			"tag": tagPtr,
@@ -30,12 +26,12 @@ mergeInto(LibraryManager.library, {
 		_currentShape['styles'][key] = value;
 	},
 
-	addAttribute: function(keyPtr, value, index){
-		console.log(value + " " + index);
+	addAttribute: function(keyPtr, value, index, line){
 		let key = Module.UTF8ToString(keyPtr);
 		_currentShape['attrs'][key] = {
 			value: value,
 			index: index,
+			line: line
 		};
 
 	},
