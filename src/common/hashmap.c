@@ -59,41 +59,39 @@ int hashIndex(HashMap* map, ObjString* obj){
 }
 
 static HashEntry* includes(HashMap* map, ObjString* key){
-	if(map->capacity == 0 || map->numEntries == 0) return NULL;
-
+	if(map->capacity == 0) grow(map);
 	int index = hashIndex(map, key);
-	HashEntry entry = map->entries[index];
+	if(map->numEntries == 0) return &(map->entries[index]);
+
 	while(map->entries[index].key != NULL){
 		if(map->entries[index].key == key) return &(map->entries[index]);
 		index = (index + 1) % map->capacity;
 	}
-	return NULL;
+	return &(map->entries[index]);
 }
 
 HashEntry* insert(HashMap* map, ObjString* key, Value value){
 	if(map->numEntries + 1 > map->capacity) grow(map);
-	int index = hashIndex(map, key);
-	while(map->entries[index].key != NULL){
-		index = (index + 1) % map->capacity;
-	}
-	map->entries[index].key = key;
-	map->entries[index].value = value;
-	map->entries[index].next = NULL;
+	HashEntry* spot = includes(map, key);
+
+	spot->key = key;
+	spot->value = value;
+	spot->next = NULL;
 
 	if(map->numEntries == 0) {
-		map->first = &(map->entries[index]);
+		map->first = spot;
 		map->previous = map->first;
 	}else{
-		map->previous->next = &(map->entries[index]);
-		map->previous = &(map->entries[index]);
+		map->previous->next = spot;
+		map->previous = spot;
 	}
 	++map->numEntries;
-	return &map->entries[index];
+	return spot;
 }
 
 Value getValue(HashMap* map, ObjString* key){
 	HashEntry* entry = includes(map, key);
-	if(entry != NULL){
+	if(entry->key != NULL){
 		return entry->value;
 	}else{
 		return NULL_VAL();
