@@ -67,7 +67,7 @@ static void runtimeError(char* format, ...){
 	va_list args;
 	va_start(args, format);
 	vprint(O_ERR, format, args);
-	fputc('\n', stderr);
+	print(O_ERR, "\n");
 	va_end(args);
 	resetStack();
 }
@@ -130,22 +130,6 @@ static InterpretResult run() {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
-			case OP_DIMS: {
-				uint8_t numParams = READ_BYTE();
-				Value params[numParams];
-				for(int i = 0; i< numParams; ++i){
-					params[i] = pop();
-				}
-				assignDimensions(vm.currentClosure, params, numParams);
-			} break;
-			case OP_POS: {
-				uint8_t numParams = READ_BYTE();
-				Value params[numParams];
-				for(int i = 0; i< numParams; ++i){
-					params[i] = pop();
-				}
-				assignPosition(vm.currentClosure, params, numParams);
-			} break;
 			case OP_DEREF: {
 				uint32_t valIndex = readInteger();
 				Value superString = CONSTANT(valIndex-1);
@@ -165,7 +149,7 @@ static InterpretResult run() {
 				ObjString* superString = AS_STRING(READ_CONSTANT());
 				//as "shape"
 				Value shapeType = NUM_VAL(READ_BYTE());
-				ObjClosure* close = allocateClosure(shapeType);
+				ObjClosure* close = allocateShapeClosure(shapeType);
 				insert(vm.globals, idString, OBJ_VAL(close));
 				vm.currentClosure = close;
 			} break;
@@ -180,26 +164,52 @@ static InterpretResult run() {
 				if(vm.frameIndex < lowerBound || vm.frameIndex > upperBound){
 					vm.ip += limitOffset;
 			} break;
-			case OP_GET_CLOSURE: {
-				ObjString* getString = AS_STRING(READ_CONSTANT());	
-				Value stored = getValue(vm.currentClosure->map, getString);
-				push(stored);
-			} break;
-			case OP_DEF_CLOSURE: {
-				ObjString* setString = AS_STRING(READ_CONSTANT());	
-				Value expr = pop();
-				insert(vm.currentClosure->map, setString, expr);
-			} break;
 			case OP_GET_GLOBAL: {
 				ObjString* getString = AS_STRING(READ_CONSTANT());	
 				Value stored = getValue(vm.globals, getString);
 				push(stored);
 			} break;
 			case OP_DEF_GLOBAL: {
-				ObjString* setString = AS_STRING(READ_CONSTANT());
+				ObjString* setString = AS_STRING(READ_CONSTANT());	
 				Value expr = pop();
 				insert(vm.globals, setString, expr);
 			} break;
+			case OP_GET_CLOSURE: {
+				Value scopeVal = pop();
+				Value getVal = READ_CONSTANT();
+				if(IS_NULL(scopeVal) || !IS_CLOSURE(scopeVal)){
+					runtimeError("'%s' is undefined.", AS_CSTRING(getVal));
+				}else{
+					ObjClosure* superScope = AS_CLOSURE(scopeVal);
+					ObjString* getString = AS_STRING(getVal);
+					Value stored = getValue(superScope->map, getString);
+					push(stored);	
+				}
+			} break;
+			case OP_DEF_CLOSURE: {
+				Value setVal = READ_CONSTANT();
+				Value encloseVal = READ_CONSTANT();
+				Value expr = pop();
+				Value scopeVal = pop();
+
+				if(IS_NULL(scopeVal) || !IS_CLOSURE(scopeVal)){
+					ObjString* encloseString = AS_STRING(encloseVal);
+					ObjString* setString = AS_STRING(setVal);
+
+					ObjClosure* newClosure = allocateClosure();
+					insert(newClosure->map, setString, expr);
+					insert(vm.currentClosure->map, encloseString, OBJ_VAL(newClosure));
+
+				}else{
+					ObjClosure* superScope = AS_CLOSURE(scopeVal);
+					ObjString* setString = AS_STRING(setVal);
+					insert(superScope->map, setString, expr);
+				}
+			} break;
+			case OP_LOAD_CLOSURE: {
+				Value closeVal = OBJ_VAL(vm.currentClosure);
+				push(closeVal);
+			} break;	
 			case OP_GET_LOCAL: ;
 				uint32_t stackIndexGet = readInteger();
 				Value val = vm.stack[stackIndexGet];

@@ -36,7 +36,8 @@ struct sObjString{
 struct sObjClosure{
 	Obj object;
 	HashMap* map;
-	Shape* shape;
+	TKType shapeType;
+	ObjClosure* next;
 };
 
 struct sObjChunk{
@@ -44,16 +45,4 @@ struct sObjChunk{
 	Chunk* chunk;
 };
 
-struct sShape {
-	TKType shapeType;
-	Shape* next;
-};
-
-struct sRect {
-	Shape shape;
-	Value x;
-	Value y;
-	Value w;
-	Value h;
-};
 #endif

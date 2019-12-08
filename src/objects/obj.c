@@ -38,7 +38,6 @@ void freeObject(Obj* obj){
 		case(OBJ_CLOSURE): ;
 			ObjClosure* close = (ObjClosure*) obj;
 			freeMap(close->map);
-			FREE(Shape, close->shape);
 			FREE(ObjClosure, close);
 			break;
 		case(OBJ_CHUNK): ;
@@ -66,13 +65,20 @@ ObjChunk* allocateChunkObject(){
 	return obj;
 }
 
-static Shape* allocateShape(TKType shapeType);
-
-ObjClosure* allocateClosure(Value shapeType){
+ObjClosure* allocateShapeClosure(Value shapeType){
 	ObjClosure* close = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
 	initMap(&close->map);
+	
 	TKType shapeToken = (TKType) AS_NUM(shapeType);
-	close->shape = allocateShape(shapeToken);
+	close->shapeType = shapeToken;
+	close->next = vm.shapes;
+	vm.shapes = close;
+	return close;
+}
+ObjClosure* allocateClosure(){
+	ObjClosure* close = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+	initMap(&close->map);
+	close->shapeType = TK_NULL;
 	return close;
 }
 
@@ -85,30 +91,4 @@ ObjString* internString(char* chars, int length){
 	heapChars[length] = '\0';
 
 	return allocateString(heapChars, length);
-}
-
-static Shape* initRect();
-
-static Shape* allocateShape(TKType type){
-	
-	switch(type){
-		case TK_RECT:
-			return initRect();
-		default:
-			return NULL;
-	}
-}
-
-static Shape* initRect(){
-	Rect* rect = ALLOCATE(Rect, 1);
-	rect->x = NUM_VAL(0);
-	rect->y = NUM_VAL(0);
-	rect->w = NUM_VAL(10);
-	rect ->h = NUM_VAL(10);
-	rect->shape.shapeType = TK_RECT;
-
-	Shape* shape = AS_SHAPE(rect);
-	shape->next = vm.shapes;
-	vm.shapes = shape;
-	return shape;
 }

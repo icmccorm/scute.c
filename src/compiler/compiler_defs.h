@@ -9,6 +9,7 @@
 typedef struct {
     TK current;
     TK previous;
+    TK lastID;
     bool hadError;
     bool panicMode;
     char* codeStart;
@@ -25,6 +26,7 @@ typedef struct {
     int localCount;
     int scopeDepth;
     int scopeCapacity;
+    bool enclosed;
     CompilePackage* result;
     TKType shapeType;
 } Compiler;

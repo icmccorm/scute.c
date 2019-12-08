@@ -17,8 +17,7 @@ extern void addAttribute(char* key, double value, double index, double line);
 extern void addStyle(char* key, double value);
 extern void newShape(double id, double type);
 extern void paintShape();
-extern void hello();
-void drawShape(Shape* shape);
-void renderFrame(Shape* shape);
 
+void drawShape(HashMap* shapeMap, TKType type);
+void renderFrame(ObjClosure* close);
 #endif

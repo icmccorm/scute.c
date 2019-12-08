@@ -7,7 +7,10 @@
 
 Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject();
+
 ObjClosure* allocateClosure();
+ObjClosure* allocateShapeClosure(Value shapeType);
+
 bool isObjectType(Value value, OBJType type);
 ObjString* internString(char * start, int length);
 void freeObject(Obj* obj);

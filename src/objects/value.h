@@ -18,7 +18,7 @@ typedef enum {
 	VL_BOOL,
 	VL_NULL,
 	VL_NUM,
-	VL_OBJ
+	VL_OBJ,
 } VLType;
 
 typedef struct {
@@ -46,12 +46,12 @@ typedef struct {
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUM(value) ((value).as.number)
 #define AS_OBJ(value) ((value).as.obj)
+#define AS_MAP(value) ((value).as.map)
 
 #define IS_BOOL(value) ((value).type == VL_BOOL)
 #define IS_NULL(value) ((value).type == VL_NULL)
 #define IS_NUM(value) ((value).type == VL_NUM)
 #define IS_OBJ(value) ((value).type == VL_OBJ)
-
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
 void initValueArray(ValueArray* array);

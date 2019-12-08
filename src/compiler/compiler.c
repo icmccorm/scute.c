@@ -29,6 +29,7 @@ void initCompiler(Compiler* compiler, CompilePackage* package){
 	compiler->scopeCapacity = 0;
 	compiler->localCount = 0;
 	compiler->locals = NULL;
+	compiler->enclosed = false;
 	current = compiler;
 	compiler->shapeType = 0;
 }
@@ -70,6 +71,13 @@ static void emitBundle(uint8_t opCode, Value index){
 	writeOperatorBundle(currentChunk(), opCode, AS_NUM(index), parser.previous.line);
 }
 
+static void emitTriple(uint8_t opCode, Value val1, Value val2){
+	writeChunk(currentChunk(), opCode, parser.previous.line);
+	writeVariableData(currentChunk(), AS_NUM(val1));
+	writeVariableData(currentChunk(), AS_NUM(val2));
+
+}
+
 static int emitLimit(int low, int high){
 	emitByte(OP_LIMIT);
 	int offset = 0;
@@ -109,7 +117,9 @@ static void error(char* message){
 }
 
 static TKType advance() {
+	if(parser.current.type == TK_DEREF && parser.previous.type == TK_ID) parser.lastID = parser.previous;
 	parser.previous = parser.current;
+	
 	for(;;){
 		parser.current = scanTK();
 		if(parser.current.type != TK_ERROR) {
@@ -165,6 +175,7 @@ static Value getTokenStringObj(TK* token){
 }
 
 static uint32_t getStringObjectIndex(TK* token){
+	if(token == NULL) return -1;
 	return writeValue(currentChunk(), getTokenStringObj(token), parser.previous.line);
 }
 
@@ -180,7 +191,8 @@ static void literal(bool canAssign);
 static void constant(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
-
+static void deref(bool canAssign);
+static void closureDeref(bool canAssign);
 ParseRule rules[] = {
 	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
 	{ unary,    binary,     PC_TERM },    // TK_MINUS,
@@ -226,7 +238,7 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DEREF, 
+	{ closureDeref,	deref,	PC_CALL },    // TK_DEREF, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
@@ -487,7 +499,9 @@ static void defStatement(){
 		emitClosure(&idToken, NULL, 0);
 	}
 	endLine();
+	currentCompiler()->enclosed = true;
 	block();
+	currentCompiler()->enclosed = false;
 }
 
 static void frameStatement() {
@@ -562,7 +576,7 @@ static void posStatement(){
 
 static void expressionStatement(){
 	expression();
-	emitByte(OP_POP);
+	//emitByte(OP_POP);
 	endLine();
 }
 
@@ -571,6 +585,53 @@ static void parseAssignment(){
 		expression();
 	}else{
 		emitByte(OP_NULL);
+	}
+}
+
+static void closureDeref(bool canAssign){
+	if(currentCompiler()->enclosed){
+		emitByte(OP_LOAD_CLOSURE);
+		deref(canAssign);
+		
+	}else{
+		errorAtCurrent("Cannot set a closure property outside of a closure");
+	}
+
+}
+
+static void deref(bool canAssign){
+	while(parser.previous.type == TK_DEREF){
+		TK possibleID = parser.current;
+		if(possibleID.type == TK_ID){
+			advance();
+			if(parser.current.type == TK_DEREF){
+				uint32_t idIndex = getStringObjectIndex(&parser.previous);
+				
+				Value indexVal = NUM_VAL(idIndex);
+				indexVal.charIndex = getTokenIndex(parser.previous.start);
+				indexVal.line = parser.previous.line;
+
+				emitBundle(OP_GET_CLOSURE, indexVal);
+				advance();
+			}else{
+				//reached the end of the deref chain; determing whether an assignment is needed.
+				uint32_t idIndex = getStringObjectIndex(&parser.previous);
+				uint32_t encloseIndex = getStringObjectIndex(&parser.lastID);
+				Value indexVal = NUM_VAL(idIndex);
+				Value encloseVal = NUM_VAL(encloseIndex);
+				indexVal.charIndex = getTokenIndex(parser.previous.start);
+				indexVal.line = parser.previous.line;
+				
+				if(canAssign && match(TK_ASSIGN)){
+					expression();
+					emitTriple(OP_DEF_CLOSURE, indexVal, encloseVal);
+				}else{
+					emitBundle(OP_GET_CLOSURE, indexVal);
+				}
+			}
+		}else{
+			errorAtCurrent("Expected an identifier.");
+		}
 	}
 }
 

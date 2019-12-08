@@ -62,28 +62,10 @@ void printObject(OutType out, Value value){
 			print(out, "%s", AS_CSTRING(value));
 			break;
 		case OBJ_CLOSURE:
-			printMap(O_OUT, AS_CLOSURE(value)->map);
-			printShape(O_OUT, AS_CLOSURE(value)->shape);
+			printMap(O_OUT, AS_CLOSURE(value)->map, 0);
 			break;
 		default:
 			break;
-	}
-}
-
-void printShape(OutType out, Shape* shape){
-	if(shape){
-		drawShape(shape);
-		switch(shape->shapeType){
-			case TK_RECT: {
-					Rect *r = AS_RECT(shape);
-					print(out, "x: %g\n", AS_NUM(r->x));
-					print(out, "y: %g\n", AS_NUM(r->y));
-					print(out, "w: %g\n", AS_NUM(r->w));
-					print(out, "h: %g\n", AS_NUM(r->h));
-				} break;
-			default:
-				break;
-		}
 	}
 }
 

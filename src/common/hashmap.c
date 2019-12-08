@@ -135,10 +135,30 @@ void delete(HashMap* map, ObjString* key){
 	}
 }
 
-void printMap(OutType out, HashMap* map){
+void printMap(OutType out, HashMap* map, int indents){
 	HashEntry* first = map->first;
+
 	while(first != NULL){
-		print(out, "%s: %g\n", first->key->chars, first->value.as.number);
+		for(int i = 0; i<indents; ++i){
+			print(out, "   ");
+		}
+		print(out, "%s: ", first->key->chars);
+		switch(first->value.type){
+			case VL_OBJ: {
+				Obj* valObj = AS_OBJ(first->value);
+				switch(valObj->type){
+					case OBJ_CLOSURE: {
+						print(out, "\n");
+						ObjClosure* closeObj = (ObjClosure*) valObj;
+						printMap(out, closeObj->map, indents+1);
+						} break;
+				}
+				} break;
+			default:
+				print(out, "%g\n", first->value.as.number);
+				break;
+
+		}
 		first = first->next;
 	}
 }

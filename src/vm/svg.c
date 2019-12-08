@@ -3,72 +3,68 @@
 #include "svg.h"
 #include "hashmap.h"
 #include "obj.h"
+#include "obj_def.h"
 #include "value.h"
 #include "vm.h"
 #include "scanner.h"
 
-void drawShape(Shape* shape){
+void drawShape(HashMap* shapeMap, TKType type){
 		#ifdef EM_MAIN
 			#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex, value.line));
+			unsigned address = (unsigned) shapeMap;
+			newShape(address, type);
 
-			unsigned address = (unsigned) shape;
-			newShape(address, shape->shapeType);
-			switch(shape->shapeType){
-				case TK_RECT: {
-					Rect* rect = AS_RECT(shape);
-					ATTR("x", rect->x);
-					ATTR("y", rect->y);
-					ATTR("width", rect->w);
-					ATTR("height", rect->h);
-				} break;
+			Value stroke = getValue(shapeMap, internString("stroke", 6));
+			switch(stroke.type){
+				case VL_OBJ: {
+					Obj* strokeObj = AS_OBJ(stroke);
+					if(strokeObj->type == OBJ_CLOSURE){
+						HashMap* strokeMap = ((ObjClosure*) strokeObj)->map;
+						Value width = getValue(strokeMap, internString("width", 5));
+						Value color = getValue(strokeMap, internString("color", 5));
+						ATTR("stroke", color);
+						ATTR("stroke-width", width);
+					}
+					} break;
+				default:
+					ATTR("stroke", stroke);
+					break;
+			}
+
+			Value fill = getValue(shapeMap, internString("fill", 4));
+			switch(fill.type){
+				case VL_OBJ: { 
+						ObjString* xStr = internString("x", 1);
+						ObjString* yStr = internString("y", 1);
+						ObjString* wStr = internString("width", 5);
+						ObjString* hStr = internString("height", 6);
+
+						Value xVal = getValue(shapeMap, xStr);
+						ATTR("x", xVal);
+
+						Value yVal = getValue(shapeMap, yStr);
+						ATTR("y", yVal);
+
+						Value wVal = getValue(shapeMap, wStr);
+						ATTR("w", wVal);
+
+						Value hVal = getValue(shapeMap, hStr);
+						ATTR("h", hVal);
+
+					} break;
 				default:
 					break;
 			}
 			paintShape();
 		#else
-			printValue(O_OUT, OBJ_VAL(shape));
+			printMap(O_OUT, shapeMap, 0);
 		#endif
 }
 
-void renderFrame(Shape* shape){
-	while(shape != NULL){
-		drawShape(shape);
-		shape = shape->next;
-	}
-}
-
-void assignPosition(ObjClosure* close, Value* values, uint8_t numValues){
-	Shape* shape = close->shape;
-	switch(shape->shapeType){
-		case TK_RECT: {
-			Rect* rect = AS_RECT(shape);
-			if(numValues == 1){
-				rect->x = values[0];
-				rect->y = values[0];
-			}else{
-				rect->x = values[0];
-				rect->y = values[1];	
-			}
-		} break;
-		default:
-			break;
-	}
-
-}
-void assignDimensions(ObjClosure* close, Value* values, uint8_t numValues){
-	Shape* shape = close->shape;
-	switch(shape->shapeType){
-		case TK_RECT: {
-			Rect* rect = AS_RECT(shape);
-			if(numValues == 1){
-				rect->w = values[0];
-				rect->h = values[0];
-			}else{
-				rect->w = values[0];
-				rect->h = values[1];	
-			}
-		} break;
-		default:
-			break;
+void renderFrame(ObjClosure* close){
+	ObjClosure* current = close;
+	while(current != NULL){
+		drawShape(current->map, current->shapeType);
+		current = current->next;
 	}
 }
