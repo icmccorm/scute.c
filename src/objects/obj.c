@@ -35,10 +35,10 @@ void freeObject(Obj* obj){
 			FREE_ARRAY(char, string->chars, string->length);
 			FREE(ObjString, string);
 			break;
-		case(OBJ_CLOSURE): ;
-			ObjClosure* close = (ObjClosure*) obj;
+		case(OBJ_SCOPE): ;
+			ObjScope* close = (ObjScope*) obj;
 			freeMap(close->map);
-			FREE(ObjClosure, close);
+			FREE(ObjScope, close);
 			break;
 		case(OBJ_CHUNK): ;
 			ObjChunk* chunk = (ObjChunk*) obj;
@@ -61,22 +61,21 @@ ObjString* allocateString(char* chars, int length){
 
 ObjChunk* allocateChunkObject(){
 	ObjChunk* obj = ALLOCATE_OBJ(ObjChunk, OBJ_CHUNK);
+	obj->chunk = ALLOCATE(Chunk, 1);
 	initChunk(obj->chunk);
 	return obj;
 }
 
-ObjClosure* allocateShapeClosure(Value shapeType){
-	ObjClosure* close = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+ObjScope* allocateShapeScope(Value shapeType){
+	ObjScope* close = ALLOCATE_OBJ(ObjScope, OBJ_SCOPE);
 	initMap(&close->map);
 	
 	TKType shapeToken = (TKType) AS_NUM(shapeType);
 	close->shapeType = shapeToken;
-	close->next = vm.shapes;
-	vm.shapes = close;
 	return close;
 }
-ObjClosure* allocateClosure(){
-	ObjClosure* close = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+ObjScope* allocateScope(){
+	ObjScope* close = ALLOCATE_OBJ(ObjScope, OBJ_SCOPE);
 	initMap(&close->map);
 	close->shapeType = TK_NULL;
 	return close;

@@ -28,11 +28,10 @@ void initVM(CompilePackage* code, int frameIndex) {
 	vm.frameIndex = frameIndex;
 	vm.chunk = code->compiled;
 	vm.ip = vm.chunk->code;
-	vm.chunk = code->compiled;
 	vm.runtimeObjects = NULL;
 	vm.stackSize = 0;
-	vm.currentClosure = NULL;
-	vm.shapes = NULL;
+	vm.currentScope = NULL;
+	vm.currentFrame = NULL;
 }
 
 void freeVM() {
@@ -90,6 +89,8 @@ static bool valuesEqual(Value a, Value b){
 	}	
 }
 
+static InterpretResult executeChunk(Chunk* chunk);
+
 #define READ_BYTE() (*vm.ip++)
 static uint32_t readInteger() {
 	uint8_t numBytes = READ_BYTE();
@@ -130,6 +131,11 @@ static InterpretResult run() {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
+			case OP_DRAW: {
+				ObjScope* shape = AS_SCOPE(pop());
+				shape->nextShape = vm.currentFrame;
+				vm.currentFrame = shape;
+			} break;
 			case OP_DEREF: {
 				uint32_t valIndex = readInteger();
 				Value superString = CONSTANT(valIndex-1);
@@ -138,21 +144,32 @@ static InterpretResult run() {
 				Value closeVal = pop();
 				if(IS_NULL(closeVal)) runtimeError("Cannot dereference null scope '%s'.", AS_STRING(superString));
 
-				ObjClosure* closure = (ObjClosure*) AS_OBJ(closeVal);
-				Value innerVal = getValue(closure->map, AS_STRING(idString));
+				ObjScope* scope = (ObjScope*) AS_OBJ(closeVal);
+				Value innerVal = getValue(scope->map, AS_STRING(idString));
 				push(innerVal);
 			} break;
-			case OP_CLOSURE: {
+			case OP_SCOPE: {
 				//def "id"
 				ObjString* idString = AS_STRING(READ_CONSTANT());
 				//from "super"
 				ObjString* superString = AS_STRING(READ_CONSTANT());
 				//as "shape"
 				Value shapeType = NUM_VAL(READ_BYTE());
-				ObjClosure* close = allocateShapeClosure(shapeType);
+				ObjScope* close = allocateShapeScope(shapeType);
 				insert(vm.globals, idString, OBJ_VAL(close));
-				vm.currentClosure = close;
+				
+				ObjScope* previousClose = vm.currentScope;
+				vm.currentScope = close;
+
+				Chunk* scopeChunk = AS_CHUNK(READ_CONSTANT());
+				executeChunk(scopeChunk);
+
+				Value closeVal = OBJ_VAL(close);
+				push(closeVal);
+
+				vm.currentScope = previousClose;
 			} break;
+			
 			case OP_JMP_FALSE: ;
 				uint16_t offset = READ_SHORT();
 				if(isFalsey(peek(0))) vm.ip += offset;
@@ -174,40 +191,40 @@ static InterpretResult run() {
 				Value expr = pop();
 				insert(vm.globals, setString, expr);
 			} break;
-			case OP_GET_CLOSURE: {
+			case OP_GET_SCOPE: {
 				Value scopeVal = pop();
 				Value getVal = READ_CONSTANT();
-				if(IS_NULL(scopeVal) || !IS_CLOSURE(scopeVal)){
+				if(IS_NULL(scopeVal) || !IS_SCOPE(scopeVal)){
 					runtimeError("'%s' is undefined.", AS_CSTRING(getVal));
 				}else{
-					ObjClosure* superScope = AS_CLOSURE(scopeVal);
+					ObjScope* superScope = AS_SCOPE(scopeVal);
 					ObjString* getString = AS_STRING(getVal);
 					Value stored = getValue(superScope->map, getString);
 					push(stored);	
 				}
 			} break;
-			case OP_DEF_CLOSURE: {
+			case OP_DEF_SCOPE: {
 				Value setVal = READ_CONSTANT();
 				Value encloseVal = READ_CONSTANT();
 				Value expr = pop();
 				Value scopeVal = pop();
 
-				if(IS_NULL(scopeVal) || !IS_CLOSURE(scopeVal)){
+				if(IS_NULL(scopeVal) || !IS_SCOPE(scopeVal)){
 					ObjString* encloseString = AS_STRING(encloseVal);
 					ObjString* setString = AS_STRING(setVal);
 
-					ObjClosure* newClosure = allocateClosure();
-					insert(newClosure->map, setString, expr);
-					insert(vm.currentClosure->map, encloseString, OBJ_VAL(newClosure));
+					ObjScope* newScope = allocateScope();
+					insert(newScope->map, setString, expr);
+					insert(vm.currentScope->map, encloseString, OBJ_VAL(newScope));
 
 				}else{
-					ObjClosure* superScope = AS_CLOSURE(scopeVal);
+					ObjScope* superScope = AS_SCOPE(scopeVal);
 					ObjString* setString = AS_STRING(setVal);
 					insert(superScope->map, setString, expr);
 				}
 			} break;
-			case OP_LOAD_CLOSURE: {
-				Value closeVal = OBJ_VAL(vm.currentClosure);
+			case OP_LOAD_SCOPE: {
+				Value closeVal = OBJ_VAL(vm.currentScope);
 				push(closeVal);
 			} break;	
 			case OP_GET_LOCAL: ;
@@ -340,6 +357,21 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
+static InterpretResult executeChunk(Chunk* chunk){
+	Chunk* previousChunk = vm.chunk;
+	uint8_t* prevIp = vm.ip;
+
+	vm.chunk = chunk;
+	vm.ip = chunk->code;
+
+	InterpretResult chunkResult = run();	
+
+	vm.chunk = previousChunk;
+	vm.ip = prevIp;
+	return chunkResult;
+}
+
+
 void runCompiler(CompilePackage* package, char* source);
 void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
@@ -349,13 +381,13 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	if(index < 0){
 		initVM(code, index);
 		result = run();
-		renderFrame(vm.shapes);
+		renderFrame(vm.currentFrame);
 		freeVM();
 	}else{
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
 			result = run();
-			renderFrame(vm.shapes);
+			renderFrame(vm.currentFrame);
 			freeVM();
 		}
 	}

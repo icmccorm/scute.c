@@ -2,8 +2,21 @@
 #define scute_chunk_h
 
 #include "common.h"
-#include "value.h"
 #include "hashmap.h"
+#include "value.h"
+
+struct sChunk {
+	int count;
+	int capacity;
+	uint8_t* code;
+	ValueArray constants;
+	int* opsPerLine;
+	int* lineNums;
+	int lineCount;
+	int lineCapacity;
+	int previousLine;
+	HashMap* map; 
+};
 
 typedef enum {
 	OP_RETURN,
@@ -33,30 +46,17 @@ typedef enum {
 	OP_GET_GLOBAL,
 	OP_DEF_LOCAL,
 	OP_GET_LOCAL,
-	OP_DEF_CLOSURE,
-	OP_GET_CLOSURE,
-	OP_LOAD_CLOSURE,
+	OP_DEF_SCOPE,
+	OP_GET_SCOPE,
+	OP_LOAD_SCOPE,
 	OP_JMP_FALSE,
 	OP_LIMIT,
 	OP_T,
-	OP_CLOSURE,
+	OP_SCOPE,
 	OP_DEREF,
 	OP_DIMS,
 	OP_POS
 } OpCode;
-
-typedef struct {
-	int count;
-	int capacity;
-	uint8_t* code;
-	ValueArray constants;
-	int* opsPerLine;
-	int* lineNums;
-	int lineCount;
-	int lineCapacity;
-	int previousLine;
-	HashMap* map; 
-} Chunk;
 
 void initChunk(Chunk* chunk);
 void writeChunk(Chunk* chunk, uint8_t byte, int line);

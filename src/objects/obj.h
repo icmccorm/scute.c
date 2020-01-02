@@ -8,8 +8,8 @@
 Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject();
 
-ObjClosure* allocateClosure();
-ObjClosure* allocateShapeClosure(Value shapeType);
+ObjScope* allocateScope();
+ObjScope* allocateShapeScope(Value shapeType);
 
 bool isObjectType(Value value, OBJType type);
 ObjString* internString(char * start, int length);
@@ -17,11 +17,11 @@ void freeObject(Obj* obj);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
 #define IS_SHAPE(value) (isObjectType(value, OBJ_SHAPE))
-#define IS_CLOSURE(value) (isObjectType(value, OBJ_CLOSURE))
+#define IS_SCOPE(value) (isObjectType(value, OBJ_SCOPE))
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
-#define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
+#define AS_SCOPE(value) ((ObjScope*)AS_OBJ(value))
 
 #define AS_SHAPE(value) ((Shape*)(value))
 #define AS_RECT(value) ((Rect*)(value))

@@ -147,9 +147,9 @@ void printMap(OutType out, HashMap* map, int indents){
 			case VL_OBJ: {
 				Obj* valObj = AS_OBJ(first->value);
 				switch(valObj->type){
-					case OBJ_CLOSURE: {
+					case OBJ_SCOPE: {
 						print(out, "\n");
-						ObjClosure* closeObj = (ObjClosure*) valObj;
+						ObjScope* closeObj = (ObjScope*) valObj;
 						printMap(out, closeObj->map, indents+1);
 						} break;
 				}

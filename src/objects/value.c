@@ -61,8 +61,8 @@ void printObject(OutType out, Value value){
 		case OBJ_STRING:
 			print(out, "%s", AS_CSTRING(value));
 			break;
-		case OBJ_CLOSURE:
-			printMap(O_OUT, AS_CLOSURE(value)->map, 0);
+		case OBJ_SCOPE:
+			printMap(O_OUT, AS_SCOPE(value)->map, 0);
 			break;
 		default:
 			break;

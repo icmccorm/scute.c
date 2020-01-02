@@ -34,6 +34,17 @@ static TK makeToken(TKType type){
     return token;
 }
 
+static TK makeCustomToken(TKType type, const char* chars, int length){
+    TK token;
+    token.type = type;
+    token.line = scanner.line;
+    token.start = chars;
+    token.length = length;
+    scanner.lastScanned = scanner.start;
+    token.subtype = -1;
+    return token;
+}
+
 static TK makeDualToken(TKType primary, TKType secondary){
     TK token = makeToken(primary);
     token.subtype = secondary;
@@ -189,7 +200,17 @@ static TKType findIdentifier(){
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
                     case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
-                    case 'o': return checkKeyword(2, 1, "s", TK_POS);
+                    case 'o': {
+                        if(scanner.current - scanner.start > 2){
+                            switch(scanner.start[2]){
+                                case 'l': return checkKeyword(3, 1, "y", TK_POLY);
+                                case 's': return TK_POS;
+                            }    
+                        }else{
+                            return TK_ID;
+                        }
+                        
+                        } break;
                     case 'i': return TK_PI;
                 }
             }else{
@@ -227,8 +248,41 @@ static TK identifier(){
         case TK_CIRC:
         case TK_ELLIP:
             return makeDualToken(TK_SHAPE, type);
+/*      case TK_RED:
+        case TK_ORANGE:
+        case TK_YELLOW:
+        case TK_GREEN:
+        case TK_BLUE:
+        case TK_PURPLE:
+        case TK_BROWN:
+        case TK_MAGENTA:
+        case TK_TAN:
+        case TK_OLIVE:
+        case TK_MAROON:
+        case TK_NAVY:
+        case TK_AQUM:
+        case TK_TURQ:
+        case TK_SILVER:
+        case TK_LIME:
+        case TK_TEAL:
+        case TK_INDIGO:
+        case TK_VIOLET:
+        case TK_PINK:
+        case TK_BLACK:
+        case TK_WHITE:
+        case TK_GRAY:
+        case TK_GREY:
+            return makeDualToken(TK_CONST, type);*/
         default:
             return makeToken(type);
+    }
+}
+
+static TK constant(){
+    while(isAlpha(peek())) advance();
+    TKType type = findIdentifier();
+    switch(type){
+        
     }
 }
 
@@ -265,7 +319,18 @@ TK scanTK(){
         case '?': return makeToken(TK_QUESTION);
         case ';': return makeToken(TK_SEMI);
 
-        case ':': return makeToken(match('=') ? TK_EVAL_ASSIGN : TK_COLON);
+        case ':':{
+            char b = advance();
+            if(isAlpha(b)){
+                return identifier();
+            }else{
+                if(match('=')){
+                    return makeToken(TK_EVAL_ASSIGN);
+                }else{
+                    return makeToken(TK_COLON); 
+                }
+            }
+        } break;
         case '<': 
             if(match('=')){
                 return makeToken(TK_LESS_EQUALS);

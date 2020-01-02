@@ -14,7 +14,7 @@
 typedef enum {
 	OBJ_STRING,
 	OBJ_SHAPE,
-	OBJ_CLOSURE,
+	OBJ_SCOPE,
 	OBJ_INSTANCE,
 	OBJ_CHUNK,
 } OBJType;
@@ -33,11 +33,11 @@ struct sObjString{
 	uint32_t hash;
 };
 
-struct sObjClosure{
+struct sObjScope{
 	Obj object;
 	HashMap* map;
 	TKType shapeType;
-	ObjClosure* next;
+	ObjScope* nextShape;
 };
 
 struct sObjChunk{

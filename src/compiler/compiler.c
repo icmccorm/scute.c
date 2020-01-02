@@ -179,6 +179,16 @@ static uint32_t getStringObjectIndex(TK* token){
 	return writeValue(currentChunk(), getTokenStringObj(token), parser.previous.line);
 }
 
+static uint32_t getObjectIndex(Obj* obj){
+	if(obj == NULL) return -1;
+	return writeValue(currentChunk(), OBJ_VAL(obj), parser.previous.line);
+}
+
+static uint32_t getChunkIndex(Chunk* chunk){
+	if(chunk == NULL) return -1;
+	return writeValue(currentChunk(), CHUNK_VAL(chunk), parser.previous.line);
+}
+
 static void expression();
 static void block();
 
@@ -192,7 +202,8 @@ static void constant(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
 static void deref(bool canAssign);
-static void closureDeref(bool canAssign);
+static void scopeDeref(bool canAssign);
+
 ParseRule rules[] = {
 	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
 	{ unary,    binary,     PC_TERM },    // TK_MINUS,
@@ -238,7 +249,7 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
-	{ closureDeref,	deref,	PC_CALL },    // TK_DEREF, 
+	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
@@ -270,6 +281,7 @@ static void frameStatement();
 static void synchronize();
 static uint8_t emitParams();
 static void attr();
+static void drawStatement();
 
 static ParseRule* getRule(TKType type){
 	return &rules[type];
@@ -302,6 +314,10 @@ static void statement(){
 		case TK_DEF:
 			advance();
 			defStatement();
+			break;
+		case TK_DRAW:
+			advance();
+			drawStatement();
 			break;
 		case TK_POS:
 		case TK_DIMS:
@@ -430,14 +446,17 @@ static void block(){
 	}
 }
 
-static ObjChunk* chunkBlock(){
-	ObjChunk* chunkObj = allocateChunkObject();
+static uint32_t chunkBlock(){
+	Chunk* chunkObj = ALLOCATE(Chunk, 1);
+	initChunk(chunkObj);
+
 	Chunk* originalChunk = compilingChunk;
-	compilingChunk = chunkObj->chunk;
+	compilingChunk = chunkObj;
 	
 	block();
 
-	return chunkObj;
+	compilingChunk = originalChunk;
+	return getChunkIndex(chunkObj);
 }
 
 static int emitJump(OpCode op){
@@ -454,8 +473,8 @@ static void patchJump(int jumpIndex){
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
-static void emitClosure(TK* idToken, TK* superToken, TKType type){
-	emitByte(OP_CLOSURE);
+static void emitScope(TK* idToken, TK* superToken, TKType type, uint32_t chunkIndex){
+	emitByte(OP_SCOPE);
 
 	uint32_t idIndex = getStringObjectIndex(idToken);
 	writeVariableData(currentChunk(), idIndex);
@@ -466,15 +485,58 @@ static void emitClosure(TK* idToken, TK* superToken, TKType type){
 		emitByte(0);
 	}
 	emitByte(type);
+	writeVariableData(currentChunk(), chunkIndex);
 }
 
-static void emitShapeClosure(TK* idToken, TKType shapeType){
-	emitByte(OP_CLOSURE);
+static void emitShapeScope(TK* idToken, TKType shapeType){
+	emitByte(OP_SCOPE);
 
 	uint32_t idIndex = getStringObjectIndex(idToken);
 	writeVariableData(currentChunk(), idIndex);
 	emitByte(0);
 	emitByte(0);	
+}
+
+static void drawStatement(){
+	Compiler* currentComp = currentCompiler();
+	if(parser.current.type == TK_ID){
+		advance();
+		TK idToken = parser.previous;
+		advance();
+		if(parser.previous.type == TK_AS){ //draw foo as ____
+			advance();
+			TK shapeToken = parser.previous;
+
+			switch(shapeToken.type){
+				case TK_SHAPE:
+					endLine();
+					currentCompiler()->enclosed = true;
+					uint32_t chunkIndex = chunkBlock();
+					currentCompiler()->enclosed = false;
+
+					emitScope(&idToken, NULL, shapeToken.subtype, chunkIndex);
+					break;
+				default:
+					errorAt(&parser.previous, "Expected a shape identifier.");
+			}
+		}else{	// draw foo
+			endLine();
+			//FIX: resolve variable name (foo) to scope
+			
+		}
+	}else if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
+		advance();
+		TK shapeToken = parser.previous;
+		endLine();
+		
+		currentCompiler()->enclosed = true;
+		uint32_t chunkIndex = chunkBlock();
+		currentCompiler()->enclosed = false;
+
+		emitScope(NULL, NULL, shapeToken.subtype, chunkIndex);
+	}
+
+	emitByte(OP_DRAW);
 }
 
 static void defStatement(){
@@ -489,19 +551,23 @@ static void defStatement(){
 		TK shapeToken = parser.previous;
 		switch(shapeToken.type){
 			case TK_SHAPE:
-				emitClosure(&idToken, NULL, shapeToken.subtype);
+				endLine();
+				currentCompiler()->enclosed = true;
+				uint32_t chunkIndex = chunkBlock();
+				currentCompiler()->enclosed = false;		
+				emitScope(&idToken, NULL, shapeToken.subtype, chunkIndex);
 				break;
 			default:
 				errorAt(&parser.current, "Expected a shape identifier.");
 				break;
 		}
 	}else{
-		emitClosure(&idToken, NULL, 0);
+		endLine();
+		currentCompiler()->enclosed = true;
+		uint32_t chunkIndex = chunkBlock();
+		currentCompiler()->enclosed = false;
+		emitScope(&idToken, NULL, 0, chunkIndex);
 	}
-	endLine();
-	currentCompiler()->enclosed = true;
-	block();
-	currentCompiler()->enclosed = false;
 }
 
 static void frameStatement() {
@@ -588,13 +654,13 @@ static void parseAssignment(){
 	}
 }
 
-static void closureDeref(bool canAssign){
+static void scopeDeref(bool canAssign){
 	if(currentCompiler()->enclosed){
-		emitByte(OP_LOAD_CLOSURE);
+		emitByte(OP_LOAD_SCOPE);
 		deref(canAssign);
 		
 	}else{
-		errorAtCurrent("Cannot set a closure property outside of a closure");
+		errorAtCurrent("Cannot set a scope property outside of a scope");
 	}
 
 }
@@ -611,7 +677,7 @@ static void deref(bool canAssign){
 				indexVal.charIndex = getTokenIndex(parser.previous.start);
 				indexVal.line = parser.previous.line;
 
-				emitBundle(OP_GET_CLOSURE, indexVal);
+				emitBundle(OP_GET_SCOPE, indexVal);
 				advance();
 			}else{
 				//reached the end of the deref chain; determing whether an assignment is needed.
@@ -624,9 +690,9 @@ static void deref(bool canAssign){
 				
 				if(canAssign && match(TK_ASSIGN)){
 					expression();
-					emitTriple(OP_DEF_CLOSURE, indexVal, encloseVal);
+					emitTriple(OP_DEF_SCOPE, indexVal, encloseVal);
 				}else{
-					emitBundle(OP_GET_CLOSURE, indexVal);
+					emitBundle(OP_GET_SCOPE, indexVal);
 				}
 			}
 		}else{

@@ -1,5 +1,6 @@
 #ifndef scute_compiler_defs_h
 #define scute_compiler_defs_h
+
 #include "common.h"
 #include "scanner.h"
 #include "hashmap.h"

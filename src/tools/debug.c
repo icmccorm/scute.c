@@ -6,17 +6,18 @@
 #include "output.h"
 
 void printChunk(Chunk* chunk, const char* name) {
-	print(O_DEBUG, "== %s ==\n", name);
+	if(name != NULL) print(O_DEBUG, "== %s ==\n", name);
 	for (int offset = 0; offset < chunk->count;) {
 		offset = printInstruction(chunk, offset);
 	}
+	if(name != NULL) print(O_DEBUG, "======");
 }
 static int tripleInstruction(const char* name, Chunk* chunk, int offset);
 static int simpleInstruction(const char* name, int offset);
 static int embeddedInstruction(const char* name, Chunk* chunk, int offset);
 static int jumpInstruction(const char* name, Chunk* chunk, int offset);
 static int limitInstruction(const char* name, Chunk* chunk, int offset);
-static int closureInstruction(const char* name, Chunk* chunk, int offset);
+static int scopeInstruction(const char* name, Chunk* chunk, int offset);
 static int paramInstruction(const char* name, Chunk* chunk, int offset);
 
 
@@ -24,11 +25,11 @@ int printInstruction(Chunk* chunk, int offset){
 	print(O_DEBUG, "%4d ", offset);
 	
 	int currLine = getLine(chunk, offset);
-	if(currLine == -1 || offset > 0 && getLine(chunk, offset - 1) == currLine){
+/*	if(currLine == -1 || offset > 0 && getLine(chunk, offset - 1) == currLine){
 		print(O_DEBUG, "   | ");
-	}else{
-		print(O_DEBUG, "%4d ", currLine);
-	}
+*///	}else{
+	print(O_DEBUG, "%4d ", currLine);
+//	}
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
@@ -72,8 +73,8 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_TAU", offset);
 		case OP_E:
 			return simpleInstruction("OP_E", offset);
-		case OP_LOAD_CLOSURE:
-			return simpleInstruction("OP_LOAD_CLOSURE", offset);
+		case OP_LOAD_SCOPE:
+			return simpleInstruction("OP_LOAD_SCOPE", offset);
 		case OP_DEF_GLOBAL:
 			return embeddedInstruction("OP_DEF_GLOBAL", chunk, offset);
 		case OP_GET_GLOBAL:
@@ -82,10 +83,10 @@ int printInstruction(Chunk* chunk, int offset){
 			return embeddedInstruction("OP_DEF_LOCAL", chunk, offset);
 		case OP_GET_LOCAL:
 			return embeddedInstruction("OP_GET_LOCAL", chunk, offset);
-		case OP_DEF_CLOSURE:
-			return tripleInstruction("OP_DEF_CLOSURE", chunk, offset);
-		case OP_GET_CLOSURE:
-			return embeddedInstruction("OP_GET_CLOSURE", chunk, offset);
+		case OP_DEF_SCOPE:
+			return tripleInstruction("OP_DEF_SCOPE", chunk, offset);
+		case OP_GET_SCOPE:
+			return embeddedInstruction("OP_GET_SCOPE", chunk, offset);
 		case OP_JMP_FALSE:
 			return jumpInstruction("OP_JMP_FALSE", chunk, offset);
 		case OP_LIMIT:
@@ -96,8 +97,8 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_POP", offset);
 		case OP_T:
 			return simpleInstruction("OP_T", offset);
-		case OP_CLOSURE:
-			return closureInstruction("OP_CLOSURE", chunk, offset);
+		case OP_SCOPE:
+			return scopeInstruction("OP_SCOPE", chunk, offset);
 		case OP_DIMS:
 			return paramInstruction("OP_DIMS", chunk, offset);
 		case OP_POS:
@@ -136,33 +137,42 @@ static int jumpInstruction(const char* name, Chunk* chunk, int offset){
 
 static int limitInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numLowerBytes = chunk->code[offset + 1];
-	uint8_t numUpperBytes = chunk->code[offset + 2 + numLowerBytes];
+	offset = offset + 1 + numLowerBytes;
+
+	uint8_t numUpperBytes = chunk->code[offset + 1];
+	offset = offset + 1 + numUpperBytes;
+
 	print(O_DEBUG, "%-16s\n", name);
-	return offset + 2 + numLowerBytes + numUpperBytes + 2 + 1;
+	return offset + 1;
 }	
 
 static int embeddedInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numBytes = chunk->code[offset + 1];
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
 
+	offset = offset + 1 + numBytes;
 	print(O_DEBUG, "%-16s %4d '", name, valIndex);
 	printValue(O_DEBUG, chunk->constants.values[valIndex]);
 	print(O_DEBUG, "'\n");
-	return offset + 2 + numBytes;
+	return offset + 1;
 }
 
 static int tripleInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numBytes = chunk->code[offset + 1];
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
-	
-	uint8_t numSecondBytes = chunk->code[offset+1+numBytes];
+	offset = offset + 1 + numBytes;
+
+	uint8_t numSecondBytes = chunk->code[offset+1];
+	offset = offset + 1 + numSecondBytes;
+
 	print(O_DEBUG, "%-16s %4d '", name, valIndex);
 	printValue(O_DEBUG, chunk->constants.values[valIndex]);
 	print(O_DEBUG, "'\n");
-	return offset + 2 + numBytes + numSecondBytes;
+
+	return offset + 1;
 }
 
-static int closureInstruction(const char* name, Chunk* chunk, int offset){
+static int scopeInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numBytes = chunk->code[offset + 1];
 	uint32_t idIndex = readEmbeddedInteger(chunk, numBytes, offset);
 
@@ -175,6 +185,13 @@ static int closureInstruction(const char* name, Chunk* chunk, int offset){
 
 	uint8_t shapeType = chunk->code[offset + 1];
 
+	offset = offset + 1;
+
+	uint8_t numChunkBytes = chunk->code[offset+1];
+	uint32_t chunkIndex = readEmbeddedInteger(chunk, numChunkBytes, offset);
+
+	offset = offset + 1 + numChunkBytes;
+
 	print(O_DEBUG, "%-16s (%d)", name, idIndex);
 	printValue(O_DEBUG, chunk->constants.values[idIndex]);
 	print(O_DEBUG, " from ");
@@ -183,6 +200,8 @@ static int closureInstruction(const char* name, Chunk* chunk, int offset){
 	print(O_DEBUG, " as ");
 	printShapeType(O_DEBUG, shapeType);
 	print(O_DEBUG, "\n");
-
-	return offset + numBytes + numSuperBytes + 1;
+	
+	Chunk* chonker = AS_CHUNK(chunk->constants.values[chunkIndex]);
+	printChunk(chonker, NULL);
+	return offset+1;
 }
