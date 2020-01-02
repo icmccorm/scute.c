@@ -9,10 +9,10 @@
 #include "scanner.h"
 
 void drawShape(HashMap* shapeMap, TKType type){
-		#ifdef EM_MAIN
-			#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex, value.line));
-			unsigned address = (unsigned) shapeMap;
-			newShape(address, type);
+	#ifdef EM_MAIN
+		#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex, value.line));
+		unsigned address = (unsigned) shapeMap;
+		newShape(address, type);
 
 			Value stroke = getValue(shapeMap, internString("stroke", 6));
 			switch(stroke.type){
@@ -31,34 +31,48 @@ void drawShape(HashMap* shapeMap, TKType type){
 					break;
 			}
 
-			Value fill = getValue(shapeMap, internString("fill", 4));
-			switch(fill.type){
-				case VL_OBJ: { 
-						ObjString* xStr = internString("x", 1);
-						ObjString* yStr = internString("y", 1);
-						ObjString* wStr = internString("width", 5);
-						ObjString* hStr = internString("height", 6);
+		switch(type){
+			case TK_RECT: { 
+				ObjString* xStr = internString("x", 1);
+				ObjString* yStr = internString("y", 1);
+				ObjString* wStr = internString("width", 5);
+				ObjString* hStr = internString("height", 6);
 
-						Value xVal = getValue(shapeMap, xStr);
-						ATTR("x", xVal);
+				Value xVal = getValue(shapeMap, xStr);
+				ATTR("x", xVal);
 
-						Value yVal = getValue(shapeMap, yStr);
-						ATTR("y", yVal);
+				Value yVal = getValue(shapeMap, yStr);
+				ATTR("y", yVal);
 
-						Value wVal = getValue(shapeMap, wStr);
-						ATTR("w", wVal);
+				Value wVal = getValue(shapeMap, wStr);
+				ATTR("width", wVal);
 
-						Value hVal = getValue(shapeMap, hStr);
-						ATTR("h", hVal);
+				Value hVal = getValue(shapeMap, hStr);
+				ATTR("height", hVal);
+			} break;
 
-					} break;
-				default:
-					break;
-			}
-			paintShape();
-		#else
-			printMap(O_OUT, shapeMap, 0);
-		#endif
+			case TK_CIRC:{
+				ObjString* cxStr = internString("cx", 2);
+				ObjString* cyStr = internString("cy", 2);
+				ObjString* rStr = internString("r", 1);
+
+				Value cxVal = getValue(shapeMap, cxStr);
+				ATTR("cx", cxVal);
+
+				Value cyVal = getValue(shapeMap, cyStr);
+				ATTR("cy", cyVal);
+
+				Value rVal = getValue(shapeMap, rStr);
+				ATTR("r", wVal);
+
+				} break;
+			default:
+				break;
+		}
+		paintShape();
+	#else
+		printMap(O_OUT, shapeMap, 0);
+	#endif
 }
 
 void renderFrame(ObjScope* close){
