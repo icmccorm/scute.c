@@ -34,7 +34,7 @@ static TK makeToken(TKType type){
     return token;
 }
 
-static TK makeCustomToken(TKType type, const char* chars, int length){
+static TK makeCustomToken(TKType type, char* chars, int length){
     TK token;
     token.type = type;
     token.line = scanner.line;
@@ -175,6 +175,7 @@ static TKType findIdentifier(){
                     case 'o': return checkKeyword(2, 1, "r", TK_FOR);
                     case 'a': return checkKeyword(2, 3, "lse", TK_FALSE);
                     case 'u': return checkKeyword(2, 2, "nc", TK_FUNC);
+                    case 'r': return checkKeyword(2, 2, "om", TK_FROM);
                 }
             }else{
                 return TK_ID;
@@ -183,7 +184,27 @@ static TKType findIdentifier(){
         case 'i': return checkKeyword(1, 1, "f", TK_IF);
         case 'l': return checkKeyword(1, 2, "et", TK_LET);
         case 'w': return checkKeyword(1, 4, "hile", TK_WHILE);
-        case 'r': return checkKeyword(1, 3, "ect", TK_RECT);
+        case 'r': 
+            if(scanner.current - scanner.start > 1){
+                switch(scanner.start[1]){
+                    case 'e': {
+                        if(scanner.current - scanner.start > 2){
+                            switch(scanner.start[2]){
+                                case 't': return checkKeyword(3, 3, "urn", TK_RET);
+                                case 'c': return checkKeyword(3, 1, "t", TK_RECT);
+                                default:
+                                    return TK_ID;
+                            }
+                        }else{
+                            return TK_ID;
+                        }
+                    }
+                    default:
+                        return TK_ID;
+                }
+            }else{
+                return TK_ID;
+            }
         case 'c': return checkKeyword(1, 5, "ircle", TK_CIRC);
         case 't': 
             if(scanner.current - scanner.start > 1){
@@ -350,9 +371,11 @@ TK scanTK(){
                 }
                 return scanTK();
             }else if(match('*')){
-                while((peek() != '*' && peekNext() != '/') && !isAtEnd()){
+                while(!(peek() == '*' && peekNext() == '/') && !isAtEnd()){
                     advance();
                 }
+                advance(); // clear '*'
+                advance(); // clear '/'
                 return scanTK();
             }else{
                 return makeToken(TK_DIVIDE);
