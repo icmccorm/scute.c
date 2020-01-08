@@ -8,7 +8,7 @@
 typedef struct {
 	InterpretResult result;
 	Obj* objects;
-	Chunk* compiled;
+	ObjChunk* compiled;
 	int lowerLimit;
 	int upperLimit;
 	HashMap* strings;

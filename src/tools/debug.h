@@ -2,6 +2,8 @@
 #define scute_debug_h
 
 #include "chunk.h"
+#include "value.h"
+
 void printChunk(Chunk* chunk, const char* name);
 int printInstruction(Chunk* chunk, int offset);
 int getLine(Chunk* chunk, int opIndex);

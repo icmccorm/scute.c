@@ -8,7 +8,7 @@
 typedef struct sChunk Chunk;
 typedef struct sObj Obj;
 typedef struct sObjString ObjString;
-typedef struct sObjScope ObjScope;
+typedef struct sObjInstance ObjInstance;
 typedef struct sObjChunk ObjChunk;
 
 typedef struct sShape Shape;
@@ -16,11 +16,10 @@ typedef struct sRect Rect;
 typedef struct sCircle Circle;
 
 typedef enum {
-	VL_BOOL,
 	VL_NULL,
+	VL_BOOL,
 	VL_NUM,
 	VL_OBJ,
-	VL_CHK,
 } VLType;
 
 typedef struct {
@@ -29,7 +28,6 @@ typedef struct {
 		bool boolean;
 		double number;
 		Obj* obj;
-		Chunk* chunk;
 	} as;
 	int charIndex;
 	int line;
@@ -42,16 +40,13 @@ typedef struct {
 } ValueArray;	
 
 #define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}, -1, -1})
-#define NULL_VAL(index) ((Value){VL_NULL, {.number = 0}, -1, -1})
+#define NULL_VAL() ((Value){VL_NULL, {.number = 0}, -1, -1})
 #define NUM_VAL(value) ((Value){VL_NUM, {.number = value}, -1, -1})
 #define OBJ_VAL(value) ((Value){VL_OBJ, {.obj = (Obj*)(value)}, -1, -1})
-#define CHUNK_VAL(value) ((Value){VL_CHK, {.chunk = (Chunk*)(value)}, -1, -1})
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUM(value) ((value).as.number)
 #define AS_OBJ(value) ((value).as.obj)
-#define AS_MAP(value) ((value).as.map)
-#define AS_CHUNK(value) ((value).as.chunk)
 
 #define IS_BOOL(value) ((value).type == VL_BOOL)
 #define IS_NULL(value) ((value).type == VL_NULL)

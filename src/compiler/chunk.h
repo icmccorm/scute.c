@@ -5,6 +5,13 @@
 #include "hashmap.h"
 #include "value.h"
 
+typedef enum {
+	CK_FUNC,
+	CK_CONSTR,
+	CK_MAIN,
+	CK_UNDEF
+} CKType;
+
 struct sChunk {
 	int count;
 	int capacity;
@@ -48,14 +55,15 @@ typedef enum {
 	OP_GET_LOCAL,
 	OP_DEF_SCOPE,
 	OP_GET_SCOPE,
-	OP_LOAD_SCOPE,
+	OP_LOAD_INSTANCE,
 	OP_JMP_FALSE,
 	OP_LIMIT,
 	OP_T,
 	OP_SCOPE,
 	OP_DEREF,
 	OP_DIMS,
-	OP_POS
+	OP_POS,
+	OP_CALL,
 } OpCode;
 
 void initChunk(Chunk* chunk);

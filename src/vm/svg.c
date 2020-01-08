@@ -18,8 +18,8 @@ void drawShape(HashMap* shapeMap, TKType type){
 			switch(stroke.type){
 				case VL_OBJ: {
 					Obj* strokeObj = AS_OBJ(stroke);
-					if(strokeObj->type == OBJ_SCOPE){
-						HashMap* strokeMap = ((ObjScope*) strokeObj)->map;
+					if(strokeObj->type == OBJ_INST){
+						HashMap* strokeMap = ((ObjInstance*) strokeObj)->map;
 						Value width = getValue(strokeMap, internString("width", 5));
 						Value color = getValue(strokeMap, internString("color", 5));
 						ATTR("stroke", color);
@@ -75,10 +75,10 @@ void drawShape(HashMap* shapeMap, TKType type){
 	#endif
 }
 
-void renderFrame(ObjScope* close){
-	ObjScope* current = close;
+void renderFrame(ObjInstance* close){
+	ObjInstance* current = close;
 	while(current != NULL){
-		drawShape(current->map, current->shapeType);
+		drawShape(current->map, current->instanceType);
 		current = current->nextShape;
 	}
 }

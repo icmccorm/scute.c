@@ -328,6 +328,18 @@ TK scanTK(){
 
     char c = advance();
     switch(c){
+        case ' ': {
+            int spaceCount = 1;
+            while(peek() == ' ' && spaceCount < 4){
+                ++spaceCount;
+                advance();
+            }
+            if(spaceCount == 4){
+                return makeToken(TK_INDENT);
+            }else{
+                return scanTK();
+            }
+        } break;
         case '*': return makeToken(TK_TIMES);
         case '(': return makeToken(TK_L_PAREN);
         case ')': return makeToken(TK_R_PAREN);

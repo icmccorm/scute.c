@@ -9,18 +9,31 @@
 #define PI ((double)3.141592653589793238462)
 #define E  ((double)2.718281828459045235360)
 
+struct sStackFrame {
+	Value* stackOffset;
+	struct sStackFrame* nextLower;
+	uint8_t* returnTo;
+	ObjChunk* chunkObj;
+	ObjInstance* instanceObj;
+};
+
+typedef struct sStackFrame StackFrame;
+
 typedef struct {
 	Chunk* chunk;
 	uint8_t* ip;
 	Value stack[STACK_MAX];
+	StackFrame stackFrames[STACK_MAX];
 	int stackSize;
+	int stackFrameCount;
 	Value* stackTop;
 	HashMap* globals;
 	Obj* runtimeObjects;
-	ObjScope* currentFrame;
+	ObjInstance* currentAnimationFrame;
 	Value* stackBottom;
-	ObjScope* currentScope;
+	ObjInstance* currentScope;
 	int frameIndex;
+
 } VM;
 
 extern VM vm;
