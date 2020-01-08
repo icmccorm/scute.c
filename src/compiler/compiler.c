@@ -354,7 +354,7 @@ static void statement(){
 				break;
 			case TK_DRAW:
 				advance();
-				//drawStatement();
+				drawStatement();
 				break;
 			case TK_POS:
 			case TK_DIMS:
@@ -535,47 +535,19 @@ static void repeatStatement(){
 	patchJump(initialJumpIndex);	
 }
 
-/*static void drawStatement(){
+static void drawStatement(){
 	Compiler* currentComp = currentCompiler();
 	if(parser.current.type == TK_ID){
-		advance();
-		TK idToken = parser.previous;
-		advance();
-		if(parser.previous.type == TK_AS){ //draw foo as ____
-			advance();
-			TK shapeToken = parser.previous;
-
-			switch(shapeToken.type){
-				case TK_SHAPE:
-					endLine();
-					currentCompiler()->enclosed = true;
-					uint32_t chunkIndex = chunkBlock();
-					currentCompiler()->enclosed = false;
-
-					emitScope(&idToken, NULL, shapeToken.subtype, chunkIndex);
-					break;
-				default:
-					errorAt(&parser.previous, "Expected a shape identifier.");
-			}
-		}else{	// draw foo
-			endLine();
-			//FIX: resolve variable name (foo) to scope
-			
-		}
+		expression();
 	}else if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
 		advance();
-		TK shapeToken = parser.previous;
-		endLine();
-		
-		currentCompiler()->enclosed = true;
-		uint32_t chunkIndex = chunkBlock();
-		currentCompiler()->enclosed = false;
-
-		emitScope(NULL, NULL, shapeToken.subtype, chunkIndex);
+		ObjChunk* chunkObj = chunkBlock(currentChunkObject()->funcName, CK_UNDEF, parser.previous.subtype);
+		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
+		emitBundle(OP_CONSTANT, scopeIndex);
+		emitBytes(OP_CALL, 0);
 	}
-
 	emitByte(OP_DRAW);
-}*/
+}
 
 static void defStatement(){
 	Compiler* currentComp = currentCompiler();

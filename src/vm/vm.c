@@ -226,9 +226,16 @@ static InterpretResult run() {
 				}	
 			} break;
 			case OP_DRAW: {
-				ObjInstance* shape = AS_INST(pop());
-				shape->nextShape = vm.currentAnimationFrame;
-				vm.currentAnimationFrame = shape;
+				Value drawVal = pop();
+				Obj* toObject = valueToObject(OBJ_INST, drawVal);
+				if(toObject){
+					ObjInstance* shape = AS_INST(drawVal);
+					shape->nextShape = vm.currentAnimationFrame;
+					vm.currentAnimationFrame = shape;
+				}else{
+					runtimeError("Only shapes and shape instances can be drawn.");
+					return INTERPRET_RUNTIME_ERROR;
+				}
 			} break;
 			case OP_DEREF: {
 				uint32_t valIndex = readInteger();
