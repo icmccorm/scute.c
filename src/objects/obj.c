@@ -35,15 +35,15 @@ void freeObject(Obj* obj){
 			FREE_ARRAY(char, string->chars, string->length);
 			FREE(ObjString, string);
 			break;
-		case(OBJ_SCOPE): ;
-			ObjScope* close = (ObjScope*) obj;
+		case(OBJ_INST): ;
+			ObjInstance* close = (ObjInstance*) obj;
 			freeMap(close->map);
-			FREE(ObjScope, close);
+			FREE(ObjInstance, close);
 			break;
 		case(OBJ_CHUNK): ;
-			ObjChunk* chunk = (ObjChunk*) obj;
-			freeChunk(chunk->chunk);
-			FREE(ObjChunk, close);
+			ObjChunk* chunkObj = (ObjChunk*) obj;
+			freeChunk(chunkObj->chunk);
+			FREE(ObjChunk, chunkObj);
 		default:
 			break;
 	}
@@ -59,26 +59,34 @@ ObjString* allocateString(char* chars, int length){
 	return obj;
 }
 
-ObjChunk* allocateChunkObject(){
-	ObjChunk* obj = ALLOCATE_OBJ(ObjChunk, OBJ_CHUNK);
-	obj->chunk = ALLOCATE(Chunk, 1);
-	initChunk(obj->chunk);
-	return obj;
+ObjInstance* allocateInstance(ObjInstance* super){
+	ObjInstance* close = ALLOCATE_OBJ(ObjInstance, OBJ_INST);
+	initMap(&close->map);
+	if(super != NULL){
+		close->instanceType = super->instanceType;
+
+		HashEntry* current = super->map->first;
+		while(current != NULL){
+			insert(close->map, current->key, current->value);
+			current = current->next;
+		}
+	}else{
+		close->instanceType = TK_NULL;
+	}
+	return close;
 }
 
-ObjScope* allocateShapeScope(Value shapeType){
-	ObjScope* close = ALLOCATE_OBJ(ObjScope, OBJ_SCOPE);
-	initMap(&close->map);
+ObjChunk* allocateChunkObject(ObjString* funcName, CKType chunkType, TKType instanceType){
+	ObjChunk* chunkObj = ALLOCATE_OBJ(ObjChunk, OBJ_CHUNK);
+
+	chunkObj->chunk = ALLOCATE(Chunk, 1);
+	initChunk(chunkObj->chunk);
+
+	chunkObj->funcName = funcName;
+	chunkObj->chunkType = chunkType;
+	chunkObj->instanceType = instanceType;
 	
-	TKType shapeToken = (TKType) AS_NUM(shapeType);
-	close->shapeType = shapeToken;
-	return close;
-}
-ObjScope* allocateScope(){
-	ObjScope* close = ALLOCATE_OBJ(ObjScope, OBJ_SCOPE);
-	initMap(&close->map);
-	close->shapeType = TK_NULL;
-	return close;
+	return chunkObj;
 }
 
 ObjString* internString(char* chars, int length){

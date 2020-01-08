@@ -5,7 +5,8 @@
 #include "obj.h"
 #include "output.h"
 #include "hashmap.h"
-
+#include "chunk.h"
+#include "debug.h"
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;
@@ -61,9 +62,14 @@ void printObject(OutType out, Value value){
 		case OBJ_STRING:
 			print(out, "%s", AS_CSTRING(value));
 			break;
-		case OBJ_SCOPE:
-			printMap(O_OUT, AS_SCOPE(value)->map, 0);
+		case OBJ_CHUNK:
+			print(out, "<chunk>");
+			print(out, "\n------------\n");
+			printChunk(AS_CHUNK(value)->chunk, NULL);
+			print(out, "------------");
 			break;
+		case OBJ_INST:
+			printMap(O_OUT, AS_INST(value)->map, 0);
 		default:
 			break;
 	}

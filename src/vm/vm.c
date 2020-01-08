@@ -22,16 +22,21 @@ static void resetStack(){
 	vm.stackTop = vm.stack;
 }
 
-void initVM(CompilePackage* code, int frameIndex) {
-	resetStack();
-	initMap(&vm.globals);
+static void pushStackFrame(ObjChunk* funcChunk);
+static uint8_t* popStackFrame();
+
+void initVM(CompilePackage* package, int frameIndex) {
 	vm.frameIndex = frameIndex;
-	vm.chunk = code->compiled;
-	vm.ip = vm.chunk->code;
 	vm.runtimeObjects = NULL;
 	vm.stackSize = 0;
+	vm.stackFrameCount = 0;
 	vm.currentScope = NULL;
-	vm.currentFrame = NULL;
+	vm.currentAnimationFrame = NULL;
+	vm.ip = NULL;
+	
+	resetStack();
+	initMap(&vm.globals);
+	pushStackFrame(package->compiled);
 }
 
 void freeVM() {
@@ -43,6 +48,14 @@ void freeVM() {
 void push(Value value) {
 	*vm.stackTop = value;
 	vm.stackTop++;
+}
+
+static StackFrame* currentStackFrame(){
+	return &vm.stackFrames[vm.stackFrameCount-1];
+}	
+
+static Chunk* currentChunk(){
+	return currentStackFrame()->chunkObj->chunk;
 }
 
 int stackSize(){
@@ -59,8 +72,9 @@ static Value peek(int distance){
 }
 
 static void runtimeError(char* format, ...){
-	size_t opIndex = vm.ip - vm.chunk->code;
-	int line = getLine(vm.chunk, opIndex);
+	Chunk* currentChunk = currentStackFrame()->chunkObj->chunk;
+	size_t opIndex = vm.ip - currentChunk->code;
+	int line = getLine(currentChunk, opIndex);
 	print(O_ERR, "[line %d] ", line);
 	
 	va_list args;
@@ -69,6 +83,27 @@ static void runtimeError(char* format, ...){
 	print(O_ERR, "\n");
 	va_end(args);
 	resetStack();
+}
+
+static void pushStackFrame(ObjChunk* funcChunk){
+	StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
+	++vm.stackFrameCount;
+	
+	newFrame->chunkObj = funcChunk;
+	newFrame->instanceObj = allocateInstance(NULL);
+	newFrame->stackOffset = vm.stackTop;
+	newFrame->returnTo = vm.ip;
+	vm.ip = funcChunk->chunk->code;
+}
+
+static uint8_t* popStackFrame(){
+	StackFrame* frame = currentStackFrame();
+	if(frame->chunkObj->chunkType == CK_CONSTR){
+		push(OBJ_VAL(frame->instanceObj));
+	}
+	--vm.stackFrameCount;
+	uint8_t* opLocation = vm.stackFrames[vm.stackFrameCount].returnTo;
+	return opLocation;
 }
 
 static bool isFalsey(Value val){
@@ -89,7 +124,7 @@ static bool valuesEqual(Value a, Value b){
 	}	
 }
 
-static InterpretResult executeChunk(Chunk* chunk);
+static InterpretResult callFunction(ObjChunk* chunkObj);
 
 #define READ_BYTE() (*vm.ip++)
 static uint32_t readInteger() {
@@ -99,6 +134,16 @@ static uint32_t readInteger() {
 		index = index | (READ_BYTE() << (8*i)); 
 	}
 	return index;
+}
+
+static Obj* valueToObject(OBJType objType, Value val){
+	if(IS_OBJ(val)){
+		Obj* obj = AS_OBJ(val);
+		if(obj->type == objType){
+			return obj;
+		}	
+	}
+	return NULL;
 }
 
 static InterpretResult run() {
@@ -114,8 +159,8 @@ static InterpretResult run() {
 
 #define READ_BYTE() (*vm.ip++)
 #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
-#define READ_CONSTANT() (vm.chunk->constants.values[readInteger()])
-#define CONSTANT(index) (vm.chunk->constants.values[index])
+#define READ_CONSTANT() (currentChunk()->constants.values[readInteger()])
+#define CONSTANT(index) (currentChunk()->constants.values[index])
 #define BINARY_OP(op, valueType, operandType) \
 	do { \
 		if(!IS_NUM(peek(0)) || !IS_NUM(peek(1))){ \
@@ -131,10 +176,33 @@ static InterpretResult run() {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
+			case OP_RETURN: ;
+				uint8_t* returnAddress = popStackFrame();
+				if(returnAddress){
+					vm.ip = returnAddress;
+				}else{	
+					return INTERPRET_OK;
+				}
+				break;
+			case OP_CALL: {
+				uint8_t numParams = READ_BYTE();
+				Value* params = ALLOCATE(Value, numParams);
+				for(int i = 0; i< numParams; ++i){
+					params[i] = pop();
+				}
+				Value chunkValue = pop();
+				ObjChunk* chunkObj = (ObjChunk*) valueToObject(OBJ_CHUNK, chunkValue);
+				if(chunkObj){
+					pushStackFrame(chunkObj);
+				}else{
+					runtimeError("Only functions or constructors can be called.");
+					return INTERPRET_RUNTIME_ERROR;
+				}	
+			} break;
 			case OP_DRAW: {
-				ObjScope* shape = AS_SCOPE(pop());
-				shape->nextShape = vm.currentFrame;
-				vm.currentFrame = shape;
+				ObjInstance* shape = AS_INST(pop());
+				shape->nextShape = vm.currentAnimationFrame;
+				vm.currentAnimationFrame = shape;
 			} break;
 			case OP_DEREF: {
 				uint32_t valIndex = readInteger();
@@ -142,34 +210,14 @@ static InterpretResult run() {
 				Value idString = CONSTANT(valIndex);
 
 				Value closeVal = pop();
-				if(IS_NULL(closeVal)) runtimeError("Cannot dereference null scope '%s'.", AS_STRING(superString));
-
-				ObjScope* scope = (ObjScope*) AS_OBJ(closeVal);
+				if(IS_NULL(closeVal)) {
+					runtimeError("Cannot dereference null scope '%s'.", AS_STRING(superString));
+					return INTERPRET_RUNTIME_ERROR;
+				}
+				ObjInstance* scope = (ObjInstance*) AS_OBJ(closeVal);
 				Value innerVal = getValue(scope->map, AS_STRING(idString));
 				push(innerVal);
 			} break;
-			case OP_SCOPE: {
-				//def "id"
-				ObjString* idString = AS_STRING(READ_CONSTANT());
-				//from "super"
-				ObjString* superString = AS_STRING(READ_CONSTANT());
-				//as "shape"
-				Value shapeType = NUM_VAL(READ_BYTE());
-				ObjScope* close = allocateShapeScope(shapeType);
-				insert(vm.globals, idString, OBJ_VAL(close));
-				
-				ObjScope* previousClose = vm.currentScope;
-				vm.currentScope = close;
-
-				Chunk* scopeChunk = AS_CHUNK(READ_CONSTANT());
-				executeChunk(scopeChunk);
-
-				Value closeVal = OBJ_VAL(close);
-				push(closeVal);
-
-				vm.currentScope = previousClose;
-			} break;
-			
 			case OP_JMP_FALSE: ;
 				uint16_t offset = READ_SHORT();
 				if(isFalsey(peek(0))) vm.ip += offset;
@@ -194,13 +242,21 @@ static InterpretResult run() {
 			case OP_GET_SCOPE: {
 				Value scopeVal = pop();
 				Value getVal = READ_CONSTANT();
-				if(IS_NULL(scopeVal) || !IS_SCOPE(scopeVal)){
-					runtimeError("'%s' is undefined.", AS_CSTRING(getVal));
-				}else{
-					ObjScope* superScope = AS_SCOPE(scopeVal);
+
+				ObjInstance* superScope = (ObjInstance*) valueToObject(OBJ_INST, scopeVal);
+				if(superScope){
+					ObjInstance* superScope = AS_INST(scopeVal);
 					ObjString* getString = AS_STRING(getVal);
 					Value stored = getValue(superScope->map, getString);
 					push(stored);	
+				}else{
+					if(IS_NULL(scopeVal)){
+						runtimeError("Cannot dereference a NULL value.");
+						return INTERPRET_RUNTIME_ERROR;
+					}else{
+						runtimeError("Only instances of classes can be dereferenced.");
+						return INTERPRET_RUNTIME_ERROR;
+					}
 				}
 			} break;
 			case OP_DEF_SCOPE: {
@@ -209,33 +265,34 @@ static InterpretResult run() {
 				Value expr = pop();
 				Value scopeVal = pop();
 
-				if(IS_NULL(scopeVal) || !IS_SCOPE(scopeVal)){
+				if(IS_NULL(scopeVal) || !IS_INST(scopeVal)){
 					ObjString* encloseString = AS_STRING(encloseVal);
 					ObjString* setString = AS_STRING(setVal);
 
-					ObjScope* newScope = allocateScope();
+					ObjInstance* newScope = allocateInstance(NULL);
 					insert(newScope->map, setString, expr);
 					insert(vm.currentScope->map, encloseString, OBJ_VAL(newScope));
 
 				}else{
-					ObjScope* superScope = AS_SCOPE(scopeVal);
+					ObjInstance* superScope = AS_INST(scopeVal);
 					ObjString* setString = AS_STRING(setVal);
 					insert(superScope->map, setString, expr);
 				}
 			} break;
-			case OP_LOAD_SCOPE: {
-				Value closeVal = OBJ_VAL(vm.currentScope);
+			case OP_LOAD_INSTANCE: {
+				ObjInstance* currentInstance = currentStackFrame()->instanceObj;
+				Value closeVal = OBJ_VAL(currentInstance);
 				push(closeVal);
 			} break;	
-			case OP_GET_LOCAL: ;
-				uint32_t stackIndexGet = readInteger();
-				Value val = vm.stack[stackIndexGet];
+			case OP_GET_LOCAL: {
+				uint32_t stackIndex = readInteger();
+				Value val = *(vm.stackFrames->stackOffset+stackIndex);
 				push(val);
-				break;
-			case OP_DEF_LOCAL: ;
-				uint32_t stackIndexDef = readInteger();
-				vm.stack[stackIndexDef] = peek(0);
-				break;
+			} break;
+			case OP_DEF_LOCAL: {
+				uint32_t stackIndex = readInteger();
+				*(vm.stackFrames->stackOffset+stackIndex) = peek(0);
+			} break;
 			case OP_POP:
 				pop();
 				break;
@@ -243,8 +300,6 @@ static InterpretResult run() {
 				printValue(O_OUT, pop());
 				print(O_OUT, "\n");
 				break;
-			case OP_RETURN:
-				return INTERPRET_OK;
 			case OP_CONSTANT: ;
 				Value cons = READ_CONSTANT();
 				push(cons);
@@ -357,21 +412,6 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-static InterpretResult executeChunk(Chunk* chunk){
-	Chunk* previousChunk = vm.chunk;
-	uint8_t* prevIp = vm.ip;
-
-	vm.chunk = chunk;
-	vm.ip = chunk->code;
-
-	InterpretResult chunkResult = run();	
-
-	vm.chunk = previousChunk;
-	vm.ip = prevIp;
-	return chunkResult;
-}
-
-
 void runCompiler(CompilePackage* package, char* source);
 void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
@@ -381,13 +421,13 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	if(index < 0){
 		initVM(code, index);
 		result = run();
-		renderFrame(vm.currentFrame);
+		renderFrame(vm.currentAnimationFrame);
 		freeVM();
 	}else{
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
 			result = run();
-			renderFrame(vm.currentFrame);
+			renderFrame(vm.currentAnimationFrame);
 			freeVM();
 		}
 	}

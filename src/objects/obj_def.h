@@ -15,7 +15,7 @@ typedef enum {
 	OBJ_STRING,
 	OBJ_SHAPE,
 	OBJ_SCOPE,
-	OBJ_INSTANCE,
+	OBJ_INST,
 	OBJ_CHUNK,
 } OBJType;
 
@@ -33,16 +33,18 @@ struct sObjString{
 	uint32_t hash;
 };
 
-struct sObjScope{
+struct sObjInstance{
 	Obj object;
 	HashMap* map;
-	TKType shapeType;
-	ObjScope* nextShape;
+	TKType instanceType;
+	ObjInstance* nextShape;
 };
 
 struct sObjChunk{
 	Obj object;
 	Chunk* chunk;
+	ObjString* funcName;
+	CKType chunkType;
+	TKType instanceType;
 };
-
 #endif

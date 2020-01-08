@@ -67,14 +67,8 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_EQUALS", offset);
 		case OP_PRINT:
 			return simpleInstruction("OP_PRINT", offset);
-		case OP_PI:
-			return simpleInstruction("OP_PI", offset);
-		case OP_TAU:
-			return simpleInstruction("OP_TAU", offset);
-		case OP_E:
-			return simpleInstruction("OP_E", offset);
-		case OP_LOAD_SCOPE:
-			return simpleInstruction("OP_LOAD_SCOPE", offset);
+		case OP_LOAD_INSTANCE:
+			return simpleInstruction("OP_LOAD_INSTANCE", offset);
 		case OP_DEF_GLOBAL:
 			return embeddedInstruction("OP_DEF_GLOBAL", chunk, offset);
 		case OP_GET_GLOBAL:
@@ -97,12 +91,12 @@ int printInstruction(Chunk* chunk, int offset){
 			return simpleInstruction("OP_POP", offset);
 		case OP_T:
 			return simpleInstruction("OP_T", offset);
-		case OP_SCOPE:
-			return scopeInstruction("OP_SCOPE", chunk, offset);
 		case OP_DIMS:
 			return paramInstruction("OP_DIMS", chunk, offset);
 		case OP_POS:
 			return paramInstruction("OP_POS", chunk, offset);
+		case OP_CALL:
+			return paramInstruction("OP_CALL", chunk, offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;
@@ -151,9 +145,9 @@ static int embeddedInstruction(const char* name, Chunk* chunk, int offset){
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
 
 	offset = offset + 1 + numBytes;
-	print(O_DEBUG, "%-16s %4d '", name, valIndex);
+	print(O_DEBUG, "%-16s %4d ", name, valIndex);
 	printValue(O_DEBUG, chunk->constants.values[valIndex]);
-	print(O_DEBUG, "'\n");
+	print(O_DEBUG, "\n");
 	return offset + 1;
 }
 
@@ -165,43 +159,9 @@ static int tripleInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numSecondBytes = chunk->code[offset+1];
 	offset = offset + 1 + numSecondBytes;
 
-	print(O_DEBUG, "%-16s %4d '", name, valIndex);
+	print(O_DEBUG, "%-16s %4d ", name, valIndex);
 	printValue(O_DEBUG, chunk->constants.values[valIndex]);
-	print(O_DEBUG, "'\n");
+	print(O_DEBUG, "\n");
 
 	return offset + 1;
-}
-
-static int scopeInstruction(const char* name, Chunk* chunk, int offset){
-	uint8_t numBytes = chunk->code[offset + 1];
-	uint32_t idIndex = readEmbeddedInteger(chunk, numBytes, offset);
-
-	offset = offset + 1 + numBytes;
-
-	uint8_t numSuperBytes = chunk->code[offset + 1];
-	uint32_t superIndex = readEmbeddedInteger(chunk, numSuperBytes, offset);
-
-	offset = offset + 1 + numSuperBytes;
-
-	uint8_t shapeType = chunk->code[offset + 1];
-
-	offset = offset + 1;
-
-	uint8_t numChunkBytes = chunk->code[offset+1];
-	uint32_t chunkIndex = readEmbeddedInteger(chunk, numChunkBytes, offset);
-
-	offset = offset + 1 + numChunkBytes;
-
-	print(O_DEBUG, "%-16s (%d)", name, idIndex);
-	printValue(O_DEBUG, chunk->constants.values[idIndex]);
-	print(O_DEBUG, " from ");
-	if(superIndex != 0) print(O_DEBUG, "(%d)", superIndex);
-	printValue(O_DEBUG, chunk->constants.values[superIndex]);
-	print(O_DEBUG, " as ");
-	printShapeType(O_DEBUG, shapeType);
-	print(O_DEBUG, "\n");
-	
-	Chunk* chonker = AS_CHUNK(chunk->constants.values[chunkIndex]);
-	printChunk(chonker, NULL);
-	return offset+1;
 }

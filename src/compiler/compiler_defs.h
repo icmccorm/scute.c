@@ -21,7 +21,7 @@ typedef struct{
     int depth;
 } Local;
 
-typedef struct {
+ struct sCompiler{
     HashMap* globals;
     Local* locals;
     int localCount;
@@ -29,8 +29,12 @@ typedef struct {
     int scopeCapacity;
     bool enclosed;
     CompilePackage* result;
-    TKType shapeType;
-} Compiler;
+    TKType instanceType;
+    struct sCompiler* super;
+    ObjChunk* compilingChunk;
+};
+
+typedef struct sCompiler Compiler;
 
 typedef enum{
 	PC_NONE,
