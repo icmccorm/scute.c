@@ -587,7 +587,8 @@ static void defStatement(){
 
 	if(parser.current.type == TK_AS){
 		advance();
-		TK shapeToken = parser.previous;
+		TK shapeToken = parser.current;
+		advance();
 		switch(shapeToken.type){
 			case TK_SHAPE:
 				instanceType = shapeToken.type;
