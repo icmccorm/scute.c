@@ -9,6 +9,7 @@
 			"name": "(gdb) Bash on Windows Launch",
 			"type": "cppdbg",
 			"request": "launch",
+			"preLaunchTask": "Build",
 			"program": "/mnt/c/shell/scutec/scute",
 			"args": ["./test"],
 			"stopAtEntry": true,

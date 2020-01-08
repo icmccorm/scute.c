@@ -1,0 +1,9 @@
+{
+	"tasks": [
+	  {
+		"label": "Build",
+		"type": "shell",
+		"command": "make scute",
+	  }
+	]
+}
