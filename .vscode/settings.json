@@ -9,6 +9,8 @@
 		"obj_def.h": "c",
 		"string.h": "c",
 		"compiler.h": "c"
-	}
+	},
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false
 	
 }
