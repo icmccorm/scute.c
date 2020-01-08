@@ -192,6 +192,7 @@ static TKType findIdentifier(){
                             switch(scanner.start[2]){
                                 case 't': return checkKeyword(3, 3, "urn", TK_RET);
                                 case 'c': return checkKeyword(3, 1, "t", TK_RECT);
+								case 'p': return checkKeyword(3, 3, "eat", TK_REP);
                                 default:
                                     return TK_ID;
                             }
@@ -212,6 +213,7 @@ static TKType findIdentifier(){
                     case 'a': return checkKeyword(2, 1, "u", TK_TAU);
                     case 'e': return checkKeyword(2, 2, "xt", TK_TEXT);
                     case 'r': return checkKeyword(2, 2, "ue", TK_TRUE);
+					case 'o': return TK_TO;
                 }
             }else{
                 return TK_T;

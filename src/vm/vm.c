@@ -176,6 +176,32 @@ static InterpretResult run() {
 		Value a;
 		Value b;
 		switch(READ_BYTE()){
+			case OP_JMP: {
+				int16_t offset = READ_SHORT();
+				vm.ip += offset;
+			} break;
+			case OP_JMP_CNT: {
+				Value repeatVal = pop();
+				uint16_t offset = READ_SHORT();
+				if(IS_NUM(repeatVal)){
+					int numRepeats = AS_NUM(repeatVal);
+					if(numRepeats > 0){
+						push(NUM_VAL(numRepeats - 1));
+					}else{
+						vm.ip += offset;
+					}
+				}else{
+					switch(repeatVal.type){
+						case VL_NULL:
+							runtimeError("Repeat value is null.");
+							break;
+						default:
+							runtimeError("Repeat value is not a number.");
+							break;
+					}
+					return INTERPRET_RUNTIME_ERROR;
+				}
+			} break;
 			case OP_RETURN: ;
 				uint8_t* returnAddress = popStackFrame();
 				if(returnAddress){
@@ -219,7 +245,7 @@ static InterpretResult run() {
 				push(innerVal);
 			} break;
 			case OP_JMP_FALSE: ;
-				uint16_t offset = READ_SHORT();
+				int16_t offset = READ_SHORT();
 				if(isFalsey(peek(0))) vm.ip += offset;
 				break;
 			case OP_LIMIT: ;

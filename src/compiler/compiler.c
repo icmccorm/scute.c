@@ -314,6 +314,7 @@ static uint8_t emitParams();
 static void attr();
 static void drawStatement();
 static void returnStatement();
+static void repeatStatement();
 
 static ParseRule* getRule(TKType type){
 	return &rules[type];
@@ -385,6 +386,10 @@ static void statement(){
 					returnStatement();
 					currentChunkObject()->chunkType = CK_FUNC;
 				}
+			case TK_REP:
+				advance();
+				repeatStatement();
+				break;
 			default:
 				expressionStatement();
 				break;
@@ -479,7 +484,6 @@ static void block(){
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentCompiler()->scopeDepth
 		){
-
 		statement();
 	}
 	Compiler* currentComp = currentCompiler();
@@ -509,10 +513,26 @@ static int emitJump(OpCode op){
 }
 
 static void patchJump(int jumpIndex){
-	uint16_t backIndex = currentChunk()->count - jumpIndex - 2;
+	int16_t backIndex = currentChunk()->count - jumpIndex - 2;
 
 	currentChunk()->code[jumpIndex] = (backIndex >> 8) & 0xFF;
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
+}
+
+static int jumpTo(int opIndex){
+	Chunk* chunk = currentChunk();
+	emitByte(OP_JMP);
+	int16_t offset = opIndex - chunk->count;
+	emitByte((offset >> 8) & 0xFF);
+	emitByte(offset & 0xFF);
+}
+
+static void repeatStatement(){
+	expression();
+	int initialJumpIndex = emitJump(OP_JMP_CNT);
+	block();	
+	jumpTo(initialJumpIndex-3);	
+	patchJump(initialJumpIndex);	
 }
 
 /*static void drawStatement(){
@@ -578,7 +598,6 @@ static void defStatement(){
 				break;
 		}
 	}
-
 	endLine();
 	ObjString* funcName = getTokenStringObject(&idToken);
 	ObjChunk* chunkObj = chunkBlock(funcName, chunkType, instanceType);
@@ -594,6 +613,7 @@ static void frameStatement() {
 	if(parser.previous.type == TK_T){
 		consume(TK_R_LIMIT, "Expected right limit.");
 	}
+
 	consume(TK_INTEGER, "Expected upper-bound");
 	TK upper = parser.previous;
 	int upperVal = (strtod(parser.previous.start, NULL));	
@@ -601,6 +621,7 @@ static void frameStatement() {
 	if((upperVal) <= 0){
 		error("Invalid upper bound.");
 	}
+
 	if((upperVal) > currentResult()->upperLimit) currentResult()->upperLimit = upperVal;
 
 	int jumpIndex = emitLimit(currentResult()->lowerLimit, upperVal);
@@ -703,7 +724,6 @@ static void deref(bool canAssign){
 				uint32_t idIndex = getStringObjectIndex(&parser.previous);
 				uint32_t encloseIndex = getStringObjectIndex(&parser.lastID);
 
-				
 				if(canAssign && match(TK_ASSIGN)){
 					expression();
 					emitTriple(OP_DEF_SCOPE, idIndex, encloseIndex);
@@ -729,7 +749,6 @@ static int32_t resolveLocal(TK*id){
 }
 
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
-
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
 		emitBundle(OP_DEF_LOCAL, index);
@@ -739,7 +758,6 @@ static void namedLocal(TK* id, bool canAssign, uint32_t index){
 }
 
 static void namedGlobal(TK* id, bool canAssign, uint32_t index){
-
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
 		emitBundle(OP_DEF_GLOBAL, index);

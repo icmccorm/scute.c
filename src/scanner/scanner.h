@@ -64,6 +64,8 @@ typedef enum {
     TK_SHAPE,
     TK_DEF,
     TK_RET,
+	TK_REP,
+	TK_TO,
     TK_FROM,
     TK_CONST,
     TK_POLY,

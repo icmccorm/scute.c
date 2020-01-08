@@ -83,6 +83,10 @@ int printInstruction(Chunk* chunk, int offset){
 			return embeddedInstruction("OP_GET_SCOPE", chunk, offset);
 		case OP_JMP_FALSE:
 			return jumpInstruction("OP_JMP_FALSE", chunk, offset);
+		case OP_JMP:
+			return jumpInstruction("OP_JMP", chunk, offset);
+		case OP_JMP_CNT:
+			return jumpInstruction("OP_JMP_CNT", chunk, offset);
 		case OP_LIMIT:
 			return limitInstruction("OP_LIMIT", chunk, offset);
 		case OP_DRAW:
