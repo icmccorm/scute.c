@@ -264,6 +264,7 @@ static InterpretResult run() {
 				ObjString* setString = AS_STRING(READ_CONSTANT());	
 				Value expr = pop();
 				insert(vm.globals, setString, expr);
+				push(BOOL_VAL(true));
 			} break;
 			case OP_GET_SCOPE: {
 				Value scopeVal = pop();
@@ -304,6 +305,7 @@ static InterpretResult run() {
 					ObjString* setString = AS_STRING(setVal);
 					insert(superScope->map, setString, expr);
 				}
+				push(BOOL_VAL(true));
 			} break;
 			case OP_LOAD_INSTANCE: {
 				ObjInstance* currentInstance = currentStackFrame()->instanceObj;
@@ -318,6 +320,7 @@ static InterpretResult run() {
 			case OP_DEF_LOCAL: {
 				uint32_t stackIndex = readInteger();
 				*(vm.stackFrames->stackOffset+stackIndex) = peek(0);
+				push(BOOL_VAL(true));
 			} break;
 			case OP_POP:
 				pop();
