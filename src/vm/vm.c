@@ -220,6 +220,7 @@ static InterpretResult run() {
 				ObjChunk* chunkObj = (ObjChunk*) valueToObject(OBJ_CHUNK, chunkValue);
 				if(chunkObj){
 					pushStackFrame(chunkObj);
+					currentStackFrame()->instanceObj->instanceType = chunkObj->instanceType;
 				}else{
 					runtimeError("Only functions or constructors can be called.");
 					return INTERPRET_RUNTIME_ERROR;

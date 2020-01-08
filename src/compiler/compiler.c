@@ -563,7 +563,7 @@ static void defStatement(){
 		advance();
 		switch(shapeToken.type){
 			case TK_SHAPE:
-				instanceType = shapeToken.type;
+				instanceType = shapeToken.subtype;
 				chunkType = CK_CONSTR;
 				break;
 			default:
