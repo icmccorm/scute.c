@@ -63,7 +63,7 @@ void drawShape(HashMap* shapeMap, TKType type){
 				ATTR("cy", cyVal);
 
 				Value rVal = getValue(shapeMap, rStr);
-				ATTR("r", wVal);
+				ATTR("r", rVal);
 
 				} break;
 			default:
