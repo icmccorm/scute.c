@@ -11,6 +11,7 @@
 #include "output.h"
 #include "svg.h"
 #include "package.h"
+//#include "natives.h"
 
 #ifdef EM_MAIN
 	extern void setMaxFrameIndex(int index);
@@ -36,6 +37,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	
 	resetStack();
 	initMap(&vm.globals);
+	mergeMaps(package->globals, vm.globals);
 	pushStackFrame(package->compiled);
 }
 
@@ -71,7 +73,7 @@ static Value peek(int distance){
 	return vm.stackTop[-1 - distance];
 }
 
-static void runtimeError(char* format, ...){
+void runtimeError(char* format, ...){
 	Chunk* currentChunk = currentStackFrame()->chunkObj->chunk;
 	size_t opIndex = vm.ip - currentChunk->code;
 	int line = getLine(currentChunk, opIndex);
@@ -91,7 +93,7 @@ static void pushStackFrame(ObjChunk* funcChunk){
 	
 	newFrame->chunkObj = funcChunk;
 	newFrame->instanceObj = allocateInstance(NULL);
-	newFrame->stackOffset = vm.stackTop;
+	newFrame->stackOffset = vm.stackTop - funcChunk->numParameters;
 	newFrame->returnTo = vm.ip;
 	vm.ip = funcChunk->chunk->code;
 }
@@ -212,19 +214,37 @@ static InterpretResult run() {
 				break;
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
-				Value* params = ALLOCATE(Value, numParams);
-				for(int i = 0; i< numParams; ++i){
-					params[i] = pop();
-				}
-				Value chunkValue = pop();
-				ObjChunk* chunkObj = (ObjChunk*) valueToObject(OBJ_CHUNK, chunkValue);
-				if(chunkObj){
-					pushStackFrame(chunkObj);
-					currentStackFrame()->instanceObj->instanceType = chunkObj->instanceType;
+				Value fnValue = pop();
+				if(fnValue.type = VL_OBJ){
+					Obj* object = AS_OBJ(fnValue);
+					switch(object->type){
+						case OBJ_CHUNK: {
+							ObjChunk* chunkObj = (ObjChunk*) object;
+							for(int i = numParams; i< chunkObj->numParameters; ++i){
+								push(NULL_VAL());
+							}
+							pushStackFrame(chunkObj);
+							currentStackFrame()->instanceObj->instanceType = chunkObj->instanceType;
+							} break;
+						case OBJ_NATIVE: {
+							ObjNative* native = (ObjNative*) object;
+							NativeFn function = native->function;
+							Value params[numParams];
+							for(int i = 0; i<numParams; ++i){
+								params[i] = pop();
+							}
+							Value result = function(params, numParams);
+							push(result);
+							} break;
+						default:
+							runtimeError("Only functions or constructors can be called.");
+							return INTERPRET_RUNTIME_ERROR;
+							break;
+					}
 				}else{
 					runtimeError("Only functions or constructors can be called.");
 					return INTERPRET_RUNTIME_ERROR;
-				}	
+				}
 			} break;
 			case OP_DRAW: {
 				Value drawVal = pop();

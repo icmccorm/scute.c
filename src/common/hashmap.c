@@ -73,7 +73,6 @@ static HashEntry* includes(HashMap* map, ObjString* key){
 HashEntry* insert(HashMap* map, ObjString* key, Value value){
 	if(map->numEntries + 1 > map->capacity) grow(map);
 	HashEntry* spot = includes(map, key);
-
 	spot->key = key;
 	spot->value = value;
 	spot->next = NULL;
@@ -183,4 +182,12 @@ static void displayFullMap(HashMap* map){
 		}
 	}
 	print(O_DEBUG, "]\n");
+}
+
+void mergeMaps(HashMap* super, HashMap* instance){
+	HashEntry* superEntry = super->first;
+	while(superEntry != NULL){
+		insert(instance, superEntry->key, superEntry->value);
+		superEntry = superEntry->next;
+	}
 }

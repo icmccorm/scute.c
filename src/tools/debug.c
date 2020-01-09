@@ -14,7 +14,7 @@ void printChunk(Chunk* chunk, const char* name) {
 }
 static int tripleInstruction(const char* name, Chunk* chunk, int offset);
 static int simpleInstruction(const char* name, int offset);
-static int embeddedInstruction(const char* name, Chunk* chunk, int offset);
+static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset);
 static int jumpInstruction(const char* name, Chunk* chunk, int offset);
 static int limitInstruction(const char* name, Chunk* chunk, int offset);
 static int scopeInstruction(const char* name, Chunk* chunk, int offset);
@@ -46,7 +46,7 @@ int printInstruction(Chunk* chunk, int offset){
 		case OP_MODULO:
 			return simpleInstruction("OP_MODULO", offset);
 		case OP_CONSTANT:
-			return embeddedInstruction("OP_CONSTANT", chunk, offset);
+			return embeddedValueInstruction("OP_CONSTANT", chunk, offset);
 		case OP_TRUE:
 			return simpleInstruction("OP_TRUE", offset);
 		case OP_FALSE:
@@ -70,17 +70,17 @@ int printInstruction(Chunk* chunk, int offset){
 		case OP_LOAD_INSTANCE:
 			return simpleInstruction("OP_LOAD_INSTANCE", offset);
 		case OP_DEF_GLOBAL:
-			return embeddedInstruction("OP_DEF_GLOBAL", chunk, offset);
+			return embeddedValueInstruction("OP_DEF_GLOBAL", chunk, offset);
 		case OP_GET_GLOBAL:
-			return embeddedInstruction("OP_GET_GLOBAL", chunk, offset);
+			return embeddedValueInstruction("OP_GET_GLOBAL", chunk, offset);
 		case OP_DEF_LOCAL:
-			return embeddedInstruction("OP_DEF_LOCAL", chunk, offset);
+			return embeddedValueInstruction("OP_DEF_LOCAL", chunk, offset);
 		case OP_GET_LOCAL:
-			return embeddedInstruction("OP_GET_LOCAL", chunk, offset);
+			return embeddedValueInstruction("OP_GET_LOCAL", chunk, offset);
 		case OP_DEF_SCOPE:
 			return tripleInstruction("OP_DEF_SCOPE", chunk, offset);
 		case OP_GET_SCOPE:
-			return embeddedInstruction("OP_GET_SCOPE", chunk, offset);
+			return embeddedValueInstruction("OP_GET_SCOPE", chunk, offset);
 		case OP_JMP_FALSE:
 			return jumpInstruction("OP_JMP_FALSE", chunk, offset);
 		case OP_JMP:
@@ -144,7 +144,7 @@ static int limitInstruction(const char* name, Chunk* chunk, int offset){
 	return offset + 1;
 }	
 
-static int embeddedInstruction(const char* name, Chunk* chunk, int offset){
+static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numBytes = chunk->code[offset + 1];
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
 

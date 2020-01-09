@@ -12,6 +12,7 @@ typedef struct {
 	int lowerLimit;
 	int upperLimit;
 	HashMap* strings;
+	HashMap* globals;
 } CompilePackage;
 
 void freeCompilationPackage(CompilePackage* code);

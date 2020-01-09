@@ -9,11 +9,14 @@
 
 CompilePackage* initCompilationPackage(){
 	CompilePackage* code = ALLOCATE(CompilePackage, 1);
-	code->compiled = allocateChunkObject(NULL, CK_MAIN, TK_NULL);
+	code->compiled = allocateChunkObject(NULL);
+	code->compiled->chunkType = CK_MAIN;
+
 	code->lowerLimit = 0;
 	code->upperLimit = 0;
 	code->objects = NULL;
 	initMap(&code->strings);
+	initMap(&code->globals);
 	return code;
 }
 
@@ -28,5 +31,6 @@ void freeObjects(Obj* list){
 void freeCompilationPackage(CompilePackage* code){
 	freeObjects(code->objects);
 	freeMap(code->strings);
+	freeMap(code->globals);
 	FREE(CompilePackage, code);
 }

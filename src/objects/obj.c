@@ -10,6 +10,7 @@
 #include "svg.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "natives.h"
 
 bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
@@ -59,6 +60,12 @@ ObjString* allocateString(char* chars, int length){
 	return obj;
 }
 
+ObjNative* allocateNative(void* func){
+	ObjNative* obj = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+	obj->function = (NativeFn) func;
+	return obj;
+}
+
 ObjInstance* allocateInstance(ObjInstance* super){
 	ObjInstance* close = ALLOCATE_OBJ(ObjInstance, OBJ_INST);
 	initMap(&close->map);
@@ -76,16 +83,16 @@ ObjInstance* allocateInstance(ObjInstance* super){
 	return close;
 }
 
-ObjChunk* allocateChunkObject(ObjString* funcName, CKType chunkType, TKType instanceType){
+ObjChunk* allocateChunkObject(ObjString* funcName){
 	ObjChunk* chunkObj = ALLOCATE_OBJ(ObjChunk, OBJ_CHUNK);
 
 	chunkObj->chunk = ALLOCATE(Chunk, 1);
 	initChunk(chunkObj->chunk);
 
+	chunkObj->numParameters = 0;
 	chunkObj->funcName = funcName;
-	chunkObj->chunkType = chunkType;
-	chunkObj->instanceType = instanceType;
-	
+	chunkObj->chunkType = CK_UNDEF;
+	chunkObj->instanceType = TK_NULL;	
 	return chunkObj;
 }
 

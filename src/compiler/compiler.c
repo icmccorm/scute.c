@@ -14,6 +14,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "package.h"
+#include "natives.h"
 
 Parser parser;
 Compiler* compiler = NULL;
@@ -234,6 +235,8 @@ static void string(bool canAssign);
 static void variable(bool canAssign);
 static void deref(bool canAssign);
 static void scopeDeref(bool canAssign);
+static void native(bool canAssign);
+
 
 ParseRule rules[] = {
 	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
@@ -258,14 +261,25 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_LIMIT, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_LIMIT,
-	{ literal,  NULL,       PC_NONE },    // TK_REAL,
-	{ literal,  NULL,       PC_NONE },    // TK_INTEGER,
-	{ literal,	NULL,	    PC_NONE },    // TK_TRUE,
-	{ literal,	NULL,	    PC_NONE },    // TK_FALSE,
-	{ literal,	NULL,	    PC_NONE },    // TK_NULL,
-	{ string,	NULL,	    PC_NONE },    // TK_STRING,
-	{ variable, NULL,	    PC_NONE },    // TK_ID,
+	{ literal,  NULL,       PC_TERM },    // TK_REAL,
+	{ literal,  NULL,       PC_TERM },    // TK_INTEGER,
+	{ literal,	NULL,	    PC_TERM },    // TK_TRUE,
+	{ literal,	NULL,	    PC_TERM },    // TK_FALSE,
+	{ literal,	NULL,	    PC_TERM },    // TK_NULL,
+	{ string,	NULL,	    PC_TERM },    // TK_STRING,
+	{ variable, NULL,	    PC_TERM },    // TK_ID,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
+	{ native,	NULL,		PC_TERM },    // TK_SIN,
+	{ native,	NULL,		PC_TERM },    // TK_COS,
+	{ native,	NULL,		PC_TERM },    // TK_TAN,
+	{ native,	NULL,		PC_TERM },    // TK_ASIN,
+	{ native,	NULL,		PC_TERM },    // TK_ACOS,
+	{ native,	NULL,		PC_TERM },    // TK_ATAN,
+	{ native,	NULL,		PC_TERM },    // TK_HSIN,
+	{ native,	NULL,		PC_TERM },    // TK_HCOS,
+	{ native,	NULL,		PC_TERM },    // TK_DEG,
+	{ native,	NULL,		PC_TERM },    // TK_RAD,
+	{ native,	NULL,		PC_TERM },    // TK_SQRT,
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
@@ -495,16 +509,6 @@ static void block(){
 	}
 }
 
-static ObjChunk* chunkBlock(ObjString* funcName, CKType chunkType, TKType instanceType){
-	ObjChunk* newChunk = allocateChunkObject(funcName, chunkType, instanceType);
-	
-	compiler = enterCompilationScope(newChunk);
-	block();
-	compiler = exitCompilationScope();
-
-	return newChunk;
-}
-
 static int emitJump(OpCode op){
 	emitByte(op);
 	emitByte(0xFF);
@@ -541,13 +545,22 @@ static void drawStatement(){
 		expression();
 	}else if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
 		advance();
-		ObjChunk* chunkObj = chunkBlock(currentChunkObject()->funcName, CK_UNDEF, parser.previous.subtype);
+		ObjChunk* chunkObj = allocateChunkObject(NULL);
+		chunkObj->chunkType = CK_UNDEF;
+		chunkObj->instanceType = parser.previous.subtype;
+
+		compiler = enterCompilationScope(chunkObj);
+		block();
+		compiler = exitCompilationScope();
+
 		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
 		emitBundle(OP_CONSTANT, scopeIndex);
 		emitBytes(OP_CALL, 0);
 	}
 	emitByte(OP_DRAW);
 }
+
+static int32_t resolveLocal(TK*id);
 
 static void defStatement(){
 	Compiler* currentComp = currentCompiler();
@@ -556,6 +569,26 @@ static void defStatement(){
 	consume(TK_ID, "Expected an identifier.");
 
 	TK idToken = parser.previous;
+	ObjString* funcName = getTokenStringObject(&idToken);
+
+	ObjChunk* newChunk = allocateChunkObject(funcName);
+	Compiler* newCompiler = enterCompilationScope(newChunk);
+
+	if(parser.current.type == TK_L_PAREN){
+		uint8_t paramCount = 0;
+		advance();
+		if(parser.current.type != TK_R_PAREN){
+			consume(TK_ID, "Expected an identifier.");
+			addLocal(newCompiler, parser.previous);
+			
+			while(parser.current.type == TK_COMMA){
+				advance();
+				consume(TK_ID, "Expected an identifier.");
+				addLocal(newCompiler, parser.previous);
+			}
+		}
+		consume(TK_R_PAREN, "Expected ')'.");
+	}
 
 	if(parser.current.type == TK_AS){
 		advance();
@@ -563,8 +596,8 @@ static void defStatement(){
 		advance();
 		switch(shapeToken.type){
 			case TK_SHAPE:
-				instanceType = shapeToken.subtype;
-				chunkType = CK_CONSTR;
+				newChunk->chunkType = CK_CONSTR;
+				newChunk->instanceType = shapeToken.subtype;
 				break;
 			default:
 				errorAt(&parser.current, "Expected a shape identifier.");
@@ -572,14 +605,20 @@ static void defStatement(){
 		}
 	}
 	endLine();
-	ObjString* funcName = getTokenStringObject(&idToken);
-	ObjChunk* chunkObj = chunkBlock(funcName, chunkType, instanceType);
+	compiler = newCompiler;
+	block();
+	compiler = exitCompilationScope();
 
-	uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
+	uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
 	emitBundle(OP_CONSTANT, scopeIndex);
 
-	uint32_t idIndex = getStringObjectIndex(&idToken);
-	emitBundle(OP_DEF_GLOBAL, idIndex);
+	if(currentCompiler()->scopeDepth > 0){
+		emitBundle(OP_DEF_LOCAL, resolveLocal(&idToken));
+	}else{
+		uint32_t idIndex = getStringObjectIndex(&idToken);
+		emitBundle(OP_DEF_GLOBAL, idIndex);
+	}
+	emitByte(OP_POP);
 }
 
 static void frameStatement() {
@@ -674,6 +713,57 @@ static void parseAssignment(){
 	}
 }
 
+static void initNative(void* func, TK* id){
+	ObjString* nativeString = internString(id->start, id->length);
+	ObjNative* nativeObj = allocateNative(func);
+	insert(currentResult()->globals, nativeString, OBJ_VAL(nativeObj));
+}
+
+static void native(bool canAssign){
+	TK nativeId = parser.previous;
+	uint8_t numParams = emitParams();
+	emitBundle(OP_GET_GLOBAL, getStringObjectIndex(&nativeId));
+	emitBytes(OP_CALL, numParams);
+
+	void* func;
+	switch(nativeId.type){
+		case TK_SIN:
+			func = nativeSine;
+			break;
+		case TK_COS:
+			func = nativeCosine;
+			break;
+		case TK_TAN:
+			func = nativeTangent;
+			break;
+		case TK_ASIN:
+			func = nativeArcsin;
+			break;
+		case TK_ACOS:
+			func = nativeArccos;
+			break;
+		case TK_ATAN:
+			func = nativeArctan;
+			break;
+		case TK_HSIN:
+			func = nativeHypsin;
+			break;
+		case TK_HCOS:
+			func =  nativeHypcos;
+			break;
+		case TK_DEG:
+			func = nativeDegrees;
+			break;
+		case TK_RAD:
+			func = nativeRadians;
+			break;
+		case TK_SQRT:
+			func = nativeSqrt;
+			break;
+	}
+	initNative(func, &nativeId);
+}
+
 static void scopeDeref(bool canAssign){
 	if(currentCompiler()->enclosed){
 		emitByte(OP_LOAD_INSTANCE);
@@ -749,10 +839,13 @@ static void namedVariable(TK* id, bool canAssign){
 }
 
 static void variable(bool canAssign){
-	namedVariable(&parser.previous, canAssign);
 	if(parser.current.type == TK_L_PAREN){
+		TK funcName = parser.previous;
 		uint8_t numParams = emitParams();
+		namedVariable(&funcName, canAssign);
 		emitBytes(OP_CALL, numParams);
+	}else{
+		namedVariable(&parser.previous, canAssign);
 	}
 }
 

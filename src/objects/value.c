@@ -55,8 +55,6 @@ void printValue(OutType out, Value value){
 	}
 }
 
-void printShape(OutType out, Shape* shape);
-
 void printObject(OutType out, Value value){
 	switch(OBJ_TYPE(value)){
 		case OBJ_STRING:

@@ -30,5 +30,6 @@ uint32_t hashFunction(char* keyString, int length);
 int hashIndex(HashMap* map, ObjString* obj);
 ObjString* findKey(HashMap* map, char* chars, int length);
 void printMap(OutType out, HashMap* map, int indents);
+void mergeMaps(HashMap* super, HashMap* instance);
 
 #endif

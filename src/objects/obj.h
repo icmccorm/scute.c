@@ -4,11 +4,12 @@
 #include "svg.h"
 #include "obj_def.h"
 #include "scanner.h"
+#include "natives.h"
 
 Obj* allocateObject(size_t size, OBJType type);
-ObjChunk* allocateChunkObject(ObjString* funcName, CKType chunkType, TKType instanceType);
-
+ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);
+ObjNative* allocateNative(void* func);
 
 bool isObjectType(Value value, OBJType type);
 ObjString* internString(char * start, int length);
@@ -22,6 +23,7 @@ void freeObject(Obj* obj);
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 #define AS_INST(value) ((ObjInstance*)AS_OBJ(value))
 #define AS_CHUNK(value) ((ObjChunk*)AS_OBJ(value))
+#define AS_NATIVE(value) ((ObjNative*)AS_OBJ(value))
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*) allocateObject(sizeof(type), objType)

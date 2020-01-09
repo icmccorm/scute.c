@@ -10,10 +10,7 @@ typedef struct sObj Obj;
 typedef struct sObjString ObjString;
 typedef struct sObjInstance ObjInstance;
 typedef struct sObjChunk ObjChunk;
-
-typedef struct sShape Shape;
-typedef struct sRect Rect;
-typedef struct sCircle Circle;
+typedef struct sObjNative ObjNative;
 
 typedef enum {
 	VL_NULL,
