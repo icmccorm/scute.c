@@ -538,9 +538,7 @@ static void repeatStatement(){
 
 static void drawStatement(){
 	Compiler* currentComp = currentCompiler();
-	if(parser.current.type == TK_ID){
-		expression();
-	}else if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
+	if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
 		advance();
 		ObjChunk* chunkObj = allocateChunkObject(NULL);
 		chunkObj->chunkType = CK_UNDEF;
@@ -553,6 +551,8 @@ static void drawStatement(){
 		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
 		emitBundle(OP_CONSTANT, scopeIndex);
 		emitBytes(OP_CALL, 0);
+	}else{
+		expression();
 	}
 	emitByte(OP_DRAW);
 }
