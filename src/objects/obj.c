@@ -10,6 +10,8 @@
 #include "svg.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "natives.h"
+#include "color.h"
 
 bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
@@ -44,10 +46,59 @@ void freeObject(Obj* obj){
 			ObjChunk* chunkObj = (ObjChunk*) obj;
 			freeChunk(chunkObj->chunk);
 			FREE(ObjChunk, chunkObj);
+			break;
+		case(OBJ_NATIVE): ;
+			ObjNative* nativeObj = (ObjNative*) obj;
+			FREE(ObjNative, nativeObj);
+			break;
+		case(OBJ_COLOR): ;
+			ObjColor* colorObj = (ObjColor*) obj;
+			Color* cl = colorObj->color;
+			switch(cl->colorType){
+				case CL_CMYK: ;
+					ColorCMYK* cmyk = (ColorCMYK*) cl;
+					FREE(ColorCMYK, cmyk);
+					break;
+				case CL_RGB: ;
+					ColorRGB* rgb = (ColorRGB*) cl;
+					FREE(ColorRGB, rgb);
+					break;
+				case CL_HSL: ;
+					ColorHSL* hsl = (ColorHSL*) cl;
+					FREE(ColorHSL, hsl);
+					break;
+			}
+			FREE(ObjColor, colorObj);
+			break;
 		default:
 			break;
 	}
 }
+
+ObjColor* allocateColor(CLType type){
+	ObjColor* colorObj = ALLOCATE_OBJ(ObjColor, OBJ_COLOR);
+	return colorObj;
+}
+
+ObjColor* makeRGB(Value r, Value g, Value b){
+	ObjColor* colorObj = allocateColor(CL_RGB);
+	ColorRGB* rgb = ALLOCATE(ColorRGB, 1);
+	rgb->color.colorType = CL_RGB;
+	rgb->r = r;
+	rgb->g = g;
+	rgb->b = b;
+	colorObj->color = (Color*) rgb;
+	return colorObj;
+}
+
+/*
+ObjColor* makeHSL(uint16_t h, float s, float l){
+	
+}
+
+ObjColor* makeCMYK(float c, float m, float y, float k){
+
+}*/
 
 ObjString* allocateString(char* chars, int length){
 	ObjString* obj = ALLOCATE_OBJ(ObjString, OBJ_STRING);
@@ -56,6 +107,12 @@ ObjString* allocateString(char* chars, int length){
 	obj->hash = hashFunction(chars, length);
 
 	insert(currentResult()->strings, obj, NULL_VAL());
+	return obj;
+}
+
+ObjNative* allocateNative(void* func){
+	ObjNative* obj = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+	obj->function = (NativeFn) func;
 	return obj;
 }
 
@@ -76,16 +133,16 @@ ObjInstance* allocateInstance(ObjInstance* super){
 	return close;
 }
 
-ObjChunk* allocateChunkObject(ObjString* funcName, CKType chunkType, TKType instanceType){
+ObjChunk* allocateChunkObject(ObjString* funcName){
 	ObjChunk* chunkObj = ALLOCATE_OBJ(ObjChunk, OBJ_CHUNK);
 
 	chunkObj->chunk = ALLOCATE(Chunk, 1);
 	initChunk(chunkObj->chunk);
 
+	chunkObj->numParameters = 0;
 	chunkObj->funcName = funcName;
-	chunkObj->chunkType = chunkType;
-	chunkObj->instanceType = instanceType;
-	
+	chunkObj->chunkType = CK_UNDEF;
+	chunkObj->instanceType = TK_NULL;	
 	return chunkObj;
 }
 

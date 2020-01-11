@@ -10,16 +10,15 @@ typedef struct sObj Obj;
 typedef struct sObjString ObjString;
 typedef struct sObjInstance ObjInstance;
 typedef struct sObjChunk ObjChunk;
-
-typedef struct sShape Shape;
-typedef struct sRect Rect;
-typedef struct sCircle Circle;
+typedef struct sObjNative ObjNative;
+typedef struct sObjColor ObjColor;
 
 typedef enum {
 	VL_NULL,
 	VL_BOOL,
 	VL_NUM,
 	VL_OBJ,
+	VL_CLR,
 } VLType;
 
 typedef struct {

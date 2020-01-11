@@ -73,7 +73,6 @@ static HashEntry* includes(HashMap* map, ObjString* key){
 HashEntry* insert(HashMap* map, ObjString* key, Value value){
 	if(map->numEntries + 1 > map->capacity) grow(map);
 	HashEntry* spot = includes(map, key);
-
 	spot->key = key;
 	spot->value = value;
 	spot->next = NULL;
@@ -143,21 +142,13 @@ void printMap(OutType out, HashMap* map, int indents){
 			print(out, "   ");
 		}
 		print(out, "%s: ", first->key->chars);
-		switch(first->value.type){
-			case VL_OBJ: {
-				Obj* valObj = AS_OBJ(first->value);
-				switch(valObj->type){
-					case OBJ_INST: {
-						print(out, "\n");
-						ObjInstance* closeObj = (ObjInstance*) valObj;
-						printMap(out, closeObj->map, indents+1);
-						} break;
-				}
-				} break;
-			default:
-				print(out, "%g\n", first->value.as.number);
-				break;
-
+		if(IS_OBJ(first->value) && IS_INST(first->value)){
+			print(out, "\n");
+			ObjInstance* closeObj = (ObjInstance*) AS_OBJ(first->value);
+			printMap(out, closeObj->map, indents+1);
+		}else{
+			printValue(out, first->value);
+			print(out, "\n");
 		}
 		first = first->next;
 	}
@@ -183,4 +174,12 @@ static void displayFullMap(HashMap* map){
 		}
 	}
 	print(O_DEBUG, "]\n");
+}
+
+void mergeMaps(HashMap* super, HashMap* instance){
+	HashEntry* superEntry = super->first;
+	while(superEntry != NULL){
+		insert(instance, superEntry->key, superEntry->value);
+		superEntry = superEntry->next;
+	}
 }

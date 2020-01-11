@@ -9,6 +9,8 @@
 #define PI ((double)3.141592653589793238462)
 #define E  ((double)2.718281828459045235360)
 
+void runtimeError(char* format, ...);
+
 struct sStackFrame {
 	Value* stackOffset;
 	struct sStackFrame* nextLower;

@@ -10,6 +10,8 @@
 #include "svg.h"
 #include "value.h"
 #include "chunk.h"
+#include "natives.h"
+#include "color.h"
 
 typedef enum {
 	OBJ_STRING,
@@ -17,6 +19,8 @@ typedef enum {
 	OBJ_SCOPE,
 	OBJ_INST,
 	OBJ_CHUNK,
+	OBJ_NATIVE,
+	OBJ_COLOR,
 } OBJType;
 
 //definition for Obj
@@ -46,5 +50,17 @@ struct sObjChunk{
 	ObjString* funcName;
 	CKType chunkType;
 	TKType instanceType;
+	int numParameters;
 };
+
+struct sObjNative {
+	Obj object;
+	NativeFn function;
+};
+
+struct sObjColor {
+	Obj object;
+	Color* color;
+};
+
 #endif

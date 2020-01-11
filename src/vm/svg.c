@@ -7,29 +7,51 @@
 #include "value.h"
 #include "vm.h"
 #include "scanner.h"
+#include "color.h"
+
+#ifdef EM_MAIN
+Color* resolveColor(const char* key, Value val){
+	Color* color = NULL;
+	if(IS_OBJ(val)){
+		Obj* objVal = AS_OBJ(val);
+		switch(objVal->type){
+			case OBJ_COLOR:
+				color = ((ObjColor*) objVal)->color;
+				break;
+		}
+	}
+	addColorAttribute(key, color);
+}
+#endif
 
 void drawShape(HashMap* shapeMap, TKType type){
 	#ifdef EM_MAIN
-		#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex, value.line));
 		unsigned address = (unsigned) shapeMap;
 		newShape(address, type);
-
-			Value stroke = getValue(shapeMap, internString("stroke", 6));
-			switch(stroke.type){
-				case VL_OBJ: {
-					Obj* strokeObj = AS_OBJ(stroke);
-					if(strokeObj->type == OBJ_INST){
+		Value stroke = getValue(shapeMap, internString("stroke", 6));
+		switch(stroke.type){
+			case VL_OBJ: {
+				Obj* strokeObj = AS_OBJ(stroke);
+				switch(strokeObj->type){
+					case OBJ_INST:
 						HashMap* strokeMap = ((ObjInstance*) strokeObj)->map;
 						Value width = getValue(strokeMap, internString("width", 5));
 						Value color = getValue(strokeMap, internString("color", 5));
-						ATTR("stroke", color);
-						ATTR("stroke-width", width);
-					}
-					} break;
-				default:
-					ATTR("stroke", stroke);
-					break;
-			}
+						resolveColor("stroke", color);
+						addAttribute("stroke-width", width);
+						break;
+					default:
+						resolveColor("stroke", stroke);
+						break;
+				}
+				} break;
+			default:
+				resolveColor("stroke", stroke);
+				break;
+		}
+
+		Value fill = getValue(shapeMap, internString("fill", 6));
+		resolveColor("fill", fill);
 
 		switch(type){
 			case TK_RECT: { 

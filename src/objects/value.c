@@ -55,8 +55,6 @@ void printValue(OutType out, Value value){
 	}
 }
 
-void printShape(OutType out, Shape* shape);
-
 void printObject(OutType out, Value value){
 	switch(OBJ_TYPE(value)){
 		case OBJ_STRING:
@@ -70,6 +68,10 @@ void printObject(OutType out, Value value){
 			break;
 		case OBJ_INST:
 			printMap(O_OUT, AS_INST(value)->map, 0);
+			break;
+		case OBJ_COLOR: ;
+			printColor(O_OUT, AS_COLOR(value)->color);
+			break;
 		default:
 			break;
 	}
