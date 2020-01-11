@@ -26,6 +26,16 @@ mergeInto(LibraryManager.library, {
 		_currentShape['styles'][key] = value;
 	},
 
+	addStringAttribute(keyPtr, valuePtr, index, line){
+		let key = Module.UTF8ToString(keyPtr);
+		let value = Module.UTF8ToString(valuePtr);
+		_currentShape['attrs'][key] = {
+			value: value,
+			index: index,
+			line: line
+		};
+	},
+
 	addAttribute: function(keyPtr, value, index, line){
 		let key = Module.UTF8ToString(keyPtr);
 		_currentShape['attrs'][key] = {

@@ -51,4 +51,3 @@ EM_ENTRY = ./src/em_main.c
 emcc : $(SRC_FILES) $(EM_ENTRY)
 	@$(WASMC) $(FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) ; \
 	sed -i "s#'$(EXEC_FILE).wasm'#require('./$(EXEC_FILE).wasm')#g" ./scute.js
-

@@ -30,6 +30,7 @@ typedef enum {
     TK_NULL,
     TK_STRING,
     TK_ID,
+	TK_CONST,
     TK_FUNC,
 	TK_SIN,
 	TK_COS,
@@ -45,8 +46,6 @@ typedef enum {
     TK_AND,
     TK_OR,
     TK_PRE,
-
-    TK_PI, TK_E, TK_TAU,
  
     TK_SEMI, TK_L_BRACE, TK_R_BRACE, TK_L_PAREN, TK_R_PAREN, 
     TK_L_BRACK, TK_R_BRACK, TK_COMMA, TK_DEREF, TK_TILDA, TK_NEWLINE,
@@ -77,36 +76,45 @@ typedef enum {
 	TK_REP,
 	TK_TO,
     TK_FROM,
-    TK_CONST,
     TK_POLY,
-    TK_RED,
-    TK_ORANGE,
-    TK_YELLOW,
-    TK_GREEN,
-    TK_BLUE,
-    TK_PURPLE,
-    TK_BROWN,
-    TK_MAGENTA,
-    TK_OLIVE,
-    TK_MAROON,
-    TK_NAVY,
-    TK_AQUM,
-    TK_TURQ,
-    TK_SILVER,
-    TK_LIME,
-    TK_TEAL,
-    TK_INDIGO,
-    TK_VIOLET,
-    TK_PINK,
-    TK_BLACK,
-    TK_WHITE,
-    TK_GRAY,
-    TK_GREY,
 } TKType;  
+
+typedef enum{
+	CS_ERROR,
+
+	CS_PI,
+	CS_TAU,
+	CS_E,
+
+	CS_RED,
+    CS_ORANGE,
+    CS_YELLOW,
+    CS_GREEN,
+    CS_BLUE,
+    CS_PURPLE,
+    CS_BROWN,
+    CS_MAGENTA,
+    CS_OLIVE,
+    CS_MAROON,
+    CS_NAVY,
+    CS_AQUA,
+    CS_TURQ,
+    CS_SILVER,
+    CS_LIME,
+    CS_TEAL,
+    CS_INDIGO,
+    CS_VIOLET,
+    CS_PINK,
+    CS_BLACK,
+    CS_WHITE,
+    CS_GRAY,
+    CS_GREY,
+
+} CSType;
 
 typedef struct{
     TKType type;
-    TKType subtype;
+    int subtype;
     char* start;
     int length;
     int line;

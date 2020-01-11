@@ -8,7 +8,6 @@
                 "${workspaceFolder}/src/scanner/**",
                 "${workspaceFolder}/src/tools/**",
                 "${workspaceFolder}/src/vm/**",
-                "${workspaceFolder}/src/vm/data/**"
             ],
             "defines": [
                 "_DEBUG",

@@ -37,7 +37,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	
 	resetStack();
 	initMap(&vm.globals);
-	mergeMaps(package->globals, vm.globals);
+  	mergeMaps(package->globals, vm.globals);
 	pushStackFrame(package->compiled);
 }
 

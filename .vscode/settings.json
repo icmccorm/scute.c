@@ -8,7 +8,10 @@
 		"output.h": "c",
 		"obj_def.h": "c",
 		"string.h": "c",
-		"compiler.h": "c"
+		"compiler.h": "c",
+		"chunk.h": "c",
+		"stdio.h": "c",
+		"stddef.h": "c"
 	},
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false
