@@ -123,6 +123,9 @@ static bool valuesEqual(Value a, Value b){
 			return AS_OBJ(a) == AS_OBJ(b);
 		case VL_NUM:
 			return AS_NUM(a) == AS_NUM(b);
+		default:
+			return true;
+			break;
 	}	
 }
 
@@ -215,7 +218,7 @@ static InterpretResult run() {
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
 				Value fnValue = pop();
-				if(fnValue.type = VL_OBJ){
+				if(fnValue.type == VL_OBJ){
 					Obj* object = AS_OBJ(fnValue);
 					switch(object->type){
 						case OBJ_CHUNK: {
@@ -475,7 +478,7 @@ CompilePackage* initCompilationPackage();
 
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
-	if(index < 0){
+	if(index <= 0){
 		initVM(code, index);
 		result = run();
 		renderFrame(vm.currentAnimationFrame);

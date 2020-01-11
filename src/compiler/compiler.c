@@ -520,7 +520,7 @@ static void patchJump(int jumpIndex){
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
-static int jumpTo(int opIndex){
+static void jumpTo(int opIndex){
 	Chunk* chunk = currentChunk();
 	emitByte(OP_JMP);
 	int16_t offset = opIndex - chunk->count;
@@ -792,6 +792,10 @@ static void constant(bool canAssign){
 		case CS_GREY:
 			emitConstant(RGB(128, 128, 128));
 			break;
+		case CS_ERROR:
+			errorAtCurrent("Invalid constant.");
+			emitConstant(NULL_VAL());
+			break;
 	}
 }
 
@@ -841,6 +845,8 @@ static void native(bool canAssign){
 			break;
 		case TK_SQRT:
 			func = nativeSqrt;
+			break;
+		default:
 			break;
 	}
 	initNative(func, &nativeId);

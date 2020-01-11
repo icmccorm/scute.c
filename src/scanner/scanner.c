@@ -157,7 +157,7 @@ static CSType checkConst(int start, int length, char* rest, CSType type){
 	return CS_ERROR;
 }
 
-static TKType findConstantIdentifier(){
+static CSType findConstantIdentifier(){
 	int length = scanner.current - scanner.start;
 	switch(scanner.start[0]){
 		case 'p': {
@@ -166,7 +166,7 @@ static TKType findConstantIdentifier(){
 					case 'i': {
 						if(length > 2){
 							switch(scanner.start[2]){
-								case 'n': return checkKeyword(3, 1, "k", CS_PINK);
+								case 'n': return checkConst(3, 1, "k", CS_PINK);
 							}
 							return CS_ERROR;
 						}
@@ -246,12 +246,12 @@ static TKType findConstantIdentifier(){
 								case 'e': {
 									if(length > 3){
 										switch(scanner.start[3]){
-											case 'e': return checkKeyword(4, 1, "n", CS_GREEN);
+											case 'e': return checkConst(4, 1, "n", CS_GREEN);
 											case 'y': return CS_GREY;
 										}
 									}
 								}
-								case 'a': return checkKeyword(3, 1, "y", CS_GRAY);
+								case 'a': return checkConst(3, 1, "y", CS_GRAY);
 							}
 						}
 					}
@@ -259,7 +259,9 @@ static TKType findConstantIdentifier(){
 			}
 			return CS_ERROR;
 		}
-	}	
+        default:
+            return CS_ERROR;
+    }
 }
 
 static TKType findIdentifier(){
@@ -349,7 +351,7 @@ static TKType findIdentifier(){
 				switch(scanner.start[1]){
 					case 'i': return checkKeyword(2, 1, "n", TK_SIN);
 					case 'q': return checkKeyword(2, 2, "rt", TK_SQRT);
-					default: TK_ID;
+					default: return TK_ID;
 				}
 			}else{
 				return TK_ID;

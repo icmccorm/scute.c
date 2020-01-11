@@ -10,13 +10,15 @@
 #include "color.h"
 
 #ifdef EM_MAIN
-Color* resolveColor(const char* key, Value val){
+void resolveColor(const char* key, Value val){
 	Color* color = NULL;
 	if(IS_OBJ(val)){
 		Obj* objVal = AS_OBJ(val);
 		switch(objVal->type){
 			case OBJ_COLOR:
 				color = ((ObjColor*) objVal)->color;
+				break;
+			default:
 				break;
 		}
 	}
@@ -33,13 +35,13 @@ void drawShape(HashMap* shapeMap, TKType type){
 			case VL_OBJ: {
 				Obj* strokeObj = AS_OBJ(stroke);
 				switch(strokeObj->type){
-					case OBJ_INST:
+					case OBJ_INST: {
 						HashMap* strokeMap = ((ObjInstance*) strokeObj)->map;
 						Value width = getValue(strokeMap, internString("width", 5));
 						Value color = getValue(strokeMap, internString("color", 5));
 						resolveColor("stroke", color);
-						addAttribute("stroke-width", width);
-						break;
+						STYLE("stroke-width", width);
+					} break;
 					default:
 						resolveColor("stroke", stroke);
 						break;

@@ -31,7 +31,7 @@ void printColor(OutType out, Color* cl){
 #ifdef EM_MAIN
 void addColorAttribute(const char* key, Color* cl){
 	char* colorString = allocateColorString(cl);
-	addStringAttribute(key, colorString, -1, -1);
+	addStringStyle(key, colorString, -1, -1);
 	FREE(char, colorString);
 }
 #endif
