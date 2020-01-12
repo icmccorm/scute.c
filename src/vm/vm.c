@@ -322,11 +322,9 @@ static InterpretResult run() {
 				Value encloseVal = READ_CONSTANT();
 				Value expr = pop();
 				Value scopeVal = pop();
-
 				if(IS_NULL(scopeVal) || !IS_INST(scopeVal)){
 					ObjString* encloseString = AS_STRING(encloseVal);
 					ObjString* setString = AS_STRING(setVal);
-
 					ObjInstance* newScope = allocateInstance(NULL);
 					insert(newScope->map, setString, expr);
 					insert(vm.currentScope->map, encloseString, OBJ_VAL(newScope));

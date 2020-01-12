@@ -31,31 +31,11 @@ void drawShape(HashMap* shapeMap, TKType type){
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
 		newShape(address, type);
-		
+
 		Value stroke = getValue(shapeMap, internString("stroke", 6));
-		printValue(O_OUT, stroke);
-		switch(stroke.type){
-			case VL_OBJ: {
-				Obj* strokeObj = AS_OBJ(stroke);
-				switch(strokeObj->type){
-					case OBJ_INST: {
-						ObjInstance* inst = AS_INST(stroke);
-						Value width = getValue(inst->map, internString("width", 5));
-						Value color = getValue(inst->map, internString("color", 5));
-						resolveColor("stroke", color);
-						STYLE("strokeWidth", width);
-					} break;
-					default:
-						resolveColor("stroke", stroke);
-						break;
-				}
-				} break;
-			default:
-				resolveColor("stroke", stroke);
-				break;
-		}
-	
-		Value fill = getValue(shapeMap, internString("fill", 4));
+		STYLE("strokeWidth", getValue(shapeMap, internString("strokeWidth", 11)));
+
+		Value fill = getValue(shapeMap, internString("fill", 6));
 		resolveColor("fill", fill);
 
 		switch(type){
