@@ -15,14 +15,15 @@ void resolveColor(const char* key, Value val){
 	if(IS_OBJ(val)){
 		Obj* objVal = AS_OBJ(val);
 		switch(objVal->type){
-			case OBJ_COLOR:
-				color = ((ObjColor*) objVal)->color;
+			case OBJ_COLOR: ;
+				ObjColor* colorObj = AS_COLOR(val);
+				color = colorObj->color;
+				addColorAttribute(key, color);
 				break;
 			default:
 				break;
 		}
 	}
-	addColorAttribute(key, color);
 }
 #endif
 
@@ -30,17 +31,19 @@ void drawShape(HashMap* shapeMap, TKType type){
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
 		newShape(address, type);
+		
 		Value stroke = getValue(shapeMap, internString("stroke", 6));
+		printValue(O_OUT, stroke);
 		switch(stroke.type){
 			case VL_OBJ: {
 				Obj* strokeObj = AS_OBJ(stroke);
 				switch(strokeObj->type){
 					case OBJ_INST: {
-						HashMap* strokeMap = ((ObjInstance*) strokeObj)->map;
-						Value width = getValue(strokeMap, internString("width", 5));
-						Value color = getValue(strokeMap, internString("color", 5));
+						ObjInstance* inst = AS_INST(stroke);
+						Value width = getValue(inst->map, internString("width", 5));
+						Value color = getValue(inst->map, internString("color", 5));
 						resolveColor("stroke", color);
-						STYLE("stroke-width", width);
+						STYLE("strokeWidth", width);
 					} break;
 					default:
 						resolveColor("stroke", stroke);
@@ -51,8 +54,8 @@ void drawShape(HashMap* shapeMap, TKType type){
 				resolveColor("stroke", stroke);
 				break;
 		}
-
-		Value fill = getValue(shapeMap, internString("fill", 6));
+	
+		Value fill = getValue(shapeMap, internString("fill", 4));
 		resolveColor("fill", fill);
 
 		switch(type){

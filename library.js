@@ -16,14 +16,18 @@ mergeInto(LibraryManager.library, {
 			"id": idPtr,
 			"tag": tagPtr,
 			"attrs":{},
-			"styles":{},
+			"style":{
+				"values":{},
+				"loc":{},
+			},
+			"styleLoc":{},
 		}
 	},
 
 	addStyle: function(keyPtr, valPtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = valPtr;
-		_currentShape['styles'][key] = value;
+		_currentShape['style'][key] = value;
 	},
 
 	addStringAttribute: function(keyPtr, valuePtr, index, line){
@@ -48,20 +52,20 @@ mergeInto(LibraryManager.library, {
 	addStringStyle: function(keyPtr, valuePtr, index, line){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valuePtr);
-		_currentShape['styles'][key] = {
-			value: value,
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
 			index: index,
-			line: line
-		};
+			line: line,
+		}
 	},
 
 	addStyle: function(keyPtr, value, index, line){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['styles'][key] = {
-			value: value,
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
 			index: index,
-			line: line
-		};
+			line: line,
+		}
 	},
 
 	paintShape: function(){
