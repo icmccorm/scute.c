@@ -20,14 +20,7 @@ mergeInto(LibraryManager.library, {
 				"values":{},
 				"loc":{},
 			},
-			"styleLoc":{},
 		}
-	},
-
-	addStyle: function(keyPtr, valPtr){
-		let key = Module.UTF8ToString(keyPtr);
-		let value = valPtr;
-		_currentShape['style'][key] = value;
 	},
 
 	addStringAttribute: function(keyPtr, valuePtr, index, line){
