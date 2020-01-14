@@ -572,6 +572,7 @@ static void inherit(ObjChunk* currentChunk) {
 				consume(TK_COMMA, "Expected ','");
 			}
 		}
+		if(numParameters > 0) errorAtCurrent("Expected additional parameters.");
 		emitConstant(OBJ_VAL(currentChunk));
 		emitBytes(OP_CALL, currentChunk->numParameters);
 	}
