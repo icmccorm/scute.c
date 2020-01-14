@@ -230,10 +230,6 @@ static InterpretResult run() {
 
 				Value fnValue = pop();
 				if(fnValue.type == VL_OBJ){
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 					Obj* object = AS_OBJ(fnValue);
 					switch(object->type){
 
