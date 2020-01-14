@@ -154,7 +154,7 @@ static uint32_t readInteger() {
 static Obj* valueToObject(OBJType objType, Value val){
 	if(IS_OBJ(val)){
 		Obj* obj = AS_OBJ(val);
-		if(obj->type == objType){
+		if(obj && obj->type == objType){
 			return obj;
 		}	
 	}

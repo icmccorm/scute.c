@@ -614,7 +614,7 @@ static void defStatement() {
 	ObjString* funcName = getTokenStringObject(&idToken);
 
 	ObjChunk* newChunk = allocateChunkObject(funcName);
-	Compiler* newCompiler = enterCompilationScope(newChunk);
+	compiler = enterCompilationScope(newChunk);
 
 
 	//TODO: fix parameter overflow
@@ -623,12 +623,12 @@ static void defStatement() {
 		advance();
 		if(parser.current.type != TK_R_PAREN){
 			consume(TK_ID, "Expected an identifier.");
-			addLocal(newCompiler, parser.previous);
+			addLocal(currentCompiler(), parser.previous);
 			++paramCount;
 			while(parser.current.type == TK_COMMA){
 				advance();
 				consume(TK_ID, "Expected an identifier.");
-				addLocal(newCompiler, parser.previous);
+				addLocal(currentCompiler(), parser.previous);
 				++paramCount;
 			}
 		}
@@ -659,7 +659,6 @@ static void defStatement() {
 	}
 
 	endLine();
-	compiler = newCompiler;
 	block();
 	compiler = exitCompilationScope();
 
@@ -1027,7 +1026,7 @@ static void assignStatement(bool enforceGlobal){
 			if(currentVar.depth > -1 && currentVar.depth < currentComp->scopeDepth){
 				break;
 			}
-			if(tokensEqual(currentVar.id, currentComp->locals[i].id)){
+			if(tokensEqual(currentVar.id, idToken)){
 				error("Variable has already been declared in this scope.");
 			}
 		}
