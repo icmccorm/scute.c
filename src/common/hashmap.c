@@ -142,21 +142,13 @@ void printMap(OutType out, HashMap* map, int indents){
 			print(out, "   ");
 		}
 		print(out, "%s: ", first->key->chars);
-		switch(first->value.type){
-			case VL_OBJ: {
-				Obj* valObj = AS_OBJ(first->value);
-				switch(valObj->type){
-					case OBJ_INST: {
-						print(out, "\n");
-						ObjInstance* closeObj = (ObjInstance*) valObj;
-						printMap(out, closeObj->map, indents+1);
-						} break;
-				}
-				} break;
-			default:
-				print(out, "%g\n", first->value.as.number);
-				break;
-
+		if(IS_OBJ(first->value) && IS_INST(first->value)){
+			print(out, "\n");
+			ObjInstance* closeObj = (ObjInstance*) AS_OBJ(first->value);
+			printMap(out, closeObj->map, indents+1);
+		}else{
+			printValue(out, first->value);
+			print(out, "\n");
 		}
 		first = first->next;
 	}

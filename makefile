@@ -43,12 +43,11 @@ clean:
 
 -include $(DEPS)
 
-EM_FLAGS = --js-library ./library.js --pre-js ./pre.js --closure 1 -Os
+EM_FLAGS = --js-library ./library.js --pre-js ./pre.js -Os
 EM_JS_FLAGS = $(EM_JS_EXPORTS) -s WASM=1 -s MODULARIZE=1 -s STRICT=1 -s FILESYSTEM=0 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0 -s ENVIRONMENT='worker' -s EXPORT_NAME="'Scute'"
 EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]' -s ALLOW_MEMORY_GROWTH=1
 EM_ENTRY = ./src/em_main.c
 
 emcc : $(SRC_FILES) $(EM_ENTRY)
-	@$(WASMC) $(FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) ; \
+	@$(WASMC) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) ; \
 	sed -i "s#'$(EXEC_FILE).wasm'#require('./$(EXEC_FILE).wasm')#g" ./scute.js
-

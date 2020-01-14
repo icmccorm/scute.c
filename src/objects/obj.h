@@ -11,6 +11,15 @@ ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);
 ObjNative* allocateNative(void* func);
 
+ObjColor* makeRGB(Value r, Value g, Value b);
+#define RGB(r, g, b) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b))))
+
+//ObjColor* makeHSL(Value h, Value s, Value l);
+//ObjColor* makeCMYK(Value c, Value m, Value y, Value k);
+
+//#define iHSL(h, s, l) (OBJ_VAL(makeHSL(h, s, l)))
+//#define iCMYK(c, m, y, k) (OBJ_VAL(makeCMYK(c, m, y, k)))
+
 bool isObjectType(Value value, OBJType type);
 ObjString* internString(char * start, int length);
 void freeObject(Obj* obj);
@@ -18,14 +27,16 @@ void freeObject(Obj* obj);
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
 #define IS_INST(value) (isObjectType(value, OBJ_INST))
 #define IS_CHUNK(value) (isObjectType(value, OBJ_CHUNK))
+#define IS_COLOR(value) (isObjectType(value, OBJ_COLOR))
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
 #define AS_INST(value) ((ObjInstance*)AS_OBJ(value))
 #define AS_CHUNK(value) ((ObjChunk*)AS_OBJ(value))
 #define AS_NATIVE(value) ((ObjNative*)AS_OBJ(value))
+#define AS_COLOR(value) ((ObjColor*)AS_OBJ(value))
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*) allocateObject(sizeof(type), objType)
-	
+
 #endif

@@ -19,6 +19,7 @@ void runCode(CompilePackage* code, int index){
 
 CompilePackage* compileCode(const char* code){
 	CompilePackage* package = initCompilationPackage();
-	runCompiler(package, code);
+	char* codeModifiable = (char*) code;
+	runCompiler(package, codeModifiable);
 	return package;
 }

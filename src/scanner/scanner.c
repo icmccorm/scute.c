@@ -45,7 +45,7 @@ static TK makeCustomToken(TKType type, char* chars, int length){
     return token;
 }
 
-static TK makeDualToken(TKType primary, TKType secondary){
+static TK makeDualToken(TKType primary, int secondary){
     TK token = makeToken(primary);
     token.subtype = secondary;
     return token;
@@ -149,6 +149,121 @@ static TKType checkKeyword(int start, int length, char* rest, TKType type){
     return TK_ID; 
 }
 
+static CSType checkConst(int start, int length, char* rest, CSType type){
+	if(scanner.current - scanner.start == start + length &&
+        memcmp(scanner.start + start, rest, length) == 0){
+            return type;
+    }
+	return CS_ERROR;
+}
+
+static CSType findConstantIdentifier(){
+	int length = scanner.current - scanner.start;
+	switch(scanner.start[0]){
+		case 'p': {
+			if(length > 1){
+				switch(scanner.start[1]){
+					case 'i': {
+						if(length > 2){
+							switch(scanner.start[2]){
+								case 'n': return checkConst(3, 1, "k", CS_PINK);
+							}
+							return CS_ERROR;
+						}
+						return CS_PI;
+					}
+					case 'u': return checkConst(2, 4, "rple", CS_PURPLE);
+				}
+			}
+			return CS_ERROR;
+		}	
+		case 't': {
+			if(length > 1){
+				switch(scanner.start[1]){
+					case 'a': return checkConst(2, 1, "u", CS_TAU);
+					case 'u': return checkConst(2, 7, "rquoise", CS_TURQ);
+					case 'e': return checkConst(2, 2, "al", CS_TEAL);
+				}
+			}
+			return CS_ERROR;			
+		}
+		case 'e': return CS_E;
+		case 'r': return checkConst(1, 2, "ed", CS_RED);
+		case 'o': {
+			if(length > 1){
+				switch(scanner.start[1]){
+					case 'r': return checkConst(2, 4, "ange", CS_ORANGE);
+					case 'l': return checkConst(2, 3, "ive", CS_OLIVE);
+				}
+			}
+			return CS_ERROR;
+		}
+		case 'y': return checkConst(1, 5, "ellow", CS_YELLOW);
+		case 'b': {
+			if(length > 1){
+				switch(scanner.start[1]){
+					case 'l': {
+						if(length > 2){
+							switch(scanner.start[2]){
+								case 'a': return checkConst(3, 2, "ck", CS_BLACK);
+								case 'u': return checkConst(3, 1, "e", CS_BLUE);
+							}
+						}
+					}
+					case 'r': return checkConst(2, 3, "own", CS_BROWN);
+				}
+			}
+			return CS_ERROR;
+		}
+		case 'm': {
+			if(length > 1){
+				switch(scanner.start[1]){
+					case 'a': {
+						if(length > 2){
+							switch(scanner.start[2]){
+								case 'g': return checkConst(3, 4, "enta", CS_MAGENTA);
+								case 'r': return checkConst(3, 3, "oon", CS_MAROON);
+							}
+						}
+					}
+				}
+			}
+			return CS_ERROR;
+		}
+		case 'n': return checkConst(1, 3, "avy", CS_NAVY);
+		case 'a': return checkConst(1, 3, "qua", CS_AQUA);
+		case 's': return checkConst(1, 5, "ilver", CS_SILVER);
+		case 'l': return checkConst(1, 3, "ime", CS_LIME);
+		case 'i': return checkConst(1, 5, "ndigo", CS_INDIGO);
+		case 'v': return checkConst(1, 5, "iolet", CS_VIOLET);
+		case 'w': return checkConst(1, 4, "hite", CS_WHITE);
+		case 'g': {
+			if(length > 1){
+				switch(scanner.start[1]){
+					case 'r': {
+						if(length > 2){
+							switch(scanner.start[2]){
+								case 'e': {
+									if(length > 3){
+										switch(scanner.start[3]){
+											case 'e': return checkConst(4, 1, "n", CS_GREEN);
+											case 'y': return CS_GREY;
+										}
+									}
+								}
+								case 'a': return checkConst(3, 1, "y", CS_GRAY);
+							}
+						}
+					}
+				}
+			}
+			return CS_ERROR;
+		}
+        default:
+            return CS_ERROR;
+    }
+}
+
 static TKType findIdentifier(){
     switch(scanner.start[0]){
         case 'a':
@@ -236,7 +351,7 @@ static TKType findIdentifier(){
 				switch(scanner.start[1]){
 					case 'i': return checkKeyword(2, 1, "n", TK_SIN);
 					case 'q': return checkKeyword(2, 2, "rt", TK_SQRT);
-					default: TK_ID;
+					default: return TK_ID;
 				}
 			}else{
 				return TK_ID;
@@ -244,16 +359,7 @@ static TKType findIdentifier(){
         case 't': 
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
-                    case 'a': 
-						if(scanner.current - scanner.start > 2){
-							switch(scanner.start[2]){
-								case 'u': return TK_TAU;
-								case 'n': return TK_TAN;
-								default: return TK_ID;
-							}
-						}else{
-							return TK_ID;
-						}
+                    case 'a': return checkKeyword(2, 1, "n", TK_TAN);
                     case 'e': return checkKeyword(2, 2, "xt", TK_TEXT);
                     case 'r': return checkKeyword(2, 2, "ue", TK_TRUE);
 					case 'o': return TK_TO;
@@ -277,13 +383,11 @@ static TKType findIdentifier(){
                             return TK_ID;
                         }
                         
-                        } break;
-                    case 'i': return TK_PI;
+                    } break;
                 }
             }else{
                 return TK_ID;
             }
-        return checkKeyword(1, 1, "i", TK_PI);
         case 'e':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -298,7 +402,7 @@ static TKType findIdentifier(){
                         }
                 }
             }else{
-                return TK_E;
+                return TK_ID;
             }
         case 'n': return checkKeyword(1, 3, "ull", TK_NULL);
         case 'v': return checkKeyword(1, 2, "ar", TK_VAR);
@@ -326,43 +430,17 @@ static TK identifier(){
         case TK_CIRC:
         case TK_ELLIP:
             return makeDualToken(TK_SHAPE, type);
-/*      case TK_RED:
-        case TK_ORANGE:
-        case TK_YELLOW:
-        case TK_GREEN:
-        case TK_BLUE:
-        case TK_PURPLE:
-        case TK_BROWN:
-        case TK_MAGENTA:
-        case TK_TAN:
-        case TK_OLIVE:
-        case TK_MAROON:
-        case TK_NAVY:
-        case TK_AQUM:
-        case TK_TURQ:
-        case TK_SILVER:
-        case TK_LIME:
-        case TK_TEAL:
-        case TK_INDIGO:
-        case TK_VIOLET:
-        case TK_PINK:
-        case TK_BLACK:
-        case TK_WHITE:
-        case TK_GRAY:
-        case TK_GREY:
-            return makeDualToken(TK_CONST, type);*/
         default:
             return makeToken(type);
     }
 }
 
 static TK constant(){
-    while(isAlpha(peek())) advance();
-    TKType type = findIdentifier();
-    switch(type){
-        
-    }
+	while(isAlpha(peek())) advance();
+	CSType constType = findConstantIdentifier();
+	return makeDualToken(TK_CONST, constType);
 }
+
 
 static TK string(char c){
     ++scanner.start;
@@ -412,7 +490,8 @@ TK scanTK(){
         case ':':{
             char b = advance();
             if(isAlpha(b)){
-                return identifier();
+				++scanner.start;
+                return constant();
             }else{
                 if(match('=')){
                     return makeToken(TK_EVAL_ASSIGN);

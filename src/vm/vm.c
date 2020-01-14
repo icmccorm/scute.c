@@ -37,7 +37,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	
 	resetStack();
 	initMap(&vm.globals);
-	mergeMaps(package->globals, vm.globals);
+  	mergeMaps(package->globals, vm.globals);
 	pushStackFrame(package->compiled);
 }
 
@@ -123,6 +123,9 @@ static bool valuesEqual(Value a, Value b){
 			return AS_OBJ(a) == AS_OBJ(b);
 		case VL_NUM:
 			return AS_NUM(a) == AS_NUM(b);
+		default:
+			return true;
+			break;
 	}	
 }
 
@@ -215,7 +218,7 @@ static InterpretResult run() {
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
 				Value fnValue = pop();
-				if(fnValue.type = VL_OBJ){
+				if(fnValue.type == VL_OBJ){
 					Obj* object = AS_OBJ(fnValue);
 					switch(object->type){
 						case OBJ_CHUNK: {
@@ -319,11 +322,9 @@ static InterpretResult run() {
 				Value encloseVal = READ_CONSTANT();
 				Value expr = pop();
 				Value scopeVal = pop();
-
 				if(IS_NULL(scopeVal) || !IS_INST(scopeVal)){
 					ObjString* encloseString = AS_STRING(encloseVal);
 					ObjString* setString = AS_STRING(setVal);
-
 					ObjInstance* newScope = allocateInstance(NULL);
 					insert(newScope->map, setString, expr);
 					insert(vm.currentScope->map, encloseString, OBJ_VAL(newScope));
@@ -475,7 +476,7 @@ CompilePackage* initCompilationPackage();
 
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
-	if(index < 0){
+	if(index <= 0){
 		initVM(code, index);
 		result = run();
 		renderFrame(vm.currentAnimationFrame);

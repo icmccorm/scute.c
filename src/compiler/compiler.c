@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -231,6 +232,7 @@ static void grouping(bool canAssign);
 static void number(bool canAssign);
 static void literal(bool canAssign);
 static void constant(bool canAssign);
+static void constant(bool canAssign);
 static void string(bool canAssign);
 static void variable(bool canAssign);
 static void deref(bool canAssign);
@@ -268,6 +270,7 @@ ParseRule rules[] = {
 	{ literal,	NULL,	    PC_TERM },    // TK_NULL,
 	{ string,	NULL,	    PC_TERM },    // TK_STRING,
 	{ variable, NULL,	    PC_TERM },    // TK_ID,
+	{ constant, NULL,	    PC_TERM },    // TK_ID,	
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 	{ native,	NULL,		PC_TERM },    // TK_SIN,
 	{ native,	NULL,		PC_TERM },    // TK_COS,
@@ -283,9 +286,6 @@ ParseRule rules[] = {
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
-	{ literal,	NULL,	    PC_NONE },    // TK_PI,
-	{ literal,	NULL,	    PC_NONE },    // TK_E,
-	{ literal,	NULL,	    PC_NONE },    // TK_TAU,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
@@ -445,9 +445,6 @@ static void literal(bool canAssign) {
 		case TK_FALSE:  emitByte(OP_FALSE); break;
 		case TK_TRUE:   emitByte(OP_TRUE); break;
 		case TK_NULL:   emitByte(OP_NULL); break;
-		case TK_TAU:    emitByte(OP_TAU); break;
-		case TK_PI:     emitByte(OP_PI); break;
-		case TK_E:      emitByte(OP_E); break;
 		case TK_INTEGER:
 		case TK_REAL:
 			number(canAssign);
@@ -523,7 +520,7 @@ static void patchJump(int jumpIndex){
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
-static int jumpTo(int opIndex){
+static void jumpTo(int opIndex){
 	Chunk* chunk = currentChunk();
 	emitByte(OP_JMP);
 	int16_t offset = opIndex - chunk->count;
@@ -541,9 +538,7 @@ static void repeatStatement(){
 
 static void drawStatement(){
 	Compiler* currentComp = currentCompiler();
-	if(parser.current.type == TK_ID){
-		expression();
-	}else if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
+	if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
 		advance();
 		ObjChunk* chunkObj = allocateChunkObject(NULL);
 		chunkObj->chunkType = CK_UNDEF;
@@ -556,6 +551,8 @@ static void drawStatement(){
 		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
 		emitBundle(OP_CONSTANT, scopeIndex);
 		emitBytes(OP_CALL, 0);
+	}else{
+		expression();
 	}
 	emitByte(OP_DRAW);
 }
@@ -713,6 +710,95 @@ static void parseAssignment(){
 	}
 }
 
+static void constant(bool canAssign){
+	TK constId = parser.previous;
+	CSType constType = (CSType) constId.subtype;
+	switch(constType){
+		case CS_PI:
+			emitConstant(NUM_VAL(PI));
+			break;
+		case CS_TAU:
+			emitConstant(NUM_VAL(2*PI));
+			break;
+		case CS_E:
+			emitConstant(NUM_VAL(E));
+			break;
+		case CS_RED:
+			emitConstant(RGB(255, 0, 0));
+			break;
+		case CS_ORANGE:
+			emitConstant(RGB(255, 165, 0));
+			break;
+		case CS_YELLOW:
+			emitConstant(RGB(255, 255, 0));
+			break;
+		case CS_GREEN:
+			emitConstant(RGB(0, 128, 0));
+			break;
+		case CS_BLUE:
+			emitConstant(RGB(0, 0, 255));
+			break;
+		case CS_PURPLE:
+			emitConstant(RGB(128, 0, 128));
+			break;
+		case CS_BROWN:
+			emitConstant(RGB(265, 42, 42));
+			break;
+		case CS_MAGENTA:
+			emitConstant(RGB(255, 0, 255));
+			break;
+		case CS_OLIVE:
+			emitConstant(RGB(128, 128, 0));
+			break;
+		case CS_MAROON:
+			emitConstant(RGB(128, 0, 0));
+			break;
+		case CS_NAVY:
+			emitConstant(RGB(0, 0, 128));
+			break;
+		case CS_AQUA:
+			emitConstant(RGB(0, 255, 255));
+			break;
+		case CS_TURQ:
+			emitConstant(RGB(64, 224, 208));
+			break;
+		case CS_SILVER:
+			emitConstant(RGB(192, 192, 192));
+			break;
+		case CS_LIME:
+			emitConstant(RGB(0, 255, 0));
+			break;
+		case CS_TEAL:
+			emitConstant(RGB(0, 128, 128));
+			break;
+		case CS_INDIGO:
+			emitConstant(RGB(75, 0, 130));
+			break;
+		case CS_VIOLET:
+			emitConstant(RGB(238, 130, 238));
+			break;
+		case CS_PINK:
+			emitConstant(RGB(255, 20, 147));
+			break;
+		case CS_BLACK:
+			emitConstant(RGB(0, 0, 0));
+			break;
+		case CS_WHITE:
+			emitConstant(RGB(255, 255, 255));
+			break;
+		case CS_GRAY:
+			emitConstant(RGB(128, 128, 128));
+			break;
+		case CS_GREY:
+			emitConstant(RGB(128, 128, 128));
+			break;
+		case CS_ERROR:
+			errorAtCurrent("Invalid constant.");
+			emitConstant(NULL_VAL());
+			break;
+	}
+}
+
 static void initNative(void* func, TK* id){
 	ObjString* nativeString = internString(id->start, id->length);
 	ObjNative* nativeObj = allocateNative(func);
@@ -759,6 +845,8 @@ static void native(bool canAssign){
 			break;
 		case TK_SQRT:
 			func = nativeSqrt;
+			break;
+		default:
 			break;
 	}
 	initNative(func, &nativeId);

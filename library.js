@@ -16,14 +16,21 @@ mergeInto(LibraryManager.library, {
 			"id": idPtr,
 			"tag": tagPtr,
 			"attrs":{},
-			"styles":{},
+			"style":{
+				"values":{},
+				"loc":{},
+			},
 		}
 	},
 
-	addStyle: function(keyPtr, valPtr){
+	addStringAttribute: function(keyPtr, valuePtr, index, line){
 		let key = Module.UTF8ToString(keyPtr);
-		let value = valPtr;
-		_currentShape['styles'][key] = value;
+		let value = Module.UTF8ToString(valuePtr);
+		_currentShape['attrs'][key] = {
+			value: value,
+			index: index,
+			line: line
+		};
 	},
 
 	addAttribute: function(keyPtr, value, index, line){
@@ -33,7 +40,25 @@ mergeInto(LibraryManager.library, {
 			index: index,
 			line: line
 		};
+	},
 
+	addStringStyle: function(keyPtr, valuePtr, index, line){
+		let key = Module.UTF8ToString(keyPtr);
+		let value = Module.UTF8ToString(valuePtr);
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
+			index: index,
+			line: line,
+		}
+	},
+
+	addStyle: function(keyPtr, value, index, line){
+		let key = Module.UTF8ToString(keyPtr);
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
+			index: index,
+			line: line,
+		}
 	},
 
 	paintShape: function(){
@@ -47,13 +72,24 @@ mergeInto(LibraryManager.library, {
 	newShape__deps: [
 		'currentShape'
 	],
+	
 	paintShape__deps: [
 		'currentShape'
 	],
+
 	addStyle__deps: [
         'currentShape'
 	],
+
+	addStringStyle__deps: [
+        'currentShape'
+	],
+
 	addAttribute__deps: [
+		'currentShape'
+	],
+
+	addStringAttribute__deps: [
 		'currentShape'
 	],
 });
