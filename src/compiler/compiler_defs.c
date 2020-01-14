@@ -16,5 +16,6 @@ void addLocal(Compiler* compiler, TK idName){
 
 
 void freeCompiler(Compiler* compiler){
+	freeMap(compiler->classes);
 	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);
 }

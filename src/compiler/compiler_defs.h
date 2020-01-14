@@ -32,6 +32,7 @@ typedef struct{
     TKType instanceType;
     struct sCompiler* super;
     ObjChunk* compilingChunk;
+	HashMap* classes;
 };
 
 typedef struct sCompiler Compiler;

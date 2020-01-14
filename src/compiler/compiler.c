@@ -45,8 +45,10 @@ int getTokenIndex(char* tokenStart){
 static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	Compiler* newComp = ALLOCATE(Compiler, 1);
 	Compiler* comp = currentCompiler();
+	initMap(&newComp->classes);
 
 	if(comp){
+		mergeMaps(comp->classes, newComp->classes);
 		newComp->scopeDepth = comp->scopeDepth + 1;
 	}else{
 		newComp->scopeDepth = 0;
@@ -239,7 +241,6 @@ static void deref(bool canAssign);
 static void scopeDeref(bool canAssign);
 static void native(bool canAssign);
 
-
 ParseRule rules[] = {
 	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
 	{ unary,    binary,     PC_TERM },    // TK_MINUS,
@@ -353,7 +354,8 @@ static void parsePrecedence(PCType precedence){
 		expression();
 	}
 }
-static void statement(){
+
+static void statement() {
 	if(currentChunkObject()->chunkType == CK_FUNC){
 		errorAtCurrent("Unreacheable code.");
 	}
@@ -414,7 +416,7 @@ static void statement(){
 	}
 }
 
-static void synchronize(){
+static void synchronize() {
 	parser.panicMode = false;
 	while(parser.current.type != TK_EOF){
 		if(parser.previous.type == TK_NEWLINE) return;
@@ -454,7 +456,7 @@ static void literal(bool canAssign) {
 	}    
 }
 
-static void attr(){
+static void attr() {
 	TK attrType = parser.previous;
 	uint8_t attrOp;
 
@@ -473,12 +475,12 @@ static void attr(){
 	endLine();
 }
 
-static void returnStatement(){
+static void returnStatement() {
 	expression();
 	emitByte(OP_RETURN);
 }
 
-static int getIndentation (){
+static int getIndentation() {
 	int indentCount = 0;
 	 while(parser.current.type == TK_INDENT || parser.current.type == TK_NEWLINE){
 		if(parser.current.type == TK_INDENT){
@@ -491,7 +493,7 @@ static int getIndentation (){
 	return indentCount;
 }
 
-static void block(){
+static void block() {
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentCompiler()->scopeDepth
 		){
@@ -506,21 +508,21 @@ static void block(){
 	}
 }
 
-static int emitJump(OpCode op){
+static int emitJump(OpCode op) {
 	emitByte(op);
 	emitByte(0xFF);
 	emitByte(0xFF);
 	return currentChunk()->count - 2;
 }
 
-static void patchJump(int jumpIndex){
+static void patchJump(int jumpIndex) {
 	int16_t backIndex = currentChunk()->count - jumpIndex - 2;
 
 	currentChunk()->code[jumpIndex] = (backIndex >> 8) & 0xFF;
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
-static void jumpTo(int opIndex){
+static void jumpTo(int opIndex) {
 	Chunk* chunk = currentChunk();
 	emitByte(OP_JMP);
 	int16_t offset = opIndex - chunk->count;
@@ -528,7 +530,7 @@ static void jumpTo(int opIndex){
 	emitByte(offset & 0xFF);
 }
 
-static void repeatStatement(){
+static void repeatStatement() {
 	expression();
 	int initialJumpIndex = emitJump(OP_JMP_CNT);
 	block();	
@@ -536,7 +538,7 @@ static void repeatStatement(){
 	patchJump(initialJumpIndex);	
 }
 
-static void drawStatement(){
+static void drawStatement() {
 	Compiler* currentComp = currentCompiler();
 	if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
 		advance();
@@ -559,7 +561,49 @@ static void drawStatement(){
 
 static int32_t resolveLocal(TK*id);
 
-static void defStatement(){
+static void inherit(ObjChunk* currentChunk) {
+	if(currentChunk){
+		inherit(currentChunk->superChunk);
+		int numParameters = currentChunk->numParameters;
+		while(parser.current.type != TK_R_PAREN && numParameters > 0){
+			expression();
+			--numParameters;
+			if(numParameters > 0){
+				consume(TK_COMMA, "Expected ','");
+			}
+		}
+		emitConstant(OBJ_VAL(currentChunk));
+		emitBytes(OP_CALL, currentChunk->numParameters);
+	}
+}
+
+static ObjChunk* fromExpression() {
+	consume(TK_ID, "Expected an identifier.");
+	TK superclassId = parser.previous;
+	Value superChunkVal = getValue(currentCompiler()->classes, getTokenStringObject(&superclassId));
+	ObjChunk* chunk = (ObjChunk*) AS_OBJ(superChunkVal);
+	if(!IS_NULL(superChunkVal)){
+		return AS_CHUNK(superChunkVal);
+	}else{
+		errorAtCurrent("Inherited object is not defined in this scope.");
+	}
+}
+
+static void asExpression() {
+	TK shapeToken = parser.current;
+	advance();
+	switch(shapeToken.type){
+		case TK_SHAPE:
+			currentChunkObject()->chunkType = CK_CONSTR;
+			currentChunkObject()->instanceType = shapeToken.subtype;
+			break;
+		default:
+			errorAt(&parser.current, "Expected a shape identifier.");
+			break;
+	}
+}
+
+static void defStatement() {
 	Compiler* currentComp = currentCompiler();
 	TKType instanceType = TK_NULL;
 	CKType chunkType = CK_UNDEF;
@@ -571,51 +615,67 @@ static void defStatement(){
 	ObjChunk* newChunk = allocateChunkObject(funcName);
 	Compiler* newCompiler = enterCompilationScope(newChunk);
 
+
+	//TODO: fix parameter overflow
+	uint8_t paramCount = 0;
 	if(parser.current.type == TK_L_PAREN){
-		uint8_t paramCount = 0;
 		advance();
 		if(parser.current.type != TK_R_PAREN){
 			consume(TK_ID, "Expected an identifier.");
 			addLocal(newCompiler, parser.previous);
-			
+			++paramCount;
 			while(parser.current.type == TK_COMMA){
 				advance();
 				consume(TK_ID, "Expected an identifier.");
 				addLocal(newCompiler, parser.previous);
+				++paramCount;
 			}
 		}
 		consume(TK_R_PAREN, "Expected ')'.");
 	}
+	newChunk->numParameters = paramCount;
 
-	if(parser.current.type == TK_AS){
-		advance();
-		TK shapeToken = parser.current;
-		advance();
-		switch(shapeToken.type){
-			case TK_SHAPE:
-				newChunk->chunkType = CK_CONSTR;
-				newChunk->instanceType = shapeToken.subtype;
-				break;
-			default:
-				errorAt(&parser.current, "Expected a shape identifier.");
-				break;
-		}
+	switch(parser.current.type){
+		case TK_AS:
+			advance();
+			asExpression();
+			if(parser.current.type == TK_FROM){
+				advance();
+				newChunk->superChunk = fromExpression();
+			}
+		case TK_FROM:
+			advance();
+			newChunk->superChunk = fromExpression();
+			if(parser.current.type == TK_AS){
+				advance();
+				asExpression();
+			}
+		case TK_NEWLINE:
+			break;
+		default:
+			errorAtCurrent("Unexpected token in function object definition.");
+			break;
 	}
+
 	endLine();
 	compiler = newCompiler;
 	block();
 	compiler = exitCompilationScope();
 
+	if(newChunk->chunkType == CK_CONSTR) {
+		insert(currentCompiler()->classes, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
+	}
 	uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
 	emitBundle(OP_CONSTANT, scopeIndex);
-
-	if(currentCompiler()->scopeDepth > 0){
+	if(currentCompiler()->scopeDepth > 0){	
 		emitBundle(OP_DEF_LOCAL, resolveLocal(&idToken));
+		emitByte(OP_POP);
+
 	}else{
-		uint32_t idIndex = getStringObjectIndex(&idToken);
-		emitBundle(OP_DEF_GLOBAL, idIndex);
+		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
+		emitByte(OP_POP);
+	//	insert(currentResult()->globals, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
 	}
-	emitByte(OP_POP);
 }
 
 static void frameStatement() {
@@ -643,7 +703,7 @@ static void frameStatement() {
 	patchJump(jumpIndex);
 }
 
-static void and_(bool canAssign){
+static void and_(bool canAssign) {
 	int endJump = emitJump(OP_JMP_FALSE);
 	emitByte(OP_POP);
 	parsePrecedence(PC_AND);
@@ -651,18 +711,18 @@ static void and_(bool canAssign){
 	patchJump(endJump);
 }
 
-static void string(bool canAssign){
+static void string(bool canAssign) {
 	emitConstant(getTokenStringValue(&parser.previous));
 }
 
-static void timeStep(bool canAssign){
+static void timeStep(bool canAssign) {
 	emitByte(OP_T);
 }
 
-static void ifStatement(){
+static void ifStatement() {
 }
 
-static uint8_t emitParams(){
+static uint8_t emitParams() {
 	uint8_t paramCount = 0;
 	consume(TK_L_PAREN, "Expected '('.");
 	if(parser.current.type != TK_R_PAREN){
@@ -678,31 +738,31 @@ static uint8_t emitParams(){
 	return paramCount;
 }
 
-static void printStatement(){
+static void printStatement() {
 	expression();
 	emitByte(OP_PRINT);
 	endLine();
 }
 
-static void dimsStatement(){
+static void dimsStatement() {
 	uint8_t numParams = emitParams();
 	emitBytes(OP_DIMS, numParams);
 	endLine();
 }
 
-static void posStatement(){
+static void posStatement() {
 	uint8_t numParams = emitParams();
 	emitBytes(OP_POS, numParams);
 	endLine();
 }
 
-static void expressionStatement(){
+static void expressionStatement() {
 	expression();
 	emitByte(OP_POP);
 	endLine();
 }
 
-static void parseAssignment(){
+static void parseAssignment() {
 	if(match(TK_ASSIGN)){
 		expression();
 	}else{
@@ -710,7 +770,7 @@ static void parseAssignment(){
 	}
 }
 
-static void constant(bool canAssign){
+static void constant(bool canAssign) {
 	TK constId = parser.previous;
 	CSType constType = (CSType) constId.subtype;
 	switch(constType){
@@ -926,12 +986,22 @@ static void namedVariable(TK* id, bool canAssign){
 	}	
 }
 
+static void functionCall(){}
+
 static void variable(bool canAssign){
 	if(parser.current.type == TK_L_PAREN){
 		TK funcName = parser.previous;
-		uint8_t numParams = emitParams();
-		namedVariable(&funcName, canAssign);
-		emitBytes(OP_CALL, numParams);
+		Value classValue = getValue(currentCompiler()->classes, getTokenStringObject(&funcName));
+		if(!IS_NULL(classValue)){
+			advance();
+			inherit(AS_CHUNK(classValue));
+			consume(TK_R_PAREN, "Expected ')'.");
+		}else{
+			uint8_t numParams = emitParams();
+			namedVariable(&funcName, canAssign);
+			emitBytes(OP_CALL, numParams);
+		}
+
 	}else{
 		namedVariable(&parser.previous, canAssign);
 	}

@@ -56,6 +56,10 @@ static StackFrame* currentStackFrame(){
 	return &vm.stackFrames[vm.stackFrameCount-1];
 }	
 
+static ObjInstance* currentInstance(){
+	return currentStackFrame()->instanceObj;
+}
+
 static Chunk* currentChunk(){
 	return currentStackFrame()->chunkObj->chunk;
 }
@@ -92,7 +96,13 @@ static void pushStackFrame(ObjChunk* funcChunk){
 	++vm.stackFrameCount;
 	
 	newFrame->chunkObj = funcChunk;
-	newFrame->instanceObj = allocateInstance(NULL);
+
+	if(funcChunk->chunkType == CK_CONSTR){
+		newFrame->instanceObj = allocateInstance(NULL);
+	}else{
+		newFrame->instanceObj = NULL;
+	}
+
 	newFrame->stackOffset = vm.stackTop - funcChunk->numParameters;
 	newFrame->returnTo = vm.ip;
 	vm.ip = funcChunk->chunk->code;
@@ -217,18 +227,34 @@ static InterpretResult run() {
 				break;
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
+
 				Value fnValue = pop();
 				if(fnValue.type == VL_OBJ){
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 					Obj* object = AS_OBJ(fnValue);
 					switch(object->type){
+
 						case OBJ_CHUNK: {
 							ObjChunk* chunkObj = (ObjChunk*) object;
+							pushStackFrame(chunkObj);
+
+							Value peekVal = peek(0);
+							if(IS_INST(peekVal)) {
+								ObjInstance* super = AS_INST(peekVal);
+								ObjInstance* current = currentInstance();
+								mergeMaps(super->map, current->map);
+							}
+
 							for(int i = numParams; i< chunkObj->numParameters; ++i){
 								push(NULL_VAL());
 							}
-							pushStackFrame(chunkObj);
+
 							currentStackFrame()->instanceObj->instanceType = chunkObj->instanceType;
 							} break;
+
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;
 							NativeFn function = native->function;
@@ -239,6 +265,7 @@ static InterpretResult run() {
 							Value result = function(params, numParams);
 							push(result);
 							} break;
+
 						default:
 							runtimeError("Only functions or constructors can be called.");
 							return INTERPRET_RUNTIME_ERROR;
@@ -450,15 +477,6 @@ static InterpretResult run() {
 			case OP_NOT:
 				push(BOOL_VAL(isFalsey(pop())));
 				break;
-			case OP_PI:
-				push(NUM_VAL(PI));
-				break;
-			case OP_TAU:
-				push(NUM_VAL(2*PI));
-				break;
-			case OP_E:
-				push(NUM_VAL(E));
-				break;
 			case OP_T:
 				push(NUM_VAL(vm.frameIndex));
 				break;
@@ -495,17 +513,16 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 InterpretResult interpretCompiled(CompilePackage* code, int index){
 	InterpretResult result = code->result;
 	if(result != INTERPRET_COMPILE_ERROR) {
-		executeCompiled(code, index);
+		result = executeCompiled(code, index);
 	}
 	return result;
 }
 
 void runCompiler(CompilePackage* package, char* source){
 	vm.runtimeObjects = NULL;
-	
-	if(!compile(source, package)){
-		package->result = INTERPRET_COMPILE_ERROR;
-	}
+	bool compiled = compile(source, package);
+	if(!compiled) package->result = INTERPRET_COMPILE_ERROR;
+
 	#ifdef EM_MAIN
 		setMaxFrameIndex(package->upperLimit);
 	#endif

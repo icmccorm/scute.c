@@ -51,6 +51,7 @@ struct sObjChunk{
 	CKType chunkType;
 	TKType instanceType;
 	int numParameters;
+	ObjChunk* superChunk;
 };
 
 struct sObjNative {
