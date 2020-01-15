@@ -543,10 +543,7 @@ static void repeatStatement() {
 
 			if(localIndex == -1){
 				addLocal(currentCompiler(), parser.previous);
-
 				emitConstant(NUM_VAL(0));
-	//			emitBundle(OP_DEF_LOCAL, latestLocal());
-	//			emitByte(OP_POP);
 
 				markInitialized();
 				counterLocalIndex = latestLocal();
@@ -563,8 +560,13 @@ static void repeatStatement() {
 	expression();
 	++currentCompiler()->localCount;
 	endLine();
-
 	int initialJumpIndex = currentChunk()->count-2;
+
+	emitBundle(OP_GET_LOCAL,counterLocalIndex);
+	emitBundle(OP_GET_LOCAL, counterLocalIndex + 1);
+	emitByte(OP_LESS);
+	uint32_t jmpFalseLocation = emitJump(OP_JMP_FALSE);
+
 	block();	
 
 	emitConstant(NUM_VAL(1));
@@ -572,12 +574,14 @@ static void repeatStatement() {
 	emitByte(OP_ADD);
 	emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 	emitByte(OP_POP);
-	
+	/*
 	emitBundle(OP_GET_LOCAL,counterLocalIndex);
 	emitBundle(OP_GET_LOCAL, counterLocalIndex + 1);
-	emitByte(OP_EQUALS);
+	emitByte(OP_GREATER);*/
 	
-	jumpTo(OP_JMP_FALSE, initialJumpIndex);	
+	jumpTo(OP_JMP, initialJumpIndex);
+//	jumpTo(OP_JMP_FALSE, initialJumpIndex);	
+    patchJump(jmpFalseLocation);
 	emitBytes(OP_POP, OP_POP);
 	--currentCompiler()->localCount;
 }
