@@ -33,8 +33,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.stackFrameCount = 0;
 	vm.currentScope = NULL;
 	vm.currentAnimationFrame = NULL;
-	vm.ip = NULL;
-	
+	vm.ip = NULL;	
 	resetStack();
 	initMap(&vm.globals);
   	mergeMaps(package->globals, vm.globals);
@@ -49,7 +48,8 @@ void freeVM() {
 
 void push(Value value) {
 	*vm.stackTop = value;
-	vm.stackTop++;
+	++vm.stackTop;
+	++vm.stackSize;
 }
 
 static StackFrame* currentStackFrame(){
@@ -69,7 +69,8 @@ int stackSize(){
 }
 
 Value pop(){
-	vm.stackTop--;
+	--vm.stackTop;
+	--vm.stackSize;
 	return *vm.stackTop;
 }
 
@@ -190,6 +191,13 @@ static InterpretResult run() {
 	for(;;) {
 		Value a;
 		Value b;
+		/*for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
+			print(O_DEBUG, "[ ");
+			printValue(O_DEBUG, *slot);
+			print(O_DEBUG, " ]");
+		}
+		print(O_DEBUG, "\n");*/
+	
 		switch(READ_BYTE()){
 			case OP_JMP: {
 				int16_t offset = READ_SHORT();
@@ -300,7 +308,8 @@ static InterpretResult run() {
 			} break;
 			case OP_JMP_FALSE: ;
 				int16_t offset = READ_SHORT();
-				if(isFalsey(peek(0))) vm.ip += offset;
+				Value boolVal = pop();
+				if(isFalsey(boolVal)) vm.ip += offset;
 				break;
 			case OP_LIMIT: ;
 				uint32_t lowerBound = readInteger();
@@ -372,7 +381,7 @@ static InterpretResult run() {
 			case OP_DEF_LOCAL: {
 				uint32_t stackIndex = readInteger();
 				*(vm.stackFrames->stackOffset+stackIndex) = peek(0);
-				push(BOOL_VAL(true));
+				//push(BOOL_VAL(true));
 			} break;
 			case OP_POP:
 				pop();

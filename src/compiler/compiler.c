@@ -522,20 +522,64 @@ static void patchJump(int jumpIndex) {
 	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
 }
 
-static void jumpTo(int opIndex) {
+static void jumpTo(uint8_t opcode, int opIndex) {
 	Chunk* chunk = currentChunk();
-	emitByte(OP_JMP);
+	emitByte(opcode);
 	int16_t offset = opIndex - chunk->count;
 	emitByte((offset >> 8) & 0xFF);
 	emitByte(offset & 0xFF);
 }
 
+static int32_t resolveLocal(TK*id);
+static int32_t latestLocal();
+static void markInitialized();
+
 static void repeatStatement() {
+	uint32_t counterLocalIndex = 0;
+	if(parser.current.type == TK_ID){
+		advance();
+		if(parser.current.type == TK_TO){
+			int localIndex = resolveLocal(&parser.previous);
+
+			if(localIndex == -1){
+				addLocal(currentCompiler(), parser.previous);
+
+				emitConstant(NUM_VAL(0));
+	//			emitBundle(OP_DEF_LOCAL, latestLocal());
+	//			emitByte(OP_POP);
+
+				markInitialized();
+				counterLocalIndex = latestLocal();
+			}else{
+				counterLocalIndex = localIndex;
+			}
+		}
+	}else{
+		counterLocalIndex = latestLocal()+1;
+		emitConstant(NUM_VAL(0));
+		currentCompiler()->localCount += 1;
+	}
+	advance();
 	expression();
-	int initialJumpIndex = emitJump(OP_JMP_CNT);
+	++currentCompiler()->localCount;
+	endLine();
+
+	int initialJumpIndex = currentChunk()->count-2;
 	block();	
-	jumpTo(initialJumpIndex-3);	
-	patchJump(initialJumpIndex);	
+
+	emitConstant(NUM_VAL(1));
+	emitBundle(OP_GET_LOCAL, counterLocalIndex);
+	emitByte(OP_ADD);
+	emitBundle(OP_DEF_LOCAL, counterLocalIndex);
+	emitByte(OP_POP);
+	
+	emitBundle(OP_GET_LOCAL,counterLocalIndex);
+	emitBundle(OP_GET_LOCAL, counterLocalIndex + 1);
+	emitByte(OP_EQUALS);
+	
+	jumpTo(OP_JMP_FALSE, initialJumpIndex);	
+	emitBytes(OP_POP, OP_POP);
+	--currentCompiler()->localCount;
 }
 
 static void drawStatement() {
@@ -559,7 +603,6 @@ static void drawStatement() {
 	emitByte(OP_DRAW);
 }
 
-static int32_t resolveLocal(TK*id);
 
 static void inherit(ObjChunk* currentChunk) {
 	if(currentChunk){
@@ -957,6 +1000,10 @@ static int32_t resolveLocal(TK*id){
 		}
 	}
 	return (int32_t) -1;
+}
+
+static int32_t latestLocal(){
+	return currentCompiler()->localCount-1;
 }
 
 static void namedLocal(TK* id, bool canAssign, uint32_t index){

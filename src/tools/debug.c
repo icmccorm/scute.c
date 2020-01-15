@@ -15,6 +15,7 @@ void printChunk(Chunk* chunk, const char* name) {
 static int tripleInstruction(const char* name, Chunk* chunk, int offset);
 static int simpleInstruction(const char* name, int offset);
 static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset);
+static int embeddedInstruction(const char* name, Chunk* chunk, int offset);
 static int jumpInstruction(const char* name, Chunk* chunk, int offset);
 static int limitInstruction(const char* name, Chunk* chunk, int offset);
 static int scopeInstruction(const char* name, Chunk* chunk, int offset);
@@ -74,9 +75,9 @@ int printInstruction(Chunk* chunk, int offset){
 		case OP_GET_GLOBAL:
 			return embeddedValueInstruction("OP_GET_GLOBAL", chunk, offset);
 		case OP_DEF_LOCAL:
-			return embeddedValueInstruction("OP_DEF_LOCAL", chunk, offset);
+			return embeddedInstruction("OP_DEF_LOCAL", chunk, offset);
 		case OP_GET_LOCAL:
-			return embeddedValueInstruction("OP_GET_LOCAL", chunk, offset);
+			return embeddedInstruction("OP_GET_LOCAL", chunk, offset);
 		case OP_DEF_SCOPE:
 			return tripleInstruction("OP_DEF_SCOPE", chunk, offset);
 		case OP_GET_SCOPE:
@@ -151,6 +152,16 @@ static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset){
 	offset = offset + 1 + numBytes;
 	print(O_DEBUG, "%-16s %4d ", name, valIndex);
 	printValue(O_DEBUG, chunk->constants.values[valIndex]);
+	print(O_DEBUG, "\n");
+	return offset + 1;
+}
+
+static int embeddedInstruction(const char* name, Chunk* chunk, int offset){
+	uint8_t numBytes = chunk->code[offset + 1];
+	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
+
+	offset = offset + 1 + numBytes;
+	print(O_DEBUG, "%-16s %4d ", name, valIndex);
 	print(O_DEBUG, "\n");
 	return offset + 1;
 }
