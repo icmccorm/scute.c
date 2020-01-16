@@ -10,7 +10,7 @@ void printChunk(Chunk* chunk, const char* name) {
 	for (int offset = 0; offset < chunk->count;) {
 		offset = printInstruction(chunk, offset);
 	}
-	if(name != NULL) print(O_DEBUG, "======");
+	if(name != NULL) print(O_DEBUG, "======\n");
 }
 static int tripleInstruction(const char* name, Chunk* chunk, int offset);
 static int simpleInstruction(const char* name, int offset);

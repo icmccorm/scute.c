@@ -533,15 +533,24 @@ static void jumpTo(uint8_t opcode, int opIndex) {
 	emitByte(offset & 0xFF);
 }
 
+static void internGlobal(TK* id){
+	insert(currentResult()->globals, getTokenStringObject(id), NULL_VAL());
+}
+
 static int32_t resolveLocal(TK*id);
 static int32_t latestLocal();
 static void markInitialized();
+static void namedVariable(TK* id, bool canAssign);
+static bool isInitialized(TK* id);
 
 static void repeatStatement() {
 	bool variableDeclared = false;
 	uint32_t counterLocalIndex = 0;
+	int initialJumpIndex = 0;
 	if(parser.current.type == TK_ID){
 		advance();
+		TK firstId = parser.previous;
+		
 		if(parser.current.type == TK_TO){
 			int localIndex = resolveLocal(&parser.previous);
 
@@ -553,26 +562,54 @@ static void repeatStatement() {
 			}else{
 				counterLocalIndex = localIndex;
 			}
+			advance();
 
+			if(parser.current.type == TK_ID){
+				TK maxId = parser.current;
+				if(!isInitialized(&maxId)){
+					errorAtCurrent("Upper bound identifier is NULL.");
+				}
+				expression();
+				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+				endLine();		
+				initialJumpIndex = currentChunk()->count-2;
+				emitBundle(OP_GET_LOCAL,counterLocalIndex);
+				namedVariable(&maxId, false);
+				
+			}else if (parser.current.type == TK_INTEGER){
+				expression();
+				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+				endLine();		
+				initialJumpIndex = currentChunk()->count-2;
+				emitBundle(OP_GET_LOCAL,counterLocalIndex);
+				emitBundle(OP_GET_LOCAL,maxRangeLocalIndex);
+			}else{
+				errorAtCurrent("Expected an integer or a defined identifier.");
+			}
 		}else{
-			endLine();
+			if(!isInitialized(&firstId)){
+				errorAt(&firstId, "Upper bound identifier is NULL.");
+			}
+			counterLocalIndex = addDummyLocal(currentCompiler());
+			emitConstant(NUM_VAL(0));
+			endLine();		
+			initialJumpIndex = currentChunk()->count-2;
+			emitBundle(OP_GET_LOCAL,counterLocalIndex);
+			namedVariable(&firstId, false);
 		}
+
 	}else{
-		counterLocalIndex = addDummyLocal(currentCompiler());
 		emitConstant(NUM_VAL(0));
+		counterLocalIndex = addDummyLocal(currentCompiler());
+		expression();
+		endLine();
+		int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+		initialJumpIndex = currentChunk()->count-2;
+		emitBundle(OP_GET_LOCAL,counterLocalIndex);
+		emitBundle(OP_GET_LOCAL, maxRangeLocalIndex);		
 	}
 
-	advance();
-	expression();
-	endLine();
-
-	int maxRangeLocalIndex = addDummyLocal(currentCompiler());
-
-	int initialJumpIndex = currentChunk()->count-2;
-	emitBundle(OP_GET_LOCAL,counterLocalIndex);
-	emitBundle(OP_GET_LOCAL, maxRangeLocalIndex);
 	emitByte(OP_LESS);
-
 	uint32_t jmpFalseLocation = emitJump(OP_JMP_FALSE);
 
 	indentedBlock();	
@@ -585,7 +622,7 @@ static void repeatStatement() {
 	emitByte(OP_POP);
 
 	jumpTo(OP_JMP, initialJumpIndex);
-    patchJump(jmpFalseLocation);
+	patchJump(jmpFalseLocation);
 	emitBytes(OP_POP, OP_POP);
 	currentCompiler()->localCount -= 2;
 }
@@ -723,7 +760,7 @@ static void defStatement() {
 
 	}else{
 		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
-	//	insert(currentResult()->globals, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
+		internGlobal(&idToken);
 	}
 }
 
@@ -1009,7 +1046,6 @@ static int32_t resolveLocal(TK*id){
 static int32_t latestLocal(){
 	return currentCompiler()->localCount-1;
 }
-
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
@@ -1023,9 +1059,19 @@ static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
 		expression();
 		emitBundle(OP_DEF_GLOBAL, index);
+		internGlobal(id);
 	}else{
 		emitBundle(OP_GET_GLOBAL, index);
 	}
+}
+
+
+static bool isGloballyDefined(TK* id){
+	return findKey(currentResult()->globals, id->start, id->length) != NULL;
+}
+
+static bool isInitialized(TK* id){
+	return isGloballyDefined(id) || (resolveLocal(id) >= 0);
 }
 
 static void namedVariable(TK* id, bool canAssign){

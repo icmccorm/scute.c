@@ -64,7 +64,7 @@ void printObject(OutType out, Value value){
 			print(out, "<chunk>");
 			print(out, "\n------------\n");
 			printChunk(AS_CHUNK(value)->chunk, NULL);
-			print(out, "------------");
+			print(out, "------------\n");
 			break;
 		case OBJ_INST:
 			printMap(O_OUT, AS_INST(value)->map, 0);
