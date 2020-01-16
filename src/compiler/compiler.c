@@ -547,10 +547,7 @@ static void repeatStatement() {
 
 			if(localIndex == -1){
 				counterLocalIndex = addLocal(currentCompiler(), parser.previous);
-
 				emitConstant(NUM_VAL(0));
-				emitBundle(OP_DEF_LOCAL, counterLocalIndex);
-
 				markInitialized();
 
 			}else{
@@ -563,7 +560,6 @@ static void repeatStatement() {
 	}else{
 		counterLocalIndex = addDummyLocal(currentCompiler());
 		emitConstant(NUM_VAL(0));
-		emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 	}
 
 	advance();
@@ -571,7 +567,6 @@ static void repeatStatement() {
 	endLine();
 
 	int maxRangeLocalIndex = addDummyLocal(currentCompiler());
-	emitBundle(OP_DEF_LOCAL, maxRangeLocalIndex);
 
 	int initialJumpIndex = currentChunk()->count-2;
 	emitBundle(OP_GET_LOCAL,counterLocalIndex);
@@ -593,7 +588,6 @@ static void repeatStatement() {
     patchJump(jmpFalseLocation);
 	emitBytes(OP_POP, OP_POP);
 	currentCompiler()->localCount -= 2;
-
 }
 
 static void drawStatement() {

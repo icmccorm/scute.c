@@ -11,6 +11,8 @@
 #include "output.h"
 #include "package.h"
 
+bool DEBUG_STACK = false;
+
 static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
 	
@@ -58,11 +60,25 @@ static void runFile(const char* path){
 }
 
 int main(int argc, const char* argv[]){
-	if(argc == 2) {
-		runFile(argv[1]);
-	} else {
-		print(O_ERR, "Usage: scute [path]\n");
-		exit(64);
+	const char* sFlag = "-s";
+
+	switch(argc){
+		case 2: ;
+			runFile(argv[1]);
+			break;
+		case 3: ;
+			const char* flag = argv[2];
+			if(memcmp(sFlag, flag, 2) == 0){
+				DEBUG_STACK = true;
+				runFile(argv[1]);
+			}else{
+				print(O_ERR, "Usage: scute [path] [-s]\n");
+			}
+			break;
+		default: ;
+			print(O_ERR, "Usage: scute [path] [-s]\n");
+			exit(64);
+			break;
 	}
 	return 0;
 }

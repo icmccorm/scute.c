@@ -164,15 +164,6 @@ static Obj* valueToObject(OBJType objType, Value val){
 
 static InterpretResult run() {
 
-#ifdef DEBUG
-	for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
-		print(O_DEBUG, "[ ");
-		printValue(O_DEBUG, *slot);
-		print(O_DEBUG, " ]");
-	}
-	print(O_DEBUG, "\n");
-#endif
-
 #define READ_BYTE() (*vm.ip++)
 #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
 #define READ_CONSTANT() (currentChunk()->constants.values[readInteger()])
@@ -191,7 +182,16 @@ static InterpretResult run() {
 	for(;;) {
 		Value a;
 		Value b;
-
+		#ifdef DEBUG
+			if(DEBUG_STACK){
+				for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
+					print(O_DEBUG, "[ ");
+					printValue(O_DEBUG, *slot);
+					print(O_DEBUG, " ]");
+				}
+				print(O_DEBUG, "\n");
+			}
+		#endif
 		switch(READ_BYTE()){
 			case OP_JMP: {
 				int16_t offset = READ_SHORT();

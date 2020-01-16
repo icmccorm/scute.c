@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+extern bool DEBUG_STACK;
+
 typedef enum {
 	INTERPRET_OK,
 	INTERPRET_COMPILE_ERROR,
