@@ -21,6 +21,12 @@ static bool isDeleted(HashEntry* entry){
 	return entry->key == NULL && AS_BOOL(entry->value);
 }
 
+bool shouldGrow(HashMap* map){
+	if(map->capacity == 0) return true;
+	float ratio = (float) map->numEntries/map->capacity;
+	return ratio > 0.75;
+}
+
 void grow(HashMap* map){
 	HashEntry* rehashed = NULL;
 	int oldCapacity = map->capacity;
@@ -71,7 +77,7 @@ static HashEntry* includes(HashMap* map, ObjString* key){
 }
 
 HashEntry* insert(HashMap* map, ObjString* key, Value value){
-	if(map->numEntries + 1 > map->capacity) grow(map);
+	if(shouldGrow(map) || map->capacity == 0) grow(map);
 	HashEntry* spot = includes(map, key);
 	spot->key = key;
 	spot->value = value;
@@ -104,10 +110,11 @@ ObjString* findKey(HashMap* map, char* chars, int length){
 	uint32_t hash = hashFunction(chars, length);
 	uint32_t index = hash % map->capacity;
 
+	int capacityCount = 0;
 	while(map->entries[index].key != NULL ){
 		HashEntry current = map->entries[index];
 
-		if(!isDeleted(&current) && hash == current.key->hash){
+		if(!isDeleted(&current) && hash == current.key->hash && capacityCount < map->capacity){
 			int result = (int) memcmp(current.key->chars, chars, length);
 			if(result == 0) {
 				return current.key;
@@ -115,6 +122,7 @@ ObjString* findKey(HashMap* map, char* chars, int length){
 		}
 		
 		index = (index + 1) % map->capacity;
+		++capacityCount;
 	}
 	return NULL;
 }
