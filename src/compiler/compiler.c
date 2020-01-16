@@ -99,7 +99,7 @@ static void enterScope(){
 }
 
 static void exitScope(){
-	currentCompiler()->scopeDepth++;
+	currentCompiler()->scopeDepth--;
 }
 
 CompilePackage* currentResult(){
@@ -535,6 +535,8 @@ static int32_t latestLocal();
 static void markInitialized();
 
 static void repeatStatement() {
+	enterScope();
+	bool variableDeclared = false;
 	uint32_t counterLocalIndex = 0;
 	if(parser.current.type == TK_ID){
 		advance();
@@ -542,29 +544,38 @@ static void repeatStatement() {
 			int localIndex = resolveLocal(&parser.previous);
 
 			if(localIndex == -1){
-				addLocal(currentCompiler(), parser.previous);
+				counterLocalIndex = addLocal(currentCompiler(), parser.previous);
+
 				emitConstant(NUM_VAL(0));
+				emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 
 				markInitialized();
-				counterLocalIndex = latestLocal();
+
 			}else{
 				counterLocalIndex = localIndex;
 			}
+
+		}else{
+			endLine();
 		}
 	}else{
-		counterLocalIndex = latestLocal()+1;
+		counterLocalIndex = addDummyLocal(currentCompiler());
 		emitConstant(NUM_VAL(0));
-		currentCompiler()->localCount += 1;
+		emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 	}
+
 	advance();
 	expression();
-	++currentCompiler()->localCount;
 	endLine();
-	int initialJumpIndex = currentChunk()->count-2;
 
+	int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+	emitBundle(OP_DEF_LOCAL, maxRangeLocalIndex);
+
+	int initialJumpIndex = currentChunk()->count-2;
 	emitBundle(OP_GET_LOCAL,counterLocalIndex);
-	emitBundle(OP_GET_LOCAL, counterLocalIndex + 1);
+	emitBundle(OP_GET_LOCAL, maxRangeLocalIndex);
 	emitByte(OP_LESS);
+
 	uint32_t jmpFalseLocation = emitJump(OP_JMP_FALSE);
 
 	block();	
@@ -574,16 +585,14 @@ static void repeatStatement() {
 	emitByte(OP_ADD);
 	emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 	emitByte(OP_POP);
-	/*
-	emitBundle(OP_GET_LOCAL,counterLocalIndex);
-	emitBundle(OP_GET_LOCAL, counterLocalIndex + 1);
-	emitByte(OP_GREATER);*/
-	
+
 	jumpTo(OP_JMP, initialJumpIndex);
-//	jumpTo(OP_JMP_FALSE, initialJumpIndex);	
     patchJump(jmpFalseLocation);
+
 	emitBytes(OP_POP, OP_POP);
 	--currentCompiler()->localCount;
+
+	exitScope();
 }
 
 static void drawStatement() {
@@ -1084,6 +1093,7 @@ static void assignStatement(bool enforceGlobal){
 		addLocal(currentCompiler(), idToken);
 		parseAssignment();
 		markInitialized(/*idToken*/);
+		emitBundle(OP_DEF_LOCAL, latestLocal());
 	}else{
 		parseAssignment();
 		

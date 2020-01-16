@@ -2,7 +2,7 @@
 #include "memory.h"
 #include "compiler_defs.h"
 
-void addLocal(Compiler* compiler, TK idName){
+uint32_t addLocal(Compiler* compiler, TK idName){
     if(compiler->localCount + 1 > compiler->scopeCapacity){
         int oldCapacity = compiler->scopeCapacity;
 		compiler->scopeCapacity = GROW_CAPACITY(oldCapacity);
@@ -12,6 +12,28 @@ void addLocal(Compiler* compiler, TK idName){
     target->depth = -1;
     target->id = idName;
     ++compiler->localCount;
+	return compiler->localCount-1;
+}
+
+uint32_t addDummyLocal(Compiler* compiler){
+	TK nullToken;
+	nullToken.start = NULL;
+	nullToken.length = 0;
+	nullToken.line = -1;
+	nullToken.length = 0;
+	nullToken.type = -1;
+	nullToken.indent = -1;
+
+    if(compiler->localCount + 1 > compiler->scopeCapacity){
+        int oldCapacity = compiler->scopeCapacity;
+		compiler->scopeCapacity = GROW_CAPACITY(oldCapacity);
+		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->scopeCapacity);
+    }
+    Local* target = &(compiler->locals[compiler->localCount]);
+    target->depth = compiler->scopeDepth;
+	target->id = nullToken;
+    ++compiler->localCount;	
+	return compiler->localCount-1;
 }
 
 
