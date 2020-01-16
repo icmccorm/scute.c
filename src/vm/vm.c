@@ -32,8 +32,14 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.stackSize = 0;
 	vm.stackFrameCount = 0;
 	vm.currentScope = NULL;
-	vm.currentAnimationFrame = NULL;
+
+	vm.shapeCapacity = 0;
+	vm.shapeCount = 0;
+	vm.shapeStack = NULL;
+	vm.shapeStackTop = NULL;
+
 	vm.ip = NULL;	
+
 	resetStack();
 	initMap(&vm.globals);
   	mergeMaps(package->globals, vm.globals);
@@ -43,6 +49,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 void freeVM() {
 	freeMap(vm.globals);
 	freeObjects(vm.runtimeObjects);
+	FREE_ARRAY(ObjInstance*, vm.shapeStack, vm.shapeCapacity);
 	vm.chunk = NULL;
 }
 
@@ -279,8 +286,7 @@ static InterpretResult run() {
 				Obj* toObject = valueToObject(OBJ_INST, drawVal);
 				if(toObject){
 					ObjInstance* shape = AS_INST(drawVal);
-					shape->nextShape = vm.currentAnimationFrame;
-					vm.currentAnimationFrame = shape;
+					pushShape(shape);
 				}else{
 					runtimeError("Only shapes and shape instances can be drawn.");
 					return INTERPRET_RUNTIME_ERROR;
@@ -359,7 +365,7 @@ static InterpretResult run() {
 					ObjString* setString = AS_STRING(setVal);
 					insert(superScope->map, setString, expr);
 				}
-				push(BOOL_VAL(true));
+				push(expr);
 			} break;
 			case OP_LOAD_INSTANCE: {
 				ObjInstance* currentInstance = currentStackFrame()->instanceObj;
@@ -494,13 +500,13 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	if(index <= 0){
 		initVM(code, index);
 		result = run();
-		renderFrame(vm.currentAnimationFrame);
+		renderFrame();
 		freeVM();
 	}else{
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
 			result = run();
-			renderFrame(vm.currentAnimationFrame);
+			renderFrame();
 			freeVM();
 		}
 	}

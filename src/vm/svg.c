@@ -82,10 +82,29 @@ void drawShape(HashMap* shapeMap, TKType type){
 	#endif
 }
 
-void renderFrame(ObjInstance* close){
-	ObjInstance* current = close;
-	while(current != NULL){
-		drawShape(current->map, current->instanceType);
-		current = current->nextShape;
+
+ObjInstance* popShape(){
+	--vm.shapeCount;
+	--vm.shapeStackTop;
+	return *vm.shapeStackTop;
+}
+
+void pushShape(ObjInstance* close){
+	if(vm.shapeCount + 1 > vm.shapeCapacity){
+
+		int oldCapacity = vm.shapeCapacity;
+		vm.shapeCapacity = GROW_CAPACITY(oldCapacity);
+		vm.shapeStack = GROW_ARRAY(vm.shapeStack, ObjInstance*, oldCapacity, vm.shapeCapacity);
+		if(oldCapacity == 0) vm.shapeStackTop = vm.shapeStack;
+	}
+	vm.shapeStack[vm.shapeCount] = close;
+	++vm.shapeStackTop;
+	++vm.shapeCount;
+}
+
+void renderFrame(){
+	while(vm.shapeCount > 0){
+		ObjInstance* top = popShape();
+		drawShape(top->map, top->instanceType);
 	}
 }

@@ -31,7 +31,11 @@ typedef struct {
 	Value* stackTop;
 	HashMap* globals;
 	Obj* runtimeObjects;
-	ObjInstance* currentAnimationFrame;
+	
+	int shapeCount;
+	int shapeCapacity;
+	ObjInstance** shapeStack;
+	ObjInstance** shapeStackTop;
 	Value* stackBottom;
 	ObjInstance* currentScope;
 	int frameIndex;

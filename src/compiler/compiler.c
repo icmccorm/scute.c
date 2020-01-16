@@ -734,6 +734,7 @@ static void defStatement() {
 				advance();
 				newChunk->superChunk = fromExpression();
 			}
+			break;
 		case TK_FROM:
 			advance();
 			newChunk->superChunk = fromExpression();
@@ -741,6 +742,7 @@ static void defStatement() {
 				advance();
 				asExpression();
 			}
+			break;
 		case TK_NEWLINE:
 			break;
 		default:

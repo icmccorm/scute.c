@@ -29,6 +29,10 @@ extern void paintShape();
 #endif
 
 void drawShape(HashMap* shapeMap, TKType type);
-void renderFrame(ObjInstance* close);
+void renderFrame();
+void pushShape(ObjInstance* close);
+ObjInstance* popShape();
+
+
 
 #endif
