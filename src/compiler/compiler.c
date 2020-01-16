@@ -494,14 +494,13 @@ static int getIndentation() {
 }
 
 static void indentedBlock() {
-	enterScope();
+	int currentScopeDepth = currentCompiler()->scopeDepth;
 	int initialLocalCount = currentCompiler()->localCount;
 	while(parser.current.type != TK_EOF 
-			&& getIndentation() >= currentCompiler()->scopeDepth
+			&& getIndentation() >= currentScopeDepth
 		){
 		statement();
 	}
-	exitScope();
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
 			&& currentComp->locals[currentComp->localCount-1].depth 
@@ -612,7 +611,9 @@ static void repeatStatement() {
 	emitByte(OP_LESS);
 	uint32_t jmpFalseLocation = emitJump(OP_JMP_FALSE);
 
+	enterScope();
 	indentedBlock();	
+	exitScope();
 
 	emitConstant(NUM_VAL(1));
 	emitBundle(OP_GET_LOCAL, counterLocalIndex);
@@ -704,7 +705,6 @@ static void defStatement() {
 	ObjChunk* newChunk = allocateChunkObject(funcName);
 	compiler = enterCompilationScope(newChunk);
 
-
 	//TODO: fix parameter overflow
 	uint8_t paramCount = 0;
 	if(parser.current.type == TK_L_PAREN){
@@ -712,11 +712,13 @@ static void defStatement() {
 		if(parser.current.type != TK_R_PAREN){
 			consume(TK_ID, "Expected an identifier.");
 			addLocal(currentCompiler(), parser.previous);
+			markInitialized();
 			++paramCount;
 			while(parser.current.type == TK_COMMA){
 				advance();
 				consume(TK_ID, "Expected an identifier.");
 				addLocal(currentCompiler(), parser.previous);
+				markInitialized();
 				++paramCount;
 			}
 		}
@@ -782,7 +784,9 @@ static void frameStatement() {
 	int jumpIndex = emitLimit(currentResult()->lowerLimit, upperVal);
 	endLine();
 
+	enterScope();
 	indentedBlock();
+	exitScope();
 
 	patchJump(jumpIndex);
 }
