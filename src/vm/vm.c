@@ -248,7 +248,8 @@ static InterpretResult run() {
 
 							Value peekVal = peek(0);
 							if(IS_INST(peekVal)) {
-								ObjInstance* super = AS_INST(peekVal);
+
+								ObjInstance* super = AS_INST(pop());
 								ObjInstance* current = currentInstance();
 								mergeMaps(super->map, current->map);
 							}

@@ -89,8 +89,11 @@ static void emitReturn(){
 static Compiler* exitCompilationScope(){
 	Compiler* toFree = currentCompiler();
 	Compiler* superComp = currentCompiler()->super;
-	FREE(Compiler, toFree);
+	for(int i = 0; i<currentChunkObject()->numParameters; ++i){
+		emitByte(OP_POP);
+	}
 	emitReturn();
+	FREE(Compiler, toFree);
 	return superComp;
 }
 
@@ -650,20 +653,13 @@ static void drawStatement() {
 }
 
 
-static void inherit(ObjChunk* currentChunk) {
+static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 	if(currentChunk){
-		inherit(currentChunk->superChunk);
-		int numParameters = currentChunk->numParameters;
-		while(parser.current.type != TK_R_PAREN && numParameters > 0){
-			expression();
-			--numParameters;
-			if(numParameters > 0){
-				consume(TK_COMMA, "Expected ','");
-			}
-		}
-		if(numParameters > 0) errorAtCurrent("Expected additional parameters.");
+		inherit(currentChunk->superChunk, numParams);
+		int paramsConsumed = fmin(*numParams, currentChunk->numParameters);
+		*numParams = *numParams - paramsConsumed;
 		emitConstant(OBJ_VAL(currentChunk));
-		emitBytes(OP_CALL, currentChunk->numParameters);
+		emitBytes(OP_CALL, paramsConsumed);
 	}
 }
 
@@ -1071,7 +1067,6 @@ static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 	}
 }
 
-
 static bool isGloballyDefined(TK* id){
 	return findKey(currentResult()->globals, id->start, id->length) != NULL;
 }
@@ -1095,12 +1090,12 @@ static void variable(bool canAssign){
 	if(parser.current.type == TK_L_PAREN){
 		TK funcName = parser.previous;
 		Value classValue = getValue(currentCompiler()->classes, getTokenStringObject(&funcName));
+		uint8_t numParams = 0;
 		if(!IS_NULL(classValue)){
-			advance();
-			inherit(AS_CHUNK(classValue));
-			consume(TK_R_PAREN, "Expected ')'.");
+			numParams = emitParams();
+			inherit(AS_CHUNK(classValue), &numParams);
 		}else{
-			uint8_t numParams = emitParams();
+			numParams = emitParams();
 			namedVariable(&funcName, canAssign);
 			emitBytes(OP_CALL, numParams);
 		}
