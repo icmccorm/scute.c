@@ -191,13 +191,7 @@ static InterpretResult run() {
 	for(;;) {
 		Value a;
 		Value b;
-		/*for(Value* slot = vm.stack; slot < vm.stackTop; slot++){
-			print(O_DEBUG, "[ ");
-			printValue(O_DEBUG, *slot);
-			print(O_DEBUG, " ]");
-		}
-		print(O_DEBUG, "\n");*/
-	
+
 		switch(READ_BYTE()){
 			case OP_JMP: {
 				int16_t offset = READ_SHORT();
@@ -327,7 +321,6 @@ static InterpretResult run() {
 				ObjString* setString = AS_STRING(READ_CONSTANT());	
 				Value expr = pop();
 				insert(vm.globals, setString, expr);
-				push(BOOL_VAL(true));
 			} break;
 			case OP_GET_SCOPE: {
 				Value scopeVal = pop();
@@ -381,7 +374,6 @@ static InterpretResult run() {
 			case OP_DEF_LOCAL: {
 				uint32_t stackIndex = readInteger();
 				*(vm.stackFrames->stackOffset+stackIndex) = peek(0);
-				//push(BOOL_VAL(true));
 			} break;
 			case OP_POP:
 				pop();

@@ -225,7 +225,7 @@ static uint32_t getObjectIndex(Obj* obj){
 }
 
 static void expression();
-static void block();
+static void indentedBlock();
 
 static void and_(bool canAssign);
 static void binary(bool canAssign);
@@ -493,14 +493,17 @@ static int getIndentation() {
 	return indentCount;
 }
 
-static void block() {
+static void indentedBlock() {
+	enterScope();
+	int initialLocalCount = currentCompiler()->localCount;
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentCompiler()->scopeDepth
 		){
 		statement();
 	}
+	exitScope();
 	Compiler* currentComp = currentCompiler();
-	while(currentComp->localCount > 0
+	while(currentComp->localCount > initialLocalCount
 			&& currentComp->locals[currentComp->localCount-1].depth 
 				> currentComp->scopeDepth){
 		emitByte(OP_POP);
@@ -535,7 +538,6 @@ static int32_t latestLocal();
 static void markInitialized();
 
 static void repeatStatement() {
-	enterScope();
 	bool variableDeclared = false;
 	uint32_t counterLocalIndex = 0;
 	if(parser.current.type == TK_ID){
@@ -578,21 +580,20 @@ static void repeatStatement() {
 
 	uint32_t jmpFalseLocation = emitJump(OP_JMP_FALSE);
 
-	block();	
+	indentedBlock();	
 
 	emitConstant(NUM_VAL(1));
 	emitBundle(OP_GET_LOCAL, counterLocalIndex);
 	emitByte(OP_ADD);
+
 	emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 	emitByte(OP_POP);
 
 	jumpTo(OP_JMP, initialJumpIndex);
     patchJump(jmpFalseLocation);
-
 	emitBytes(OP_POP, OP_POP);
-	--currentCompiler()->localCount;
+	currentCompiler()->localCount -= 2;
 
-	exitScope();
 }
 
 static void drawStatement() {
@@ -604,7 +605,7 @@ static void drawStatement() {
 		chunkObj->instanceType = parser.previous.subtype;
 
 		compiler = enterCompilationScope(chunkObj);
-		block();
+		indentedBlock();
 		compiler = exitCompilationScope();
 
 		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
@@ -715,7 +716,7 @@ static void defStatement() {
 	}
 
 	endLine();
-	block();
+	indentedBlock();
 	compiler = exitCompilationScope();
 
 	if(newChunk->chunkType == CK_CONSTR) {
@@ -725,11 +726,9 @@ static void defStatement() {
 	emitBundle(OP_CONSTANT, scopeIndex);
 	if(currentCompiler()->scopeDepth > 0){	
 		emitBundle(OP_DEF_LOCAL, resolveLocal(&idToken));
-		emitByte(OP_POP);
 
 	}else{
 		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
-		emitByte(OP_POP);
 	//	insert(currentResult()->globals, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
 	}
 }
@@ -752,9 +751,7 @@ static void frameStatement() {
 	int jumpIndex = emitLimit(currentResult()->lowerLimit, upperVal);
 	endLine();
 
-	enterScope();
-	block();
-	exitScope();
+	indentedBlock();
 
 	patchJump(jumpIndex);
 }
