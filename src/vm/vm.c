@@ -23,7 +23,7 @@ static void resetStack(){
 	vm.stackTop = vm.stack;
 }
 
-static void pushStackFrame(ObjChunk* funcChunk);
+static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams);
 static uint8_t* popStackFrame();
 
 void initVM(CompilePackage* package, int frameIndex) {
@@ -42,7 +42,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	resetStack();
 	initMap(&vm.globals);
   	mergeMaps(package->globals, vm.globals);
-	pushStackFrame(package->compiled);
+	pushStackFrame(package->compiled, NULL, 0);
 }
 
 void freeVM() {
@@ -98,19 +98,19 @@ void runtimeError(char* format, ...){
 	resetStack();
 }
 
-static void pushStackFrame(ObjChunk* funcChunk){
+static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams){
 	StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
 	++vm.stackFrameCount;
 	
 	newFrame->chunkObj = funcChunk;
 
 	if(funcChunk->chunkType == CK_CONSTR){
-		newFrame->instanceObj = allocateInstance(NULL);
+		newFrame->instanceObj = allocateInstance(super);
 	}else{
 		newFrame->instanceObj = NULL;
 	}
 
-	newFrame->stackOffset = vm.stackTop - funcChunk->numParameters;
+	newFrame->stackOffset = vm.stackTop - numParams;
 	newFrame->returnTo = vm.ip;
 	vm.ip = funcChunk->chunk->code;
 }
@@ -269,15 +269,13 @@ static InterpretResult run() {
 
 						case OBJ_CHUNK: {
 							ObjChunk* chunkObj = (ObjChunk*) object;
-							pushStackFrame(chunkObj);
 
 							Value peekVal = peek(0);
+							ObjInstance* super = NULL;
 							if(IS_INST(peekVal)) {
-
-								ObjInstance* super = AS_INST(pop());
-								ObjInstance* current = currentInstance();
-								mergeMaps(super->map, current->map);
+								super = AS_INST(pop());
 							}
+							pushStackFrame(chunkObj, super, numParams);
 
 							for(int i = numParams; i< chunkObj->numParameters; ++i){
 								push(NULL_VAL());
@@ -386,12 +384,12 @@ static InterpretResult run() {
 			} break;	
 			case OP_GET_LOCAL: {
 				uint32_t stackIndex = readInteger();
-				Value val = *(vm.stackFrames->stackOffset+stackIndex);
+				Value val = *(currentStackFrame()->stackOffset+stackIndex);
 				push(val);
 			} break;
 			case OP_DEF_LOCAL: {
 				uint32_t stackIndex = readInteger();
-				*(vm.stackFrames->stackOffset+stackIndex) = peek(0);
+				*(currentStackFrame()->stackOffset+stackIndex) = peek(0);
 			} break;
 			case OP_POP:
 				pop();
