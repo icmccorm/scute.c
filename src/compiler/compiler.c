@@ -536,7 +536,7 @@ static void jumpTo(uint8_t opcode, int opIndex) {
 }
 
 static void internGlobal(TK* id){
-	insert(currentResult()->globals, getTokenStringObject(id), NULL_VAL());
+	add(currentResult()->globals, getTokenStringObject(id), NULL_VAL());
 }
 
 static int32_t resolveLocal(TK*id);
@@ -666,7 +666,8 @@ static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 static ObjChunk* fromExpression() {
 	consume(TK_ID, "Expected an identifier.");
 	TK superclassId = parser.previous;
-	Value superChunkVal = getValue(currentCompiler()->classes, getTokenStringObject(&superclassId));
+	ObjString* superclassStringObj = getTokenStringObject(&superclassId);
+	Value superChunkVal = getValue(currentCompiler()->classes, superclassStringObj);
 	ObjChunk* chunk = (ObjChunk*) AS_OBJ(superChunkVal);
 	if(!IS_NULL(superChunkVal)){
 		return AS_CHUNK(superChunkVal);
@@ -751,8 +752,9 @@ static void defStatement() {
 	compiler = exitCompilationScope();
 
 	if(newChunk->chunkType == CK_CONSTR) {
-		insert(currentCompiler()->classes, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
+		add(currentCompiler()->classes, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
 	}
+	
 	uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
 	emitBundle(OP_CONSTANT, scopeIndex);
 	if(currentCompiler()->scopeDepth > 0){	
@@ -948,7 +950,7 @@ static void constant(bool canAssign) {
 static void initNative(void* func, TK* id){
 	ObjString* nativeString = internString(id->start, id->length);
 	ObjNative* nativeObj = allocateNative(func);
-	insert(currentResult()->globals, nativeString, OBJ_VAL(nativeObj));
+	add(currentResult()->globals, nativeString, OBJ_VAL(nativeObj));
 }
 
 static void native(bool canAssign){
@@ -1009,6 +1011,23 @@ static void scopeDeref(bool canAssign){
 
 static void deref(bool canAssign){
 	while(parser.previous.type == TK_DEREF){
+		if(parser.current.type == TK_ID){
+			advance();
+			TK idToken = parser.previous;
+			
+			if(canAssign && match(TK_ASSIGN)){
+				expression();
+				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+			}else{
+				emitBundle(OP_DEREF, getStringObjectIndex(&parser.current));
+				advance();
+			}
+		}else{
+			errorAtCurrent("Expected an identifier.");
+		}
+	}
+	/*
+	while(parser.previous.type == TK_DEREF){
 		TK possibleID = parser.current;
 		if(possibleID.type == TK_ID){
 			advance();
@@ -1029,9 +1048,8 @@ static void deref(bool canAssign){
 				}
 			}
 		}else{
-			errorAtCurrent("Expected an identifier.");
 		}
-	}
+	}*/
 }
 
 static int32_t resolveLocal(TK*id){

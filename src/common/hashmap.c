@@ -23,27 +23,51 @@ static bool isDeleted(HashEntry* entry){
 
 bool shouldGrow(HashMap* map){
 	if(map->capacity == 0) return true;
+	if(map->numEntries == 0) return false;
 	float ratio = (float) map->numEntries/map->capacity;
 	return ratio > 0.75;
 }
 
 void grow(HashMap* map){
-	HashEntry* rehashed = NULL;
+	//#define GROW_ARRAY(array, type, oldCount, newCount)
 	int oldCapacity = map->capacity;
 	map->capacity = GROW_CAPACITY(map->capacity);
-	rehashed = GROW_ARRAY(rehashed, HashEntry, 0, map->capacity);
+
+	HashEntry* newBuckets = NULL;
+	newBuckets = GROW_ARRAY(newBuckets, HashEntry, 0, map->capacity);
 
 	for(int i = 0; i < map->capacity; ++i){
-		rehashed[i].key = NULL;
-		rehashed[i].value = NULL_VAL();
+		newBuckets[i].key = NULL;
+		newBuckets[i].value = NULL_VAL();
+		newBuckets[i].next = NULL;
 	}
-	HashEntry* current = map->first;
-	while(current != NULL){
-		insert(map, current->key, current->value);
-		current = current->next;
+
+	HashEntry* newFirst = NULL;
+	HashEntry* newPrevious = NULL;
+
+	if(map->numEntries > 0){
+		HashEntry* current = map->first;
+		while(current != NULL){
+			int hashIndex = current->key->hash % map->capacity;
+			while(newBuckets[hashIndex].key != NULL){
+				hashIndex = (hashIndex + 1) % map->capacity;
+			}
+			newBuckets[hashIndex].key = current->key;
+			newBuckets[hashIndex].value = current->value;
+			if(!newFirst){
+				newFirst = &newBuckets[hashIndex];
+				newPrevious = newFirst;
+			}else{
+				newPrevious->next = &newBuckets[hashIndex];
+				newPrevious = &newBuckets[hashIndex];
+			}
+			current = current->next;
+		}
 	}
 	FREE_ARRAY(HashEntry, map->entries, oldCapacity);
-	map->entries = rehashed;
+	map->first = newFirst;
+	map->previous = newPrevious;
+	map->entries = newBuckets;
 }
 
 void freeMap(HashMap* map){
@@ -64,39 +88,49 @@ int hashIndex(HashMap* map, ObjString* obj){
 	return obj->hash % map->capacity;
 }
 
-static HashEntry* includes(HashMap* map, ObjString* key){
-	if(map->capacity == 0) grow(map);
+static HashEntry* contains(HashMap* map, ObjString* key){
+	if(map->numEntries == 0) return NULL;
 	int index = hashIndex(map, key);
-	if(map->numEntries == 0) return &(map->entries[index]);
 
 	while(map->entries[index].key != NULL){
-		if(map->entries[index].key == key) return &(map->entries[index]);
+		ObjString* currentKey = map->entries[index].key;
+		if(currentKey == key) return &(map->entries[index]);
 		index = (index + 1) % map->capacity;
 	}
-	return &(map->entries[index]);
+	return NULL;
 }
 
-HashEntry* insert(HashMap* map, ObjString* key, Value value){
-	if(shouldGrow(map) || map->capacity == 0) grow(map);
-	HashEntry* spot = includes(map, key);
-	spot->key = key;
-	spot->value = value;
-	spot->next = NULL;
+void add(HashMap* map, ObjString* key, Value value){
+	if(shouldGrow(map)) grow(map);
+	int index = hashIndex(map, key);
 
 	if(map->numEntries == 0) {
-		map->first = spot;
+		map->entries[index].key = key;
+		map->entries[index].value = value;
+		++map->numEntries;
+
+		map->first = &map->entries[index];
 		map->previous = map->first;
 	}else{
-		map->previous->next = spot;
-		map->previous = spot;
+		while(map->entries[index].key != NULL && map->entries[index].key != key){
+			index = (index + 1) % map->capacity;
+		}
+		if(map->entries[index].key){
+			map->entries[index].value = value;
+		}else{
+			map->entries[index].key = key;
+			map->entries[index].value = value;
+			++map->numEntries;
+
+			map->previous->next = &map->entries[index];
+			map->previous = &map->entries[index];
+		}
 	}
-	++map->numEntries;
-	return spot;
 }
 
 Value getValue(HashMap* map, ObjString* key){
-	HashEntry* entry = includes(map, key);
-	if(entry->key != NULL){
+	HashEntry* entry = contains(map, key);
+	if(entry){
 		return entry->value;
 	}else{
 		return NULL_VAL();
@@ -127,15 +161,8 @@ ObjString* findKey(HashMap* map, char* chars, int length){
 	return NULL;
 }
 
-void set(HashMap* map, ObjString* key, Value value) {
-	HashEntry* entry = includes(map, key);
-	if(entry != NULL){
-		entry->value = value;
-	}
-}
-
 void delete(HashMap* map, ObjString* key){
-	HashEntry* entry = includes(map, key);
+	HashEntry* entry = contains(map, key);
 	if(entry != NULL){
 		entry->key = NULL;
 		entry->value = BOOL_VAL(true);
@@ -187,7 +214,7 @@ static void displayFullMap(HashMap* map){
 void mergeMaps(HashMap* super, HashMap* instance){
 	HashEntry* superEntry = super->first;
 	while(superEntry != NULL){
-		insert(instance, superEntry->key, superEntry->value);
+		add(instance, superEntry->key, superEntry->value);
 		superEntry = superEntry->next;
 	}
 }

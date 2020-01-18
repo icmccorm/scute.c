@@ -20,9 +20,10 @@ typedef struct {
 	HashEntry* previous;
 } HashMap;
 
+void add(HashMap* map, ObjString* key, Value value);
+
 void initMap(HashMap** map);
 void freeMap(HashMap* map);
-HashEntry* insert(HashMap* map, ObjString* key, Value value);
 Value getValue(HashMap* map, ObjString* key);
 void set(HashMap* map, ObjString* key, Value value);
 void grow(HashMap* map);

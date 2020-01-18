@@ -36,7 +36,6 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.shapeCapacity = 0;
 	vm.shapeCount = 0;
 	vm.shapeStack = NULL;
-	vm.shapeStackTop = NULL;
 
 	vm.ip = NULL;	
 
@@ -200,10 +199,35 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(READ_BYTE()){
+			case OP_DEF_INST: {
+				ObjString* memberId = AS_STRING(READ_CONSTANT());
+				Value expression = pop();
+				Value instanceVal = pop();
+				if(IS_INST(instanceVal)){
+					ObjInstance* inst = AS_INST(instanceVal);
+					add(inst->map, memberId, expression);
+				}else{
+					runtimeError("Property does not exist.");
+				}
+				} break;
+			case OP_DEREF: {
+				ObjString* memberId = AS_STRING(READ_CONSTANT());
+				Value instanceVal = pop();
+				if(IS_INST(instanceVal)){
+					ObjInstance* inst = AS_INST(instanceVal);
+					push(getValue(inst->map, memberId));
+				}else{
+					if(IS_NULL(instanceVal)){
+						runtimeError("Cannot dereference NULL.");
+					}else{
+						runtimeError("Can only dereference objects.");
+					}
+				}
+				} break;
 			case OP_JMP: {
 				int16_t offset = READ_SHORT();
 				vm.ip += offset;
-			} break;
+				} break;
 			case OP_JMP_CNT: {
 				Value repeatVal = pop();
 				uint16_t offset = READ_SHORT();
@@ -293,6 +317,7 @@ static InterpretResult run() {
 					return INTERPRET_RUNTIME_ERROR;
 				}
 			} break;
+			/*
 			case OP_DEREF: {
 				uint32_t valIndex = readInteger();
 				Value superString = CONSTANT(valIndex-1);
@@ -306,7 +331,7 @@ static InterpretResult run() {
 				ObjInstance* scope = (ObjInstance*) AS_OBJ(closeVal);
 				Value innerVal = getValue(scope->map, AS_STRING(idString));
 				push(innerVal);
-			} break;
+			} break;*/
 			case OP_JMP_FALSE: ;
 				int16_t offset = READ_SHORT();
 				Value boolVal = pop();
@@ -327,7 +352,7 @@ static InterpretResult run() {
 			case OP_DEF_GLOBAL: {
 				ObjString* setString = AS_STRING(READ_CONSTANT());	
 				Value expr = pop();
-				insert(vm.globals, setString, expr);
+				add(vm.globals, setString, expr);
 			} break;
 			case OP_GET_SCOPE: {
 				Value scopeVal = pop();
@@ -358,13 +383,13 @@ static InterpretResult run() {
 					ObjString* encloseString = AS_STRING(encloseVal);
 					ObjString* setString = AS_STRING(setVal);
 					ObjInstance* newScope = allocateInstance(NULL);
-					insert(newScope->map, setString, expr);
-					insert(vm.currentScope->map, encloseString, OBJ_VAL(newScope));
+					add(newScope->map, setString, expr);
+					add(vm.currentScope->map, encloseString, OBJ_VAL(newScope));
 
 				}else{
 					ObjInstance* superScope = AS_INST(scopeVal);
 					ObjString* setString = AS_STRING(setVal);
-					insert(superScope->map, setString, expr);
+					add(superScope->map, setString, expr);
 				}
 				push(expr);
 			} break;

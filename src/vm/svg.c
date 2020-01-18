@@ -84,21 +84,18 @@ void drawShape(HashMap* shapeMap, TKType type){
 
 
 ObjInstance* popShape(){
+	ObjInstance* latestShape = vm.shapeStack[vm.shapeCount-1];
 	--vm.shapeCount;
-	--vm.shapeStackTop;
-	return *vm.shapeStackTop;
+	return latestShape;
 }
 
 void pushShape(ObjInstance* close){
 	if(vm.shapeCount + 1 > vm.shapeCapacity){
-
 		int oldCapacity = vm.shapeCapacity;
 		vm.shapeCapacity = GROW_CAPACITY(oldCapacity);
 		vm.shapeStack = GROW_ARRAY(vm.shapeStack, ObjInstance*, oldCapacity, vm.shapeCapacity);
-		if(oldCapacity == 0) vm.shapeStackTop = vm.shapeStack;
 	}
 	vm.shapeStack[vm.shapeCount] = close;
-	++vm.shapeStackTop;
 	++vm.shapeCount;
 }
 

@@ -106,7 +106,7 @@ ObjString* allocateString(char* chars, int length){
 	obj->length = length;
 	obj->hash = hashFunction(chars, length);
 
-	insert(currentResult()->strings, obj, NULL_VAL());
+	add(currentResult()->strings, obj, NULL_VAL());
 	return obj;
 }
 
@@ -124,7 +124,7 @@ ObjInstance* allocateInstance(ObjInstance* super){
 
 		HashEntry* current = super->map->first;
 		while(current != NULL){
-			insert(close->map, current->key, current->value);
+			add(close->map, current->key, current->value);
 			current = current->next;
 		}
 	}else{

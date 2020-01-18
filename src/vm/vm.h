@@ -29,17 +29,18 @@ typedef struct {
 	int stackSize;
 	int stackFrameCount;
 	Value* stackTop;
+	Value* stackBottom;
+
 	HashMap* globals;
+
 	Obj* runtimeObjects;
 	
 	int shapeCount;
 	int shapeCapacity;
 	ObjInstance** shapeStack;
-	ObjInstance** shapeStackTop;
-	Value* stackBottom;
-	ObjInstance* currentScope;
 	int frameIndex;
-
+	
+	ObjInstance* currentScope;
 } VM;
 
 extern VM vm;

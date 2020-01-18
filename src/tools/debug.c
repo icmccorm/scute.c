@@ -102,6 +102,10 @@ int printInstruction(Chunk* chunk, int offset){
 			return paramInstruction("OP_POS", chunk, offset);
 		case OP_CALL:
 			return paramInstruction("OP_CALL", chunk, offset);
+		case OP_DEREF:
+			return embeddedValueInstruction("OP_DEREF", chunk, offset);
+		case OP_DEF_INST:
+			return embeddedInstruction("OP_DEF_INST", chunk, offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;
