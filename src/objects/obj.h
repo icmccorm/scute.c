@@ -11,8 +11,9 @@ ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);
 ObjNative* allocateNative(void* func);
 
-ObjColor* makeRGB(Value r, Value g, Value b);
-#define RGB(r, g, b) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b))))
+ObjColor* makeRGB(Value r, Value g, Value b, Value a);
+#define RGB(r, g, b) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b), NUM_VAL(1))))
+#define RGBA(r, g, b, a) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b), NUM_VAL(a))))
 
 //ObjColor* makeHSL(Value h, Value s, Value l);
 //ObjColor* makeCMYK(Value c, Value m, Value y, Value k);

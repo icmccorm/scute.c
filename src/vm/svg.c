@@ -32,11 +32,13 @@ void drawShape(HashMap* shapeMap, TKType type){
 		unsigned address = (unsigned) shapeMap;
 		newShape(address, type);
 
-		Value stroke = getValue(shapeMap, internString("stroke", 6));
 		STYLE("strokeWidth", getValue(shapeMap, internString("strokeWidth", 11)));
 
-		Value fill = getValue(shapeMap, internString("fill", 6));
+		Value fill = getValue(shapeMap, internString("fill", 4));
 		resolveColor("fill", fill);
+
+		Value stroke = getValue(shapeMap, internString("stroke", 6));
+		resolveColor("stroke", stroke);
 
 		switch(type){
 			case TK_RECT: { 

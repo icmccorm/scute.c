@@ -183,6 +183,7 @@ static CSType findConstantIdentifier(){
 					case 'a': return checkConst(2, 1, "u", CS_TAU);
 					case 'u': return checkConst(2, 7, "rquoise", CS_TURQ);
 					case 'e': return checkConst(2, 2, "al", CS_TEAL);
+                    case 'r': return checkConst(2, 9, "ansparent", CS_TRANSP);
 				}
 			}
 			return CS_ERROR;			

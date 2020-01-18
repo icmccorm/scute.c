@@ -80,13 +80,14 @@ ObjColor* allocateColor(CLType type){
 	return colorObj;
 }
 
-ObjColor* makeRGB(Value r, Value g, Value b){
+ObjColor* makeRGB(Value r, Value g, Value b, Value a){
 	ObjColor* colorObj = allocateColor(CL_RGB);
 	ColorRGB* rgb = ALLOCATE(ColorRGB, 1);
 	rgb->color.colorType = CL_RGB;
 	rgb->r = r;
 	rgb->g = g;
 	rgb->b = b;
+	rgb->a = a;
 	colorObj->color = (Color*) rgb;
 	return colorObj;
 }

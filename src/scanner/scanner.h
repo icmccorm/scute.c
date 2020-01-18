@@ -109,7 +109,7 @@ typedef enum{
     CS_WHITE,
     CS_GRAY,
     CS_GREY,
-
+    CS_TRANSP,
 } CSType;
 
 typedef struct{

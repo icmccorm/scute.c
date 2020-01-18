@@ -942,6 +942,9 @@ static void constant(bool canAssign) {
 		case CS_GREY:
 			emitConstant(RGB(128, 128, 128));
 			break;
+		case CS_TRANSP:
+			emitConstant(RGBA(0, 0, 0, 0));
+			break;
 		case CS_ERROR:
 			errorAtCurrent("Invalid constant.");
 			emitConstant(NULL_VAL());

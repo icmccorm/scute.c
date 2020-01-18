@@ -26,6 +26,7 @@ typedef struct {
 	Value r;
 	Value g;
 	Value b;
+	Value a;
 } ColorRGB;
 
 typedef struct {

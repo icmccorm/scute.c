@@ -9,11 +9,12 @@ char* allocateColorString(Color* cl){
 	switch(cl->colorType){
 		case CL_RGB: ;
 			ColorRGB* rgb = (ColorRGB*) cl;
-			char* result = ALLOCATE(char, 18);
+			char* result = ALLOCATE(char, 32);
 			int r = (int) AS_NUM(rgb->r);
 			int g = (int) AS_NUM(rgb->g);
 			int b = (int) AS_NUM(rgb->b);
-			sprintf(result, "rgb(%d, %d, %d)", r, g, b);
+			float a = (float) AS_NUM(rgb->a);
+			sprintf(result, "rgba(%d, %d, %d, %f)", r, g, b, a);
 			return result;
 			break;
 		default:
@@ -35,7 +36,7 @@ void addColorAttribute(const char* key, Color* cl){
 		addStringStyle(key, colorString, -1, -1);
 		FREE(char, colorString);
 	}else{
-		addStringStyle(key, "rgb(0, 0, 0)", -1, -1);
+		addStringStyle(key, "rgba(0, 0, 0, 1)", -1, -1);
 	}
 }
 #endif
