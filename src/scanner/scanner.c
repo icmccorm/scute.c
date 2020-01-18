@@ -362,7 +362,13 @@ static TKType findIdentifier(){
                     case 'a': return checkKeyword(2, 1, "n", TK_TAN);
                     case 'e': return checkKeyword(2, 2, "xt", TK_TEXT);
                     case 'r': return checkKeyword(2, 2, "ue", TK_TRUE);
-					case 'o': return TK_TO;
+					case 'o': {
+						if(scanner.current - scanner.start > 2){
+							return TK_ID;
+						}else{
+							return TK_TO;
+						}
+					} break;
 					default: return TK_ID;
                 }
             }else{
