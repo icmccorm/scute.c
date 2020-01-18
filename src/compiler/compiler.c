@@ -568,9 +568,9 @@ static void repeatStatement() {
 
 			if(parser.current.type == TK_ID){
 				TK maxId = parser.current;
-				if(!isInitialized(&maxId)){
+	/*			if(!isInitialized(&maxId)){
 					errorAtCurrent("Upper bound identifier is NULL.");
-				}
+				}*/
 				expression();
 				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
 				endLine();		
@@ -754,7 +754,7 @@ static void defStatement() {
 	if(newChunk->chunkType == CK_CONSTR) {
 		add(currentCompiler()->classes, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
 	}
-	
+
 	uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
 	emitBundle(OP_CONSTANT, scopeIndex);
 	if(currentCompiler()->scopeDepth > 0){	
@@ -827,7 +827,9 @@ static uint8_t emitParams() {
 }
 
 static void printStatement() {
+	consume(TK_L_PAREN, "Expected '('.");
 	expression();
+	consume(TK_R_PAREN, "Expected ')'.");
 	emitByte(OP_PRINT);
 	endLine();
 }
@@ -1019,8 +1021,8 @@ static void deref(bool canAssign){
 				expression();
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 			}else{
-				emitBundle(OP_DEREF, getStringObjectIndex(&parser.current));
-				advance();
+				emitBundle(OP_DEREF, getStringObjectIndex(&parser.previous));
+				if(parser.current.type == TK_DEREF) advance();
 			}
 		}else{
 			errorAtCurrent("Expected an identifier.");

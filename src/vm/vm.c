@@ -209,6 +209,7 @@ static InterpretResult run() {
 				}else{
 					runtimeError("Property does not exist.");
 				}
+				push(expression);
 				} break;
 			case OP_DEREF: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
@@ -317,21 +318,6 @@ static InterpretResult run() {
 					return INTERPRET_RUNTIME_ERROR;
 				}
 			} break;
-			/*
-			case OP_DEREF: {
-				uint32_t valIndex = readInteger();
-				Value superString = CONSTANT(valIndex-1);
-				Value idString = CONSTANT(valIndex);
-
-				Value closeVal = pop();
-				if(IS_NULL(closeVal)) {
-					runtimeError("Cannot dereference null scope '%s'.", AS_STRING(superString));
-					return INTERPRET_RUNTIME_ERROR;
-				}
-				ObjInstance* scope = (ObjInstance*) AS_OBJ(closeVal);
-				Value innerVal = getValue(scope->map, AS_STRING(idString));
-				push(innerVal);
-			} break;*/
 			case OP_JMP_FALSE: ;
 				int16_t offset = READ_SHORT();
 				Value boolVal = pop();
