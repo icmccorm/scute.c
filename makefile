@@ -49,5 +49,4 @@ EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode", "_compileCode", "_freeCompil
 EM_ENTRY = ./src/em_main.c
 
 emcc : $(SRC_FILES) $(EM_ENTRY)
-	@$(WASMC) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) ; \
-	sed -i "s#'$(EXEC_FILE).wasm'#require('./$(EXEC_FILE).wasm')#g" ./scute.js
+	@$(WASMC) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js $(EM_FLAGS) $(EM_JS_FLAGS) 
