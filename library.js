@@ -2,13 +2,13 @@ mergeInto(LibraryManager.library, {
 	currentShape: {},
 
 	printOut: function(ptr) {
-		self.postMessage({code: 1, payload: Module.UTF8ToString(ptr)});
+		self.postMessage({type: 3, payload: Module.UTF8ToString(ptr)});
 	},
 	printDebug: function(ptr){
-		self.postMessage({code: 2, payload: Module.UTF8ToString(ptr)});
+		self.postMessage({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 	printError: function(ptr){
-		self.postMessage({code: 3, payload: Module.UTF8ToString(ptr)})
+		self.postMessage({type: 5, payload: Module.UTF8ToString(ptr)})
 	},
 	
 	newShape: function(idPtr, tagPtr){

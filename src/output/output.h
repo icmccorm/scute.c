@@ -3,9 +3,9 @@
 #include <stdarg.h>
 
 typedef enum {
+	O_OUT = 3,
 	O_DEBUG,
 	O_ERR,
-	O_OUT
 } OutType;
 
 void print(OutType type, const char* c, ...);
