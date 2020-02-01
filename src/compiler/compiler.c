@@ -21,6 +21,11 @@ Parser parser;
 Compiler* compiler = NULL;
 CompilePackage* result;
 
+#ifdef EM_MAIN
+	extern void addValue(int line, int startIndex, int length);
+	int valueIndex = 0;
+#endif
+
 static Compiler* currentCompiler() {
 	return compiler;
 }
@@ -139,6 +144,26 @@ static int emitLimit(int low, int high){
 }
 
 static void emitConstant(Value value){
+	#ifdef EM_MAIN
+	if(value.charIndex > -1){
+		value.valIndex = valueIndex;
+		++valueIndex;
+		switch(value.type){
+			case VL_OBJ:;
+				Obj* obj = AS_OBJ(value);
+				if(obj->type == OBJ_STRING){
+					ObjString* str = (ObjString*) obj;
+					addValue(parser.previous.line, value.charIndex, str->length);
+				}
+				break;
+			default: ;
+				int numVal = AS_NUM(value);
+				int length = ceil(log10(numVal + 1));
+				addValue(parser.previous.line, value.charIndex, length);
+				break;
+		}
+	}
+	#endif
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
 
@@ -673,6 +698,7 @@ static ObjChunk* fromExpression() {
 		return AS_CHUNK(superChunkVal);
 	}else{
 		errorAtCurrent("Inherited object is not defined in this scope.");
+		return NULL;
 	}
 }
 

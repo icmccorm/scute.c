@@ -1,12 +1,11 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
-	values: [],
 
-	addValue(val, line, startIndex){
-		self.values.push({
-			value: val,
+	addValue: function(line, startIndex, length){
+		Module._values.push({
 			line: line,
 			startIndex: startIndex,
+			length: length,
 		});		
 	},
 
@@ -32,41 +31,37 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 
-	addStringAttribute: function(keyPtr, valuePtr, index, line){
+	addStringAttribute: function(keyPtr, valPtr, index){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valuePtr);
 		_currentShape['attrs'][key] = {
 			value: value,
-			index: index,
-			line: line
+			valueIndex: index,
 		};
 	},
 
-	addAttribute: function(keyPtr, value, index, line){
+	addAttribute: function(keyPtr, value, index){
 		let key = Module.UTF8ToString(keyPtr);
 		_currentShape['attrs'][key] = {
 			value: value,
-			index: index,
-			line: line
+			valueIndex: index,
 		};
 	},
 
-	addStringStyle: function(keyPtr, valuePtr, index, line){
+	addStringStyle: function(keyPtr, valuePtr, index){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valuePtr);
-		_currentShape['style']['values'][key] = value;
-		_currentShape['style']['loc'][key] = {
-			index: index,
-			line: line,
+		_currentShape['style']['values'][key] = {
+			value: value,
+			valueIndex: index, 
 		}
 	},
 
-	addStyle: function(keyPtr, value, index, line){
+	addStyle: function(keyPtr, value, index){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['style']['values'][key] = value;
-		_currentShape['style']['loc'][key] = {
-			index: index,
-			line: line,
+		_currentShape['style']['values'][key] = {
+			value: value,
+			valueIndex: index,
 		}
 	},
 
@@ -102,7 +97,4 @@ mergeInto(LibraryManager.library, {
 		'currentShape'
 	],
 	
-	addValue__deps: [
-		'values'
-	]
 });

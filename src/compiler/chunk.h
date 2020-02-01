@@ -82,8 +82,4 @@ void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, int line);
 uint64_t writeValue(Chunk* chunk, Value value, int line);
 int writeVariableData(Chunk* chunk, uint64_t value);
 
-#ifdef EM_MAIN
-	extern void addValue(val, line, startIndex);
-#endif
-
 #endif

@@ -4,10 +4,7 @@
 #include "chunk.h"
 #include "memory.h"
 #include "value.h"
-
-#ifdef EM_MAIN
-int valueIndex = 0;
-#endif
+#include "obj.h"
 
 void initChunk(Chunk* chunk){
 	chunk -> count = 0;
@@ -86,11 +83,6 @@ void writeConstant(Chunk* chunk, Value value, int line){
 }
 
 uint64_t writeValue(Chunk* chunk, Value value, int line){
-	#ifdef EM_MAIN
-		value.valIndex = valueIndex;
-		++valueIndex;
-		addValue(AS_NUM(value), line, value.charIndex);
-	#endif
 	return writeValueArray(&chunk->constants, value);
 }
 
