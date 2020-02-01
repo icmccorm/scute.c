@@ -21,11 +21,11 @@ extern void addStringStyle(const char* key, char* valuePtr, double index, double
 extern void newShape(double id, double type);
 extern void paintShape();
 
-#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.charIndex, value.line));
-#define CATTR(name, value) (addStringAttribute(name, value, value.charIndex, value.line));
+#define ATTR(name, value) (addAttribute(name, value.valIndex));
+#define CATTR(name, value) (addStringAttribute(name, value.valIndex));
 
-#define STYLE(name, value) (addStyle(name, AS_NUM(value), value.charIndex, value.line));
-#define CSTYLE(name, value) (addStringStyle(name, value, value.charIndex, value.line));
+#define STYLE(name, value) (addStyle(name, value.valIndex));
+#define CSTYLE(name, value) (addStringStyle(name, value.valIndex));
 #endif
 
 void drawShape(HashMap* shapeMap, TKType type);

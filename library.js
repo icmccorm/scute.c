@@ -1,5 +1,14 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
+	values: [],
+
+	addValue(val, line, startIndex){
+		self.values.push({
+			value: val,
+			line: line,
+			startIndex: startIndex,
+		});		
+	},
 
 	printOut: function(ptr) {
 		self.postMessage({type: 3, payload: Module.UTF8ToString(ptr)});
@@ -92,4 +101,8 @@ mergeInto(LibraryManager.library, {
 	addStringAttribute__deps: [
 		'currentShape'
 	],
+	
+	addValue__deps: [
+		'values'
+	]
 });
