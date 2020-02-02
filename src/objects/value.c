@@ -14,7 +14,7 @@ void initValueArray(ValueArray* array){
 	array-> count = 0;
 }
 
-int writeValueArray(ValueArray* array, Value value){
+int pushValueArray(ValueArray* array, Value value){
 	if(array->capacity < array->count + 1){
 		int oldCapacity = array->capacity;
 		array->capacity = GROW_CAPACITY(oldCapacity);
@@ -30,7 +30,30 @@ int writeValueArray(ValueArray* array, Value value){
 void freeValueArray(ValueArray* array){
 	FREE_ARRAY(Value, array->values, array->capacity);
 	initValueArray(array);
+}
 
+Value getValueArray(ValueArray* array, int index){
+	if(array->capacity == 0 || index < 0 || index >= array->count){
+		return NULL_VAL();
+	}else{
+		return array->values[index];
+	}
+}
+
+void setValueArray(ValueArray* array, int index, Value val){
+	if(array->capacity > 0 && index >= 0 && index < array->count){
+		array->values[index] = val;
+	}
+}
+
+Value popValueArray(ValueArray* array){
+	if(array->count > 0){
+		Value val = array->values[array->count-1];
+		array->count--;
+		return val;
+	}else{
+		return NULL_VAL();
+	}
 }
 
 void printObject(OutType out, Value value);

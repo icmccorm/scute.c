@@ -12,6 +12,7 @@ typedef struct sObjInstance ObjInstance;
 typedef struct sObjChunk ObjChunk;
 typedef struct sObjNative ObjNative;
 typedef struct sObjColor ObjColor;
+typedef struct sObjArray ObjArray;
 
 typedef enum {
 	VL_NULL,
@@ -54,10 +55,17 @@ typedef struct {
 #define IS_OBJ(value) ((value).type == VL_OBJ)
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
-void initValueArray(ValueArray* array);
-int writeValueArray(ValueArray* array, Value value);
-void freeValueArray(ValueArray* array);
+
 void printValue(OutType out, Value value);
 void printShapeType(OutType out, TKType type);
+
+
+void initValueArray(ValueArray* array);
+void freeValueArray(ValueArray* array);
+
+int pushValueArray(ValueArray* array, Value value);
+Value popValueArray(ValueArray* array);
+Value getValueArray(ValueArray* array, int index);
+void setValueArray(ValueArray* array, int index, Value val);
 
 #endif

@@ -70,6 +70,11 @@ void freeObject(Obj* obj){
 			}
 			FREE(ObjColor, colorObj);
 			break;
+		case(OBJ_ARRAY): ;
+			ObjArray* arrayObj = (ObjArray*) obj;
+			freeValueArray(arrayObj->array);
+			FREE(ValueArray, arrayObj->array);
+			FREE(ObjArray, arrayObj);
 		default:
 			break;
 	}
@@ -157,4 +162,11 @@ ObjString* internString(char* chars, int length){
 	heapChars[length] = '\0';
 
 	return allocateString(heapChars, length);
+}
+
+ObjArray* allocateArray(int length){
+	ObjArray* objArray = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
+	objArray->array = ALLOCATE(ValueArray, 1);
+	iniValueArray(objArray->array);
+	return objArray;
 }

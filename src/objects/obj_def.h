@@ -21,6 +21,7 @@ typedef enum {
 	OBJ_CHUNK,
 	OBJ_NATIVE,
 	OBJ_COLOR,
+	OBJ_ARRAY,
 } OBJType;
 
 //definition for Obj
@@ -35,6 +36,11 @@ struct sObjString{
 	int length;
 	char* chars;
 	uint32_t hash;
+};
+
+struct sObjArray{
+	Obj object;
+	ValueArray* array;
 };
 
 struct sObjInstance{

@@ -29,6 +29,7 @@ void freeObject(Obj* obj);
 #define IS_INST(value) (isObjectType(value, OBJ_INST))
 #define IS_CHUNK(value) (isObjectType(value, OBJ_CHUNK))
 #define IS_COLOR(value) (isObjectType(value, OBJ_COLOR))
+#define IS_ARRAY(value) (isObjectType(value, OBJ_ARRAY))
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
@@ -36,6 +37,7 @@ void freeObject(Obj* obj);
 #define AS_CHUNK(value) ((ObjChunk*)AS_OBJ(value))
 #define AS_NATIVE(value) ((ObjNative*)AS_OBJ(value))
 #define AS_COLOR(value) ((ObjColor*)AS_OBJ(value))
+#define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*) allocateObject(sizeof(type), objType)
