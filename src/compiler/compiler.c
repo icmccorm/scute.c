@@ -264,6 +264,7 @@ static void literal(bool canAssign);
 static void constant(bool canAssign);
 static void constant(bool canAssign);
 static void string(bool canAssign);
+static void array(bool canAssign);
 static void variable(bool canAssign);
 static void deref(bool canAssign);
 static void scopeDeref(bool canAssign);
@@ -320,7 +321,7 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
 	{ grouping, NULL,       PC_NONE },    // TK_L_PAREN,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_PAREN, 
-	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACK,
+	{ array,	NULL,	    PC_TERM },    // TK_L_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
 	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
@@ -827,6 +828,17 @@ static void and_(bool canAssign) {
 
 static void string(bool canAssign) {
 	emitLinkedConstant(getTokenStringValue(&parser.previous), &parser.previous);
+}
+
+static void array(bool canAssign) {
+	uint32_t numParameters = 0;
+	while(parser.current.type != TK_R_BRACK){
+		expression();
+		++numParameters;
+		if(parser.current.type != TK_R_BRACK) consume(TK_COMMA, "Expected ','");
+	}
+	consume(TK_R_BRACK, "Expected ']'");
+	emitBundle(OP_BUILD_ARRAY, numParameters);
 }
 
 static void timeStep(bool canAssign) {

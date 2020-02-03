@@ -61,6 +61,7 @@ void printShapeType(OutType out, TKType type);
 
 
 void initValueArray(ValueArray* array);
+void initValueArrayWithCapacity(ValueArray* array, int capacity);
 void freeValueArray(ValueArray* array);
 
 int pushValueArray(ValueArray* array, Value value);

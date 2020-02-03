@@ -14,12 +14,28 @@ void initValueArray(ValueArray* array){
 	array-> count = 0;
 }
 
+void initValueArrayWithCapacity(ValueArray* array, int capacity){
+	array-> capacity = capacity;
+	array-> count = 0;
+	array-> values = NULL;
+	array->capacity = GROW_CAPACITY(array->capacity);
+	array->values = GROW_ARRAY(array->values, Value, 0, array->capacity);
+}
+
+bool shouldGrowArray(ValueArray* array){
+	return array->capacity < array->count + 1;
+}
+
+void growArray(ValueArray* array){
+	int oldCapacity = array->capacity;
+	array->capacity = GROW_CAPACITY(oldCapacity);
+	array->values = GROW_ARRAY(array->values, Value,
+	oldCapacity, array->capacity);
+}
+
 int pushValueArray(ValueArray* array, Value value){
-	if(array->capacity < array->count + 1){
-		int oldCapacity = array->capacity;
-		array->capacity = GROW_CAPACITY(oldCapacity);
-		array->values = GROW_ARRAY(array->values, Value,
-			        oldCapacity, array->capacity);
+	if(shouldGrowArray(array)){
+		growArray(array);
 	}
 
 	array->values[array->count] = value;
@@ -40,8 +56,20 @@ Value getValueArray(ValueArray* array, int index){
 	}
 }
 
+void printArray(OutType out, ValueArray* array){
+	print(out, "[");
+	if(array->count > 0){
+		printValue(out, array->values[0]);
+		for(int i = 1; i< array->count; ++i){
+			print(out, ", ");
+			printValue(out, array->values[i]);
+		}
+	}
+	print(out, "]\n");
+}
+
 void setValueArray(ValueArray* array, int index, Value val){
-	if(array->capacity > 0 && index >= 0 && index < array->count){
+	if(array->capacity > 0 && index >= 0 && index < array->capacity){
 		array->values[index] = val;
 	}
 }
@@ -95,6 +123,8 @@ void printObject(OutType out, Value value){
 		case OBJ_COLOR: ;
 			printColor(O_OUT, AS_COLOR(value)->color);
 			break;
+		case OBJ_ARRAY: ;
+			printArray(O_OUT, AS_ARRAY(value)->array);
 		default:
 			break;
 	}

@@ -10,6 +10,9 @@ Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);
 ObjNative* allocateNative(void* func);
+ObjArray* allocateArray();
+ObjArray* allocateArrayWithCapacity(int capacity);
+
 
 ObjColor* makeRGB(Value r, Value g, Value b, Value a);
 #define RGB(r, g, b) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b), NUM_VAL(1))))

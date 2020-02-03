@@ -74,6 +74,8 @@ int printInstruction(Chunk* chunk, int offset){
 			return embeddedValueInstruction("OP_DEF_GLOBAL", chunk, offset);
 		case OP_GET_GLOBAL:
 			return embeddedValueInstruction("OP_GET_GLOBAL", chunk, offset);
+		case OP_BUILD_ARRAY:
+			return embeddedInstruction("OP_BUILD_ARRAY", chunk, offset);
 		case OP_DEF_LOCAL:
 			return embeddedInstruction("OP_DEF_LOCAL", chunk, offset);
 		case OP_GET_LOCAL:

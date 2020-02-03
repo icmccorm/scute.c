@@ -164,9 +164,16 @@ ObjString* internString(char* chars, int length){
 	return allocateString(heapChars, length);
 }
 
-ObjArray* allocateArray(int length){
+ObjArray* allocateArray(){
 	ObjArray* objArray = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
 	objArray->array = ALLOCATE(ValueArray, 1);
 	initValueArray(objArray->array);
+	return objArray;
+}
+
+ObjArray* allocateArrayWithCapacity(int capacity){
+	ObjArray* objArray = ALLOCATE_OBJ(ObjArray, OBJ_ARRAY);
+	objArray->array = ALLOCATE(ValueArray, 1);
+	initValueArrayWithCapacity(objArray->array, capacity);
 	return objArray;
 }

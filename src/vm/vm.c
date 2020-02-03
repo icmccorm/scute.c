@@ -172,6 +172,7 @@ static InterpretResult run() {
 
 #define READ_BYTE() (*vm.ip++)
 #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+#define READ_INT() (readInteger())
 #define READ_CONSTANT() (currentChunk()->constants.values[readInteger()])
 #define CONSTANT(index) (currentChunk()->constants.values[index])
 #define BINARY_OP(op, valueType, operandType) \
@@ -199,6 +200,14 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(READ_BYTE()){
+			case OP_BUILD_ARRAY: {
+				uint32_t numElements = READ_INT();
+				ObjArray* arrayObj = allocateArrayWithCapacity(numElements);
+				for(int i = 1; i<= numElements; ++i){
+					setValueArray(arrayObj->array, numElements - i, pop());
+				}
+				push(OBJ_VAL(arrayObj));
+				} break;
 			case OP_DEF_INST: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
 				Value expression = pop();

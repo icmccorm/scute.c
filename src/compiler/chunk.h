@@ -69,6 +69,7 @@ typedef enum {
 	OP_JMP_GT,
 	OP_JMP_CNT,
 	OP_DEF_INST,
+	OP_BUILD_ARRAY,
 } OpCode;
 
 void initChunk(Chunk* chunk);
