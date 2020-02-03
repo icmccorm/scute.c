@@ -1,0 +1,20 @@
+ def circleStyles
+	.stroke = :black
+	.strokeWidth = 1
+	.fill = :transparent
+
+def circlePoint(x, y, r) as circle from circleStyles
+	.cx = x
+	.cy = y
+	.r = r
+
+def circleRing(midX, midY, ringRadius, circleRadius, numCircles)
+	let degreeStep = 2*:pi/numCircles
+
+	repeat stepCount to numCircles
+		let x = ringRadius * cos(stepCount * degreeStep) + midX
+		let y = ringRadius * sin(stepCount * degreeStep) + midY
+		draw circlePoint(x, y, circleRadius)
+
+
+let m = circleRing(250, 250, 50, 15, 18)

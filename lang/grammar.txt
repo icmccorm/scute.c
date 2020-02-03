@@ -1,7 +1,0 @@
-statement->	def
-			draw
-			let
-			period
-			call
-			assign
-			prop

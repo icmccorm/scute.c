@@ -77,6 +77,7 @@ typedef enum {
 	TK_TO,
     TK_FROM,
     TK_POLY,
+	TK_WITH,
 } TKType;  
 
 typedef enum{
@@ -118,6 +119,7 @@ typedef struct{
     char* start;
     int length;
     int line;
+	int inlineIndex;
     int indent;
 } TK; 
 

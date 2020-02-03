@@ -11,6 +11,7 @@ typedef struct {
     char* origin;
     int line;
     char* lastScanned;
+	char* lastNewline;
 } Scanner;
 
 Scanner scanner;
@@ -21,6 +22,7 @@ void initScanner(char* source){
     scanner.current = source;
     scanner.line = 1;
     scanner.lastScanned = source;
+	scanner.lastNewline = NULL;
 }
 
 static TK makeToken(TKType type){
@@ -31,18 +33,23 @@ static TK makeToken(TKType type){
     token.length = (int) (scanner.current - scanner.start);
     scanner.lastScanned = scanner.start;
     token.subtype = -1;
-    return token;
+    
+	if(scanner.lastNewline){
+		token.inlineIndex = scanner.start - scanner.lastNewline;
+	}else{
+		token.inlineIndex = scanner.start - scanner.origin;
+	}
+	
+	return token;
+	
 }
 
 static TK makeCustomToken(TKType type, char* chars, int length){
-    TK token;
-    token.type = type;
-    token.line = scanner.line;
-    token.start = chars;
-    token.length = length;
-    scanner.lastScanned = scanner.start;
-    token.subtype = -1;
-    return token;
+	TK custom = makeToken(type);
+	custom.start = chars;
+	custom.length = length;
+	custom.subtype = -1;
+    return custom;
 }
 
 static TK makeDualToken(TKType primary, int secondary){
@@ -89,7 +96,6 @@ static char peek(){
 
 static TK makeNewline(){
     ++scanner.line;
-
     TK token;
     token.type = TK_NEWLINE;
     token.line = scanner.line;
@@ -100,6 +106,7 @@ static TK makeNewline(){
     }
     token.length = (int) (scanner.current - scanner.start);
     scanner.lastScanned = scanner.start;
+	scanner.lastNewline = scanner.current;
     return token;
 }
 
@@ -123,8 +130,8 @@ static bool isDigit(char c){
 }
 
 static bool isAlpha(char c){
-    return c >= 'A' && c <= 'Z'
-        || c >= 'a' && c <= 'z'
+    return (c >= 'A' && c <= 'Z')
+        || (c >= 'a' && c <= 'z')
         || c == '_'; 
 }
 
@@ -306,6 +313,8 @@ static TKType findIdentifier(){
                     case 'a': return checkKeyword(2, 3, "lse", TK_FALSE);
                     case 'u': return checkKeyword(2, 2, "nc", TK_FUNC);
                     case 'r': return checkKeyword(2, 2, "om", TK_FROM);
+					default:
+						return TK_ID;
                 }
             }else{
                 return TK_ID;
@@ -313,7 +322,17 @@ static TKType findIdentifier(){
         return checkKeyword(1, 2, "or", TK_FOR);
         case 'i': return checkKeyword(1, 1, "f", TK_IF);
         case 'l': return checkKeyword(1, 2, "et", TK_LET);
-        case 'w': return checkKeyword(1, 4, "hile", TK_WHILE);
+        case 'w': 
+			if(scanner.current - scanner.start > 1){
+				switch(scanner.start[1]){
+					case 'h': return checkKeyword(2, 3, "ile", TK_WHILE);
+					case 'i': return checkKeyword(2, 2, "th", TK_WITH);
+					default:
+						return TK_ID;
+				}
+			}else{
+				return TK_ID;
+			}
         case 'r': 
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){

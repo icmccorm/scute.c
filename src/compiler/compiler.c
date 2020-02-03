@@ -22,8 +22,8 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	extern void addValue(int line, int startIndex, int length);
-	int valueIndex = 0;
+	extern void em_addValue(int line, int startIndex, int length);
+	extern void em_endLine(int newlineIndex);
 #endif
 
 static Compiler* currentCompiler() {
@@ -72,6 +72,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 
 static void emitByte(uint8_t byte);
 static void emitConstant(Value v);
+static void emitLinkedConstant(Value v, TK* token);
 
 static void emitReturn(){
 	ObjChunk* current = currentChunkObject();
@@ -143,27 +144,22 @@ static int emitLimit(int low, int high){
 	return currentChunk()->count - 2;
 }
 
-static void emitConstant(Value value){
+static void emitLinkedConstant(Value value, TK* token){
+	parser.lineHadValue = true;
+
+	value.lineIndex = parser.lineIndex;
+	value.inlineIndex = parser.currentLineValueIndex;
+	++parser.currentLineValueIndex;
+
 	#ifdef EM_MAIN
-	if(value.charIndex > -1){
-		value.valIndex = valueIndex;
-		++valueIndex;
-		switch(value.type){
-			case VL_OBJ:;
-				Obj* obj = AS_OBJ(value);
-				if(obj->type == OBJ_STRING){
-					ObjString* str = (ObjString*) obj;
-					addValue(parser.previous.line, value.charIndex, str->length);
-				}
-				break;
-			default: ;
-				int numVal = AS_NUM(value);
-				int length = ceil(log10(numVal + 1));
-				addValue(parser.previous.line, value.charIndex, length);
-				break;
-		}
-	}
+		addValue(parser.lineIndex, token->inlineIndex, token->length);
 	#endif
+
+	writeConstant(currentChunk(), value, parser.previous.line);
+}
+
+static void emitConstant(Value value){
+	
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
 
@@ -229,12 +225,17 @@ static bool tokensEqual(TK one, TK two){
 
 static void endLine(){
 	if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
+	if(parser.lineHadValue) {
+		++parser.lineIndex;
+		parser.currentLineValueIndex = 0;
+		#ifdef EM_MAIN
+			em_endLine(parser.previous.start - parser.codeStart);
+		#endif
+	}
 }
 
 static Value getTokenStringValue(TK* token){
 	Value strObj = OBJ_VAL(internString(token->start, token->length));
-	strObj.charIndex = getTokenIndex(token->start);
-	strObj.line = token->line;
 	return strObj;
 }
 
@@ -465,9 +466,9 @@ static void expression() {
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
-	val.charIndex = getTokenIndex(parser.previous.start);
-	val.line = parser.previous.line;
-	emitConstant(val);
+	/*val.charIndex = getTokenIndex(parser.previous.start);
+	val.line = parser.previous.line;*/
+	emitLinkedConstant(val, &parser.previous);
 }
 
 static void literal(bool canAssign) {
@@ -826,7 +827,7 @@ static void and_(bool canAssign) {
 }
 
 static void string(bool canAssign) {
-	emitConstant(getTokenStringValue(&parser.previous));
+	emitLinkedConstant(getTokenStringValue(&parser.previous), &parser.previous);
 }
 
 static void timeStep(bool canAssign) {
@@ -1057,30 +1058,6 @@ static void deref(bool canAssign){
 			errorAtCurrent("Expected an identifier.");
 		}
 	}
-	/*
-	while(parser.previous.type == TK_DEREF){
-		TK possibleID = parser.current;
-		if(possibleID.type == TK_ID){
-			advance();
-			if(parser.current.type == TK_DEREF){
-				uint32_t idIndex = getStringObjectIndex(&parser.previous);
-				emitBundle(OP_GET_SCOPE, idIndex);
-				advance();
-			}else{
-				//reached the end of the deref chain; determing whether an assignment is needed.
-				uint32_t idIndex = getStringObjectIndex(&parser.previous);
-				uint32_t encloseIndex = getStringObjectIndex(&parser.lastID);
-
-				if(canAssign && match(TK_ASSIGN)){
-					expression();
-					emitTriple(OP_DEF_SCOPE, idIndex, encloseIndex);
-				}else{
-					emitBundle(OP_GET_SCOPE, idIndex);
-				}
-			}
-		}else{
-		}
-	}*/
 }
 
 static int32_t resolveLocal(TK*id){
@@ -1255,13 +1232,20 @@ static void grouping(bool canAssign){
 
 static void printToken();
 
+void initParser(Parser* parser, char* source){
+	parser->hadError = false;
+	parser->panicMode = false;
+	parser->codeStart = source;
+	parser->lineIndex = 0;
+	parser->lineHadValue = false;
+	parser->currentLineValueIndex = 0;
+}
+
+
 bool compile(char* source, CompilePackage* package){
 	initScanner(source);
 	compiler = enterCompilationScope(package->compiled);
-
-	parser.hadError = false;
-	parser.panicMode = false;
-	parser.codeStart = source;
+	initParser(&parser, source);
 	result = package;
 
 	advance();

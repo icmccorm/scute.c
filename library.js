@@ -1,12 +1,24 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
+	currentLine: {
+		charIndex: 0,
+		values: [],
+	},
 
-	addValue: function(line, startIndex, length){
-		Module._values.push({
-			line: line,
-			startIndex: startIndex,
+	em_addValue: function(lineIndex, inlineOffset, length){
+		_currentLine.values.push({
+			lineIndex: lineIndex,
+			inlineOffset: inlineOffset,
 			length: length,
-		});		
+		})
+	},
+
+	em_endLine: function(newlineIndex){
+		Module._lines.push(_currentLine);
+		_currentLine = {
+			charIndex: newlineIndex,
+			values: [],
+		}
 	},
 
 	printOut: function(ptr) {
@@ -31,37 +43,41 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 
-	addStringAttribute: function(keyPtr, valPtr, index){
+	addStringAttribute: function(keyPtr, valPtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valuePtr);
 		_currentShape['attrs'][key] = {
 			value: value,
-			valueIndex: index,
+			lineIndex: index,
+			inlineIndex: inlineIndex,
 		};
 	},
 
-	addAttribute: function(keyPtr, value, index){
+	addAttribute: function(keyPtr, value, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
 		_currentShape['attrs'][key] = {
 			value: value,
-			valueIndex: index,
+			lineIndex: lineIndex,
+			inlineIndex: inlineIndex,
 		};
 	},
 
-	addStringStyle: function(keyPtr, valuePtr, index){
+	addStringStyle: function(keyPtr, valuePtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valuePtr);
 		_currentShape['style']['values'][key] = {
 			value: value,
-			valueIndex: index, 
+			lineIndex: lineIndex,
+			inlineIndex: inlineIndex, 
 		}
 	},
 
-	addStyle: function(keyPtr, value, index){
+	addStyle: function(keyPtr, value, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
 		_currentShape['style']['values'][key] = {
 			value: value,
-			valueIndex: index,
+			lineIndex: lineIndex,
+			inlineIndex: inlineIndex,
 		}
 	},
 
@@ -96,5 +112,13 @@ mergeInto(LibraryManager.library, {
 	addStringAttribute__deps: [
 		'currentShape'
 	],
+
+	em_addValue__deps: [
+		'currentLine',
+	],
+
+	em_endLine__deps: [
+		'currentLine',
+	]
 	
 });

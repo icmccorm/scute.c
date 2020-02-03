@@ -14,6 +14,9 @@ typedef struct {
     bool hadError;
     bool panicMode;
     char* codeStart;
+	bool lineHadValue;
+	int lineIndex;
+	int currentLineValueIndex;
 } Parser;
 
 typedef struct{

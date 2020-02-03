@@ -29,9 +29,9 @@ typedef struct {
 		double number;
 		Obj* obj;
 	} as;
-	int charIndex;
-	int line;
-	int valIndex;
+
+	int lineIndex;
+	int inlineIndex;
 } Value;
 
 typedef struct {

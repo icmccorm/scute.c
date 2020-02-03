@@ -17,7 +17,7 @@ static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
 	
 	if(file == NULL){
-		print(O_ERR, "Could not open file\"%s\".\n", path);
+		print(O_ERR, "Could not open file \"%s\".\n", path);
 		exit(74);
 	}
 
