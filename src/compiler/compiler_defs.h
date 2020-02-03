@@ -17,6 +17,7 @@ typedef struct {
 	bool lineHadValue;
 	int lineIndex;
 	int currentLineValueIndex;
+    char* lastNewline;
 } Parser;
 
 typedef struct{

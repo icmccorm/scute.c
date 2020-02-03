@@ -40,10 +40,10 @@ typedef struct {
 	Value * values;
 } ValueArray;	
 
-#define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}, -1, -1, -1})
-#define NULL_VAL() ((Value){VL_NULL, {.number = 0}, -1, -1, -1})
-#define NUM_VAL(value) ((Value){VL_NUM, {.number = value}, -1, -1, -1})
-#define OBJ_VAL(value) ((Value){VL_OBJ, {.obj = (Obj*)(value)}, -1, -1, -1})
+#define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}, -1, -1})
+#define NULL_VAL() ((Value){VL_NULL, {.number = 0}, -1, -1})
+#define NUM_VAL(value) ((Value){VL_NUM, {.number = value}, -1, -1})
+#define OBJ_VAL(value) ((Value){VL_OBJ, {.obj = (Obj*)(value)}, -1, -1})
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUM(value) ((value).as.number)

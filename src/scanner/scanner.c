@@ -106,7 +106,12 @@ static TK makeNewline(){
     }
     token.length = (int) (scanner.current - scanner.start);
     scanner.lastScanned = scanner.start;
-	scanner.lastNewline = scanner.current;
+
+    if(scanner.start == scanner.current){
+	    scanner.lastNewline = scanner.start;
+    }else{
+        scanner.lastNewline = scanner.current - 1;
+    }
     return token;
 }
 

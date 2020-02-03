@@ -1,24 +1,20 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
-	currentLine: {
-		charIndex: 0,
-		values: [],
-	},
+	values: [],
 
-	em_addValue: function(lineIndex, inlineOffset, length){
-		_currentLine.values.push({
-			lineIndex: lineIndex,
+	em_addValue: function(inlineOffset, length){
+		_values.push({
 			inlineOffset: inlineOffset,
 			length: length,
 		})
 	},
 
 	em_endLine: function(newlineIndex){
-		Module._lines.push(_currentLine);
-		_currentLine = {
+		Module._lines.push({
 			charIndex: newlineIndex,
-			values: [],
-		}
+			values: _values
+		});
+		_values = [];
 	},
 
 	printOut: function(ptr) {
@@ -45,10 +41,10 @@ mergeInto(LibraryManager.library, {
 
 	addStringAttribute: function(keyPtr, valPtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
-		let value = Module.UTF8ToString(valuePtr);
+		let value = Module.UTF8ToString(valPtr);
 		_currentShape['attrs'][key] = {
 			value: value,
-			lineIndex: index,
+			lineIndex: lineIndex,
 			inlineIndex: inlineIndex,
 		};
 	},
@@ -114,11 +110,11 @@ mergeInto(LibraryManager.library, {
 	],
 
 	em_addValue__deps: [
-		'currentLine',
+		'values',
 	],
 
 	em_endLine__deps: [
-		'currentLine',
+		'values',
 	]
 	
 });

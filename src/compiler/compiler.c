@@ -22,7 +22,7 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	extern void em_addValue(int line, int startIndex, int length);
+	extern void em_addValue(int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
 #endif
 
@@ -145,14 +145,12 @@ static int emitLimit(int low, int high){
 }
 
 static void emitLinkedConstant(Value value, TK* token){
-	parser.lineHadValue = true;
-
 	value.lineIndex = parser.lineIndex;
 	value.inlineIndex = parser.currentLineValueIndex;
 	++parser.currentLineValueIndex;
 
 	#ifdef EM_MAIN
-		addValue(parser.lineIndex, token->inlineIndex, token->length);
+		em_addValue(token->inlineIndex, token->length);
 	#endif
 
 	writeConstant(currentChunk(), value, parser.previous.line);
@@ -225,13 +223,14 @@ static bool tokensEqual(TK one, TK two){
 
 static void endLine(){
 	if(parser.current.type != TK_EOF) consume(TK_NEWLINE, "Expected end of line, '\\n'");
-	if(parser.lineHadValue) {
+	if(parser.currentLineValueIndex != 0) {
 		++parser.lineIndex;
-		parser.currentLineValueIndex = 0;
 		#ifdef EM_MAIN
-			em_endLine(parser.previous.start - parser.codeStart);
+			em_endLine(parser.lastNewline - parser.codeStart);
 		#endif
+		parser.currentLineValueIndex = 0;
 	}
+	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;
 }
 
 static Value getTokenStringValue(TK* token){
@@ -1237,8 +1236,8 @@ void initParser(Parser* parser, char* source){
 	parser->panicMode = false;
 	parser->codeStart = source;
 	parser->lineIndex = 0;
-	parser->lineHadValue = false;
 	parser->currentLineValueIndex = 0;
+	parser->lastNewline = source;
 }
 
 
