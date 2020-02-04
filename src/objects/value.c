@@ -20,6 +20,7 @@ void initValueArrayWithCapacity(ValueArray* array, int capacity){
 	array-> values = NULL;
 	array->capacity = GROW_CAPACITY(array->capacity);
 	array->values = GROW_ARRAY(array->values, Value, 0, array->capacity);
+    array->count = capacity;
 }
 
 bool shouldGrowArray(ValueArray* array){
