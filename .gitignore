@@ -4,9 +4,12 @@ test
 # folder containing precompiled .o files
 build
 tmp
+./test
 
 # compiled solution
 scute*
+
+.DS_STORE
 
 *.o
 *.xcodeproj
