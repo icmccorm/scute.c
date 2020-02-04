@@ -1,10 +1,12 @@
 # temporary test files
-test
+*
+!/**/
+!*.*
 
 # folder containing precompiled .o files
 build
 tmp
-./test
+test
 
 # compiled solution
 scute*
