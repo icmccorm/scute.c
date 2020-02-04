@@ -20,7 +20,7 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 CC = gcc
 WASMC = emcc
 
-FLAGS = $(INC_FLAGS) -g
+FLAGS = $(INC_FLAGS)
 D_FLAGS = -MMD -MP
 
 END_FLAGS = -lm
@@ -30,11 +30,11 @@ MKDIR = mkdir
 all : ./$(EXEC_FILE)
 
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
-	@$(CC) -D DEBUG $(FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
+	@$(CC) -D DEBUG $(FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS) -g
 
 $(BUILD)/%.c.o : %.c 
 	@$(MKDIR) -p $(dir $@)
-	@$(CC) -D DEBUG $(FLAGS) $(D_FLAGS) -c $< -o $@ 
+	@$(CC) -D DEBUG $(FLAGS) $(D_FLAGS) -c $< -o $@ -g
 
 .PHONY : clean
 

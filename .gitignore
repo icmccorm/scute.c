@@ -3,6 +3,8 @@
 !/**/
 !*.*
 
+.*
+
 # folder containing precompiled .o files
 build
 tmp
