@@ -61,8 +61,8 @@ mergeInto(LibraryManager.library, {
 	addStringStyle: function(keyPtr, valuePtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valuePtr);
-		_currentShape['style']['values'][key] = {
-			value: value,
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
 			lineIndex: lineIndex,
 			inlineIndex: inlineIndex, 
 		}
@@ -70,10 +70,10 @@ mergeInto(LibraryManager.library, {
 
 	addStyle: function(keyPtr, value, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['style']['values'][key] = {
-			value: value,
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
 			lineIndex: lineIndex,
-			inlineIndex: inlineIndex,
+			inlineIndex: inlineIndex, 
 		}
 	},
 
