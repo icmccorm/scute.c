@@ -120,3 +120,39 @@ Value nativeSqrt(Value* params, int numParams){
 		return NULL_VAL();
 	}
 }
+
+Value jump(Value* params, int numParams){
+	ObjInstance* jumpInstance = allocateInstance(NULL);
+
+	return OBJ_VAL(jumpInstance);
+}
+
+Value line(Value* params, int numParams){
+	ObjInstance* lineInstance = allocateInstance(NULL);
+
+	return OBJ_VAL(lineInstance);
+}
+
+Value move(Value* params, int numParams){
+	ObjInstance* moveInstance = allocateInstance(NULL);
+
+	return OBJ_VAL(moveInstance);
+}
+
+Value vertex(Value* params, int numParams){
+	ObjInstance* vertexInstance = allocateInstance(NULL);
+
+	return OBJ_VAL(vertexInstance);
+}
+
+Value turn(Value* params, int numParams){
+	ObjInstance* turnInstance = allocateInstance(NULL);
+
+	return OBJ_VAL(turnInstance);
+}
+
+Value bezier(Value* params, int numParams){
+	ObjInstance* turnInstance = allocateInstance(NULL);
+
+	return OBJ_VAL(turnInstance);
+}

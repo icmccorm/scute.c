@@ -25,6 +25,8 @@ static void resetStack(){
 
 static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams);
 static uint8_t* popStackFrame();
+void initGlobals(HashMap* map);
+
 
 void initVM(CompilePackage* package, int frameIndex) {
 	vm.frameIndex = frameIndex;
@@ -41,8 +43,14 @@ void initVM(CompilePackage* package, int frameIndex) {
 
 	resetStack();
 	initMap(&vm.globals);
+	initGlobals(vm.globals);
   	mergeMaps(package->globals, vm.globals);
 	pushStackFrame(package->compiled, NULL, 0);
+}
+
+void initGlobals(HashMap* map){
+	ObjString* canvasString = internString("canvas", 6);
+	add(map, canvasString, OBJ_VAL(allocateInstance(NULL)));
 }
 
 void freeVM() {
@@ -200,6 +208,11 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(READ_BYTE()){
+			case OP_MERGE_INST: {
+				ObjInstance* incoming = AS_INST(pop());
+				ObjInstance* receiving = AS_INST(pop());
+				mergeMaps(receiving->map, incoming->map);
+			} break;
 			case OP_BUILD_ARRAY: {
 				uint32_t numElements = READ_INT();
 				ObjArray* arrayObj = allocateArrayWithCapacity(numElements);

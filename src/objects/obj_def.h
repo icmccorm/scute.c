@@ -48,6 +48,7 @@ struct sObjInstance{
 	HashMap* map;
 	TKType instanceType;
 	ObjInstance* nextShape;
+	ObjInstance* segments;
 };
 
 struct sObjChunk{

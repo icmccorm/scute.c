@@ -23,16 +23,17 @@ typedef enum {
 } VLType;
 
 typedef struct {
-	VLType type;
-	union {
+	VLType type;		//0
+	union {				//8
 		bool boolean;
 		double number;
-		Obj* obj;
+		Obj* obj;		
 	} as;
 
-	int lineIndex;
-	int inlineIndex;
+	int lineIndex;		//16
+	int inlineIndex;	//20
 } Value;
+
 
 typedef struct {
 	int capacity;

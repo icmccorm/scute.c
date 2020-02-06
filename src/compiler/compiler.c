@@ -22,9 +22,26 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
+	em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
 	extern void em_addValue(int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
+
+	static void prepareValueConversion(){
+		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
+		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
+		Value val = NULL_VAL();
+		size_t base = &(NULL_VAL());
+		
+		int type = (int)(&val.type - base);
+		int as = (int)(&val.as - base);
+		int lineIndex = (int)(&val.lineIndex - base);
+		int inlineIndex = (int)(&val.inlineIndex - base);
+
+		em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
+	}
 #endif
+
+
 
 static Compiler* currentCompiler() {
 	return compiler;
@@ -359,6 +376,7 @@ static void attr();
 static void drawStatement();
 static void returnStatement();
 static void repeatStatement();
+static void withStatement();
 
 static ParseRule* getRule(TKType type){
 	return &rules[type];
@@ -791,6 +809,23 @@ static void defStatement() {
 		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
 		internGlobal(&idToken);
 	}
+}
+
+static void withStatement(){
+	expression();
+	endLine();
+
+	while(parser.current.type == TK_ID){
+		advance();
+
+
+		// make a currentInstance pointer that is separate from the stackFrame? 
+		// set the value to a new instance before entering the with block, and assign each value to the instance
+		// swap the instances upon completion
+
+	}
+
+	
 }
 
 static void frameStatement() {
@@ -1254,6 +1289,9 @@ void initParser(Parser* parser, char* source){
 
 
 bool compile(char* source, CompilePackage* package){
+	#ifdef EM_MAIN
+		static void prepareValueConversion();
+	#endif
 	initScanner(source);
 	compiler = enterCompilationScope(package->compiled);
 	initParser(&parser, source);

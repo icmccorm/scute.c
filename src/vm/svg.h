@@ -23,6 +23,9 @@ extern void addStringStyle(const char* key, char* valuePtr, int lineIndex, int i
 extern void newShape(double id, double type);
 extern void paintShape();
 
+extern void setCanvasOrigin(int xLineIndex, int yLineIndex, int xInlineIndex, int yInlineIndex);
+extern void setCanvasDimensions(int widthLineIndex, int heightLineIndex, int widthInlineIndex, int heightInlineIndex);
+
 #define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.lineIndex, value.inlineIndex));
 #define CATTR(name, value) (addStringAttribute(name, AS_CSTRING(value), value.lineIndex, value.inlineIndex));
 
@@ -34,7 +37,5 @@ void drawShape(HashMap* shapeMap, TKType type);
 void renderFrame();
 void pushShape(ObjInstance* close);
 ObjInstance* popShape();
-
-
 
 #endif

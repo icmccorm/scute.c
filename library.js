@@ -1,9 +1,41 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
+	valuePointerOffsets: {
+		type: 0,
+		union: 0,
+		lineIndex: 0,
+		inlineIndex: 0,
+	},
 
-	em_addValue: function(inlineOffset, length){
+	em_configureValuePointerOffsets(type, union, lineIndex, inlineIndex){
+		console.log("Value conversion offsets: " + type + ", " + union + ", " + lineIndex + ", " + inlineIndex);
+		_valuePointerOffsets.type = type;
+		_valuePointerOffsets.union = union;
+		_valuePointerOffsets.lineIndex = lineIndex;
+		_valuePointerOffsets.inlinIndex = inlineIndex;
+	},
+
+	//getValue(ptr, type) and setValue(ptr, value, type)
+	em_getValueMeta: function (valPtr){
+		return {
+			lineIndex: getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32'),
+			inlineIndex: getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32'),
+		}
+	},
+
+	em_addValue: function(value, inlineOffset, length){
 		_values.push({
+			value: value,
+			inlineOffset: inlineOffset,
+			length: length,
+		})
+	},
+
+	em_addStringValue(valuePtr, inlineOffset, length){
+		let value = Module.UTF8ToString(valuePtr);
+		_values.push({
+			value: value,
 			inlineOffset: inlineOffset,
 			length: length,
 		})
@@ -39,42 +71,25 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 
-	addStringAttribute: function(keyPtr, valPtr, lineIndex, inlineIndex){
+	addStringAttribute: function(keyPtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
 		let value = Module.UTF8ToString(valPtr);
-		_currentShape['attrs'][key] = {
-			value: value,
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex,
-		};
+		_currentShape['attrs'][key] = [lineIndex, inlineIndex];
 	},
 
-	addAttribute: function(keyPtr, value, lineIndex, inlineIndex){
+	addAttribute: function(keyPtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['attrs'][key] = {
-			value: value,
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex,
-		};
+		_currentShape['attrs'][key] = [lineIndex, inlineIndex];
 	},
 
-	addStringStyle: function(keyPtr, valuePtr, lineIndex, inlineIndex){
+	addStringStyle: function(keyPtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
-		let value = Module.UTF8ToString(valuePtr);
-		_currentShape['style']['values'][key] = {
-			value: value,
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex, 
-		}
+		_currentShape['style'][key] = [lineIndex, inlineIndex];
 	},
 
-	addStyle: function(keyPtr, value, lineIndex, inlineIndex){
+	addStyle: function(keyPtr, lineIndex, inlineIndex){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['style']['values'][key] = {
-			value: value,
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex,
-		}
+		_currentShape['style'][key] = [lineIndex, inlineIndex];
 	},
 
 	paintShape: function(){
@@ -83,6 +98,20 @@ mergeInto(LibraryManager.library, {
 
 	setMaxFrameIndex: function(num){
 		Module._maxFrameIndex = num;
+	},
+
+	setCanvasDimensions: function(widthLineIndex, heightLineIndex, widthInlineIndex, heightInlineIndex){
+		Module._canvasDimensions = {
+			width: [widthLineIndex, widthInlineIndex],
+			height: [heightLineIndex, heightInlineIndex]
+		}
+	},
+
+	setCanvasOrigin: function(xLineIndex, yLineIndex, xInlineIndex, yInlineIndex){
+		Module._canvasOrigin = {
+			originX: [xLineIndex, xInlineIndex],
+			originY: [yLineIndex, yInlineIndex]
+		}
 	},
 
 	newShape__deps: [
@@ -115,6 +144,15 @@ mergeInto(LibraryManager.library, {
 
 	em_endLine__deps: [
 		'values',
+	],
+
+	em_getValueMeta__deps: [
+		'valuePointerOffsets'
+	],
+
+	em_configureValuePointerOffsets__deps:[
+		'valuePointerOffsets'
 	]
+
 	
 });

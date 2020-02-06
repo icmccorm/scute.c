@@ -121,9 +121,13 @@ void add(HashMap* map, ObjString* key, Value value){
 			map->entries[index].key = key;
 			map->entries[index].value = value;
 			++map->numEntries;
+			if(map->previous){
+				map->previous->next = &map->entries[index];
+				map->previous = &map->entries[index];
+			}else{
+				map->previous = &map->entries[index];
+			}
 
-			map->previous->next = &map->entries[index];
-			map->previous = &map->entries[index];
 		}
 	}
 }
