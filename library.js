@@ -8,34 +8,59 @@ mergeInto(LibraryManager.library, {
 		inlineIndex: 0,
 	},
 
-	em_configureValuePointerOffsets(type, union, lineIndex, inlineIndex){
-		console.log("Value conversion offsets: " + type + ", " + union + ", " + lineIndex + ", " + inlineIndex);
+	valueTypes: {
+		0: "VL_NULL",
+		1: "VL_BOOL",
+		2: "VL_NUM",
+		3: "VL_OBJ",
+		4: "VL_CLR",
+	},
+
+	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
 		_valuePointerOffsets.type = type;
 		_valuePointerOffsets.union = union;
 		_valuePointerOffsets.lineIndex = lineIndex;
-		_valuePointerOffsets.inlinIndex = inlineIndex;
+		_valuePointerOffsets.inlineIndex = inlineIndex;
 	},
 
 	//getValue(ptr, type) and setValue(ptr, value, type)
-	em_getValueMeta: function (valPtr){
+	lib_getValueMeta: function (valPtr){
 		return {
+			type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
 			lineIndex: getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32'),
 			inlineIndex: getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32'),
 		}
 	},
 
-	em_addValue: function(value, inlineOffset, length){
+	lib_getValue: function(valPtr){
+		let type = _valueTypes[getValue(valPtr + _valuePointerOffsets.type, 'i32')];
+		let value = getValue(valPtr + _valuePointerOffsets.union, 'double');
+		switch(type){
+			case 'VL_BOOL':
+				value = Boolean(value);
+				break;
+			case 'VL_NULL':
+				value = null;
+				break;
+			case 'VL_NUM':
+			default:
+				break;
+		}
+		return value;
+	},
+
+	em_addValue: function(valuePtr, inlineOffset, length){
+		let convertVal = _lib_getValue(valuePtr);
 		_values.push({
-			value: value,
+			value: convertVal,
 			inlineOffset: inlineOffset,
 			length: length,
 		})
 	},
 
-	em_addStringValue(valuePtr, inlineOffset, length){
-		let value = Module.UTF8ToString(valuePtr);
+	em_addStringValue: function(charPtr, inlineOffset, length){
 		_values.push({
-			value: value,
+			value: Module.UTF8ToString(charPtr),
 			inlineOffset: inlineOffset,
 			length: length,
 		})
@@ -71,25 +96,22 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 
-	addStringAttribute: function(keyPtr, lineIndex, inlineIndex){
+	addAttribute: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
-		let value = Module.UTF8ToString(valPtr);
-		_currentShape['attrs'][key] = [lineIndex, inlineIndex];
+		let meta = _lib_getValueMeta(valuePtr);
+		_currentShape['attrs'][key] = meta;
 	},
 
-	addAttribute: function(keyPtr, lineIndex, inlineIndex){
+	addStringStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['attrs'][key] = [lineIndex, inlineIndex];
+		let meta = _lib_getValueMeta(valuePtr);
+		_currentShape['style'][key] = meta;
 	},
 
-	addStringStyle: function(keyPtr, lineIndex, inlineIndex){
+	addStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['style'][key] = [lineIndex, inlineIndex];
-	},
-
-	addStyle: function(keyPtr, lineIndex, inlineIndex){
-		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['style'][key] = [lineIndex, inlineIndex];
+		let meta = _lib_getValueMeta(valuePtr);
+		_currentShape['style'][key] = meta;
 	},
 
 	paintShape: function(){
@@ -100,18 +122,8 @@ mergeInto(LibraryManager.library, {
 		Module._maxFrameIndex = num;
 	},
 
-	setCanvasDimensions: function(widthLineIndex, heightLineIndex, widthInlineIndex, heightInlineIndex){
-		Module._canvasDimensions = {
-			width: [widthLineIndex, widthInlineIndex],
-			height: [heightLineIndex, heightInlineIndex]
-		}
-	},
+	setCanvas: function(widthPtr, heightPtr, xPtr, yPtr){
 
-	setCanvasOrigin: function(xLineIndex, yLineIndex, xInlineIndex, yInlineIndex){
-		Module._canvasOrigin = {
-			originX: [xLineIndex, xInlineIndex],
-			originY: [yLineIndex, yInlineIndex]
-		}
 	},
 
 	newShape__deps: [
@@ -123,23 +135,28 @@ mergeInto(LibraryManager.library, {
 	],
 
 	addStyle__deps: [
-        'currentShape'
+		'currentShape',
+		'lib_getValueMeta'
 	],
 
 	addStringStyle__deps: [
-        'currentShape'
+		'currentShape',
+		'lib_getValueMeta'
 	],
 
 	addAttribute__deps: [
-		'currentShape'
+		'currentShape',
+		'lib_getValueMeta',
 	],
 
 	addStringAttribute__deps: [
-		'currentShape'
+		'currentShape',
+		'lib_getValueMeta'
 	],
 
 	em_addValue__deps: [
 		'values',
+		'lib_getValue'
 	],
 
 	em_endLine__deps: [
@@ -152,6 +169,10 @@ mergeInto(LibraryManager.library, {
 
 	em_configureValuePointerOffsets__deps:[
 		'valuePointerOffsets'
+	],
+
+	lib_getValue__deps: [
+		'valueTypes'
 	]
 
 	

@@ -14,23 +14,15 @@ void assignPosition(ObjInstance* close, Value* values, uint8_t numValues);
 void assignDimensions(ObjInstance* close, Value* values, uint8_t numValues);
 
 #ifdef EM_MAIN
-extern void addAttribute(const char* key, double value, int lineIndex, int inlineIndex);
-extern void addStringAttribute(const char* key, char* valuePtr, int lineIndex, int inlineIndex);
+extern void addAttribute(const char* key, Value* val);
 
-extern void addStyle(const char* key, double value, int lineIndex, int inlineIndex);
-extern void addStringStyle(const char* key, char* valuePtr, int lineIndex, int inlineIndex);
+extern void addStyle(const char* key, Value* val);
+extern void addStringStyle(const char* key, Value* val);
 
 extern void newShape(double id, double type);
 extern void paintShape();
 
-extern void setCanvasOrigin(int xLineIndex, int yLineIndex, int xInlineIndex, int yInlineIndex);
-extern void setCanvasDimensions(int widthLineIndex, int heightLineIndex, int widthInlineIndex, int heightInlineIndex);
-
-#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.lineIndex, value.inlineIndex));
-#define CATTR(name, value) (addStringAttribute(name, AS_CSTRING(value), value.lineIndex, value.inlineIndex));
-
-#define STYLE(name, value) (addStyle(name, AS_NUM(value), value.lineIndex, value.inlineIndex));
-#define CSTYLE(name, value) (addStringStyle(name, AS_CSTRING(value), value.lineIndex, value.inlineIndex));
+extern void setCanvas(Value* width, Value* height, Value* originX, Value* originY);
 #endif
 
 void drawShape(HashMap* shapeMap, TKType type);
