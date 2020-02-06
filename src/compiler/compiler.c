@@ -22,15 +22,15 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
+	extern void em_configureValuePointerOffsets(int type, int as, int lineIndex, int inlineIndex);
 	extern void em_addValue(int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
 
-	static void prepareValueConversion(){
+	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
 		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
 		Value val = NULL_VAL();
-		size_t base = &(NULL_VAL());
+		size_t base = (size_t) &(NULL_VAL());
 		
 		int type = (int)(&val.type - base);
 		int as = (int)(&val.as - base);
@@ -1290,7 +1290,7 @@ void initParser(Parser* parser, char* source){
 
 bool compile(char* source, CompilePackage* package){
 	#ifdef EM_MAIN
-		static void prepareValueConversion();
+		prepareValueConversion();
 	#endif
 	initScanner(source);
 	compiler = enterCompilationScope(package->compiled);
