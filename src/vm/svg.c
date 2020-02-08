@@ -33,6 +33,7 @@ void drawShape(HashMap* shapeMap, TKType type){
 		newShape(address, type);
 
 		STYLE("strokeWidth", getValue(shapeMap, string("strokeWidth")));
+		addStyle("strokeWidth", &strokeWidth);
 
 		Value fill = getValue(shapeMap, string("fill"));
 		resolveColor("fill", fill);
@@ -48,16 +49,16 @@ void drawShape(HashMap* shapeMap, TKType type){
 				ObjString* hStr = string("height");
 
 				Value xVal = getValue(shapeMap, xStr);
-				ATTR("x", xVal);
+				addAttribute("x", &xVal);
 
 				Value yVal = getValue(shapeMap, yStr);
-				ATTR("y", yVal);
+				addAttribute("y", &yVal);
 
 				Value wVal = getValue(shapeMap, wStr);
-				ATTR("width", wVal);
+				addAttribute("width", &wVal);
 
 				Value hVal = getValue(shapeMap, hStr);
-				ATTR("height", hVal);
+				addAttribute("height", &hVal);
 			} break;
 
 			case TK_CIRC:{
@@ -66,14 +67,13 @@ void drawShape(HashMap* shapeMap, TKType type){
 				ObjString* rStr = string("r");
 
 				Value cxVal = getValue(shapeMap, cxStr);
-				ATTR("cx", cxVal);
+				addAttribute("cx", &cxVal);
 
 				Value cyVal = getValue(shapeMap, cyStr);
-				ATTR("cy", cyVal);
+				addAttribute("cy", &cyVal);
 
 				Value rVal = getValue(shapeMap, rStr);
-				ATTR("r", rVal);
-
+				addAttribute("r", &rVal);
 				} break;
 			default:
 				break;

@@ -22,20 +22,20 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
-	extern void em_addValue(int inlineOffset, int length);
+	extern void em_configureValuePointerOffsets(int type, int as, int lineIndex, int inlineIndex);
+	extern void em_addValue(Value* value, int inlineOffset, int length);
+	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
 
-	static void prepareValueConversion(){
+	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
 		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
 		Value val = NULL_VAL();
-		size_t base = &(NULL_VAL());
-		
-		int type = (int)(&val.type - base);
-		int as = (int)(&val.as - base);
-		int lineIndex = (int)(&val.lineIndex - base);
-		int inlineIndex = (int)(&val.inlineIndex - base);
+		void* base = (void*) &val;
+		int type = (int) ((void*)&(val.type) - base);
+		int as = (int) ((void*)&(val.as) - base);
+		int lineIndex = (int) ((void*)&(val.lineIndex) - base);
+		int inlineIndex = (int) ((void*)&(val.inlineIndex) - base);
 
 		em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
 	}
@@ -167,9 +167,14 @@ static void emitLinkedConstant(Value value, TK* token){
 	++parser.currentLineValueIndex;
 
 	#ifdef EM_MAIN
-		em_addValue(token->inlineIndex, token->length);
+	if(!IS_NULL(value)){
+		if(value.type == VL_OBJ && AS_OBJ(value)->type == OBJ_STRING){
+			em_addStringValue(AS_CSTRING(value), token->inlineIndex, token->length);
+		}else{
+			em_addValue(&value, token->inlineIndex, token->length);
+		}
+	}
 	#endif
-
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
 
@@ -1282,7 +1287,8 @@ void initParser(Parser* parser, char* source){
 
 bool compile(char* source, CompilePackage* package){
 	#ifdef EM_MAIN
-		static void prepareValueConversion();
+		prepareValueConversion();
+		
 	#endif
 	initScanner(source);
 	compiler = enterCompilationScope(package->compiled);
