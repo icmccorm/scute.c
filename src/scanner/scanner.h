@@ -56,17 +56,28 @@ typedef enum {
     TK_FOR,
     TK_IF,
     TK_ELSE,
+
     TK_RECT,
     TK_CIRC,
     TK_ELLIP,
+    TK_MOVE,
+    TK_TURN,
+    TK_VERT,
+    TK_JUMP,
+    TK_ARC,
+    TK_POLY,
+    TK_POLYL,
+    TK_PATH,
+
     TK_LET,
     TK_VAR,
+
     TK_PRINT,
     TK_DRAW,
+
     TK_TEXT,
+
     TK_T,
-    TK_DIMS,
-    TK_POS,
     TK_ERROR,
     TK_EOF,
     TK_AS,
@@ -76,7 +87,6 @@ typedef enum {
 	TK_REP,
 	TK_TO,
     TK_FROM,
-    TK_POLY,
 	TK_WITH,
 } TKType;  
 

@@ -75,9 +75,44 @@ void freeObject(Obj* obj){
 			freeValueArray(arrayObj->array);
 			FREE(ValueArray, arrayObj->array);
 			FREE(ObjArray, arrayObj);
+		case(OBJ_INST_SHAPE): ;
+			ObjShape* shape = (ObjShape*)(obj);
+			freeMap(shape->map);
+			FREE_ARRAY(ObjShape*, shape->segments, shape->segmentCapacity);
+			FREE(ObjShape, shape);
+			break;
 		default:
 			break;
 	}
+}
+
+ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
+	ObjShape* shape = ALLOCATE_OBJ(ObjShape, OBJ_INST_SHAPE);
+	
+	initMap(&shape->map);
+	shape->segmentCapacity = 0;
+	shape->numSegments = 0;
+	shape->shapeType = shapeType;
+
+	if(super != NULL){
+		HashEntry* current = super->map->first;
+		while(current != NULL){
+			add(shape->map, current->key, current->value);
+			current = current->next;
+		}
+	}
+	return shape;
+}
+
+void addSegment(ObjShape* shape, ObjShape* segment){
+	if(shape->numSegments + 1 >= shape->segmentCapacity){
+			int oldCapacity = shape->segmentCapacity;
+			shape->segmentCapacity = GROW_CAPACITY(oldCapacity);
+			shape->segments = GROW_ARRAY(shape->segments, ObjShape*,
+			oldCapacity, shape->segmentCapacity);
+	}
+	shape->segments[shape->numSegments] = segment;
+	++shape->numSegments;
 }
 
 ObjColor* allocateColor(CLType type){
@@ -126,15 +161,11 @@ ObjInstance* allocateInstance(ObjInstance* super){
 	ObjInstance* close = ALLOCATE_OBJ(ObjInstance, OBJ_INST);
 	initMap(&close->map);
 	if(super != NULL){
-		close->instanceType = super->instanceType;
-
 		HashEntry* current = super->map->first;
 		while(current != NULL){
 			add(close->map, current->key, current->value);
 			current = current->next;
 		}
-	}else{
-		close->instanceType = TK_NULL;
 	}
 	return close;
 }
@@ -153,7 +184,7 @@ ObjChunk* allocateChunkObject(ObjString* funcName){
 	return chunkObj;
 }
 
-ObjString* internString(char* chars, int length){
+ObjString* tokenString(char* chars, int length){
 	ObjString* interned = findKey(currentResult()->strings, chars, length);
 	if(interned != NULL) return interned;
 	
@@ -161,6 +192,17 @@ ObjString* internString(char* chars, int length){
 	memcpy(heapChars, chars, length);
 	heapChars[length] = '\0';
 
+	return allocateString(heapChars, length);
+}
+
+ObjString* string(char* chars){
+	int length = (int) strlen(chars);
+	ObjString* interned = findKey(currentResult()->strings, chars, length);
+	if(interned != NULL) return interned;
+	
+	char* heapChars = ALLOCATE(char, length + 1);
+	memcpy(heapChars, chars, length);
+	heapChars[length] = '\0';
 	return allocateString(heapChars, length);
 }
 

@@ -10,8 +10,8 @@ typedef struct {
 	char* chars;
 } Attribute;
 
-void assignPosition(ObjInstance* close, Value* values, uint8_t numValues);
-void assignDimensions(ObjInstance* close, Value* values, uint8_t numValues);
+void assignPosition(ObjShape* close, Value* values, uint8_t numValues);
+void assignDimensions(ObjShape* close, Value* values, uint8_t numValues);
 
 #ifdef EM_MAIN
 extern void addAttribute(const char* key, double value, int lineIndex, int inlineIndex);
@@ -35,7 +35,7 @@ extern void setCanvasDimensions(int widthLineIndex, int heightLineIndex, int wid
 
 void drawShape(HashMap* shapeMap, TKType type);
 void renderFrame();
-void pushShape(ObjInstance* close);
-ObjInstance* popShape();
+void pushShape(ObjShape* close);
+ObjShape* popShape();
 
 #endif

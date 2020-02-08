@@ -290,6 +290,7 @@ static TKType findIdentifier(){
 						}
 					case 'c': return checkKeyword(2, 2, "os", TK_HCOS);
                     case 'n': return checkKeyword(2, 1, "d", TK_AND);
+                    case 'r': return checkKeyword(2, 1, "c", TK_ARC);
                 }
             }
         case 'd':
@@ -297,7 +298,6 @@ static TKType findIdentifier(){
                 switch(scanner.start[1]){
                     case 'o': return TK_DO;
                     case 'r': return checkKeyword(2, 2, "aw", TK_DRAW);
-                    case 'i': return checkKeyword(2, 2, "ms", TK_DIMS);
                     case 'e': 
 						if(scanner.current - scanner.start > 2){
 							switch(scanner.start[2]){
@@ -394,6 +394,7 @@ static TKType findIdentifier(){
 							return TK_TO;
 						}
 					} break;
+                    case 'u': return checkKeyword(2, 2, "rn", TK_TURN);
 					default: return TK_ID;
                 }
             }else{
@@ -404,21 +405,30 @@ static TKType findIdentifier(){
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
                     case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
+                    case 'a': return checkKeyword(2, 2, "th", TK_PATH);
                     case 'o': {
                         if(scanner.current - scanner.start > 2){
                             switch(scanner.start[2]){
-                                case 'l': return checkKeyword(3, 1, "y", TK_POLY);
-                                case 's': return TK_POS;
-                            }    
-                        }else{
-                            return TK_ID;
+                                case 'l': {
+                                    if(scanner.current - scanner.start > 3){
+                                        switch(scanner.start[3]){
+                                            case 'y':
+                                                if(scanner.current - scanner.start > 4){
+                                                    switch(scanner.start[4]){
+                                                        case 'l': return checkKeyword(5, 3, "ine", TK_POLYL);
+                                                        case 'g': return checkKeyword(5, 3, "on", TK_POLY);
+                                                    }
+                                                }
+                                                break;
+                                        }
+                                    }
+                                } break;
+                            }       
                         }
-                        
                     } break;
                 }
-            }else{
-                return TK_ID;
             }
+            return TK_ID;
         case 'e':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -428,15 +438,21 @@ static TKType findIdentifier(){
                                 case 'l': return checkKeyword(3, 4, "ipse", TK_ELLIP);
                                 case 's': return checkKeyword(3, 1, "e", TK_ELSE);
                             }
-                        }else{
-                            return TK_ID;
                         }
+                    break;
                 }
-            }else{
-                return TK_ID;
             }
+            return TK_ID;
         case 'n': return checkKeyword(1, 3, "ull", TK_NULL);
-        case 'v': return checkKeyword(1, 2, "ar", TK_VAR);
+        case 'v': {
+            if(scanner.current - scanner.start > 1){
+                switch(scanner.start[1]){
+                    case 'e': return checkKeyword(2, 4, "rtex", TK_VERT);
+                    case 'a': return checkKeyword(2, 1, "r", TK_VAR);
+                }
+            }
+            return TK_ID;
+        } break;
 		case 'h':
 			if(scanner.current - scanner.start > 1){
 				switch(scanner.start[1]){
@@ -448,6 +464,8 @@ static TKType findIdentifier(){
 			}else{
 				return TK_ID;
 			}
+        case 'm': return checkKeyword(1, 3, "ove", TK_MOVE);
+        case 'j': return checkKeyword(1, 3, "ump", TK_JUMP);
         default:
             return TK_ID;
     }
@@ -460,7 +478,16 @@ static TK identifier(){
         case TK_RECT:
         case TK_CIRC:
         case TK_ELLIP:
+        case TK_POLY:
+        case TK_POLYL:
+        case TK_PATH:
+        case TK_MOVE:
+        case TK_JUMP:
+        case TK_TURN:
+        case TK_ARC:
+        case TK_VERT:
             return makeDualToken(TK_SHAPE, type);
+        
         default:
             return makeToken(type);
     }

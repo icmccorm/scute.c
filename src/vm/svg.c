@@ -32,20 +32,20 @@ void drawShape(HashMap* shapeMap, TKType type){
 		unsigned address = (unsigned) shapeMap;
 		newShape(address, type);
 
-		STYLE("strokeWidth", getValue(shapeMap, internString("strokeWidth", 11)));
+		STYLE("strokeWidth", getValue(shapeMap, string("strokeWidth")));
 
-		Value fill = getValue(shapeMap, internString("fill", 4));
+		Value fill = getValue(shapeMap, string("fill"));
 		resolveColor("fill", fill);
 
-		Value stroke = getValue(shapeMap, internString("stroke", 6));
+		Value stroke = getValue(shapeMap, string("stroke"));
 		resolveColor("stroke", stroke);
 
 		switch(type){
 			case TK_RECT: { 
-				ObjString* xStr = internString("x", 1);
-				ObjString* yStr = internString("y", 1);
-				ObjString* wStr = internString("width", 5);
-				ObjString* hStr = internString("height", 6);
+				ObjString* xStr = string("x");
+				ObjString* yStr = string("y");
+				ObjString* wStr = string("width");
+				ObjString* hStr = string("height");
 
 				Value xVal = getValue(shapeMap, xStr);
 				ATTR("x", xVal);
@@ -61,9 +61,9 @@ void drawShape(HashMap* shapeMap, TKType type){
 			} break;
 
 			case TK_CIRC:{
-				ObjString* cxStr = internString("cx", 2);
-				ObjString* cyStr = internString("cy", 2);
-				ObjString* rStr = internString("r", 1);
+				ObjString* cxStr = string("cx");
+				ObjString* cyStr = string("cy");
+				ObjString* rStr = string("r");
 
 				Value cxVal = getValue(shapeMap, cxStr);
 				ATTR("cx", cxVal);
@@ -84,18 +84,17 @@ void drawShape(HashMap* shapeMap, TKType type){
 	#endif
 }
 
-
-ObjInstance* popShape(){
-	ObjInstance* latestShape = vm.shapeStack[vm.shapeCount-1];
+ObjShape* popShape(){
+	ObjShape* latestShape = vm.shapeStack[vm.shapeCount-1];
 	--vm.shapeCount;
 	return latestShape;
 }
 
-void pushShape(ObjInstance* close){
+void pushShape(ObjShape* close){
 	if(vm.shapeCount + 1 > vm.shapeCapacity){
 		int oldCapacity = vm.shapeCapacity;
 		vm.shapeCapacity = GROW_CAPACITY(oldCapacity);
-		vm.shapeStack = GROW_ARRAY(vm.shapeStack, ObjInstance*, oldCapacity, vm.shapeCapacity);
+		vm.shapeStack = GROW_ARRAY(vm.shapeStack, ObjShape*, oldCapacity, vm.shapeCapacity);
 	}
 	vm.shapeStack[vm.shapeCount] = close;
 	++vm.shapeCount;
@@ -103,7 +102,7 @@ void pushShape(ObjInstance* close){
 
 void renderFrame(){
 	while(vm.shapeCount > 0){
-		ObjInstance* top = popShape();
-		drawShape(top->map, top->instanceType);
+		ObjShape* top = popShape();
+		drawShape(top->map, top->shapeType);
 	}
 }

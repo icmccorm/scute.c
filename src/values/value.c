@@ -85,6 +85,13 @@ Value popValueArray(ValueArray* array){
 	}
 }
 
+Value vector(Value x, Value y){
+	ObjArray* arrayObj = allocateArray();
+	pushValueArray(arrayObj->array, x);
+	pushValueArray(arrayObj->array, y);
+	return OBJ_VAL(arrayObj);
+}
+
 void printObject(OutType out, Value value);
 
 void printValue(OutType out, Value value){
@@ -126,6 +133,14 @@ void printObject(OutType out, Value value){
 			break;
 		case OBJ_ARRAY: ;
 			printArray(O_OUT, AS_ARRAY(value)->array);
+		case OBJ_INST_SHAPE: ;
+			ObjShape* shape = AS_SHAPE(value);
+			printMap(O_OUT, shape->map, 0);
+			for(int i = 0; i< shape->numSegments; ++i){
+				printMap(O_OUT, shape->segments[i]->map, 1);
+				print(O_OUT, "\n");
+			}
+			break;
 		default:
 			break;
 	}

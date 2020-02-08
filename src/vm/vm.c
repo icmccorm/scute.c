@@ -11,7 +11,7 @@
 #include "output.h"
 #include "svg.h"
 #include "package.h"
-//#include "natives.h"
+#include "natives.h"
 
 #ifdef EM_MAIN
 	extern void setMaxFrameIndex(int index);
@@ -49,7 +49,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 }
 
 void initGlobals(HashMap* map){
-	ObjString* canvasString = internString("canvas", 6);
+	ObjString* canvasString = string("canvas");
 	add(map, canvasString, OBJ_VAL(allocateInstance(NULL)));
 }
 
@@ -70,7 +70,7 @@ static StackFrame* currentStackFrame(){
 	return &vm.stackFrames[vm.stackFrameCount-1];
 }	
 
-static ObjInstance* currentInstance(){
+ObjInstance* currentInstance(){
 	return currentStackFrame()->instanceObj;
 }
 
@@ -113,7 +113,11 @@ static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numP
 	newFrame->chunkObj = funcChunk;
 
 	if(funcChunk->chunkType == CK_CONSTR){
-		newFrame->instanceObj = allocateInstance(super);
+		if(funcChunk->instanceType != TK_NULL){
+			newFrame->instanceObj = (ObjInstance*) allocateShape(super, funcChunk->instanceType);
+		}else{
+			newFrame->instanceObj = allocateInstance(super);
+		}
 	}else{
 		newFrame->instanceObj = NULL;
 	}
@@ -208,11 +212,6 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(READ_BYTE()){
-			case OP_MERGE_INST: {
-				ObjInstance* incoming = AS_INST(pop());
-				ObjInstance* receiving = AS_INST(pop());
-				mergeMaps(receiving->map, incoming->map);
-			} break;
 			case OP_BUILD_ARRAY: {
 				uint32_t numElements = READ_INT();
 				ObjArray* arrayObj = allocateArrayWithCapacity(numElements);
@@ -223,6 +222,8 @@ static InterpretResult run() {
 				} break;
 			case OP_DEF_INST: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
+				bool pushBackInstance = (bool) READ_BYTE();
+
 				Value expression = pop();
 				Value instanceVal = pop();
 				if(IS_INST(instanceVal)){
@@ -231,7 +232,11 @@ static InterpretResult run() {
 				}else{
 					runtimeError("Property does not exist.");
 				}
-				push(expression);
+				if(pushBackInstance){
+					push(instanceVal);
+				}else{
+					push(expression);
+				}
 				} break;
 			case OP_DEREF: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
@@ -297,13 +302,17 @@ static InterpretResult run() {
 							if(IS_INST(peekVal)) {
 								super = AS_INST(pop());
 							}
-							pushStackFrame(chunkObj, super, numParams);
+
+							pushStackFrame(chunkObj, NULL, numParams);
 
 							for(int i = numParams; i< chunkObj->numParameters; ++i){
 								push(NULL_VAL());
 							}
+							if(currentInstance()->object.type == OBJ_INST_SHAPE){
+								ObjShape* shape = (ObjShape*) currentInstance();
+								shape->shapeType = chunkObj->instanceType;
 
-							currentStackFrame()->instanceObj->instanceType = chunkObj->instanceType;
+							}
 							} break;
 
 						case OBJ_NATIVE: {
@@ -329,9 +338,9 @@ static InterpretResult run() {
 			} break;
 			case OP_DRAW: {
 				Value drawVal = pop();
-				Obj* toObject = valueToObject(OBJ_INST, drawVal);
+				Obj* toObject = valueToObject(OBJ_INST_SHAPE, drawVal);
 				if(toObject){
-					ObjInstance* shape = AS_INST(drawVal);
+					ObjShape* shape = AS_SHAPE(drawVal);
 					pushShape(shape);
 				}else{
 					runtimeError("Only shapes and shape instances can be drawn.");
@@ -359,45 +368,6 @@ static InterpretResult run() {
 				ObjString* setString = AS_STRING(READ_CONSTANT());	
 				Value expr = pop();
 				add(vm.globals, setString, expr);
-			} break;
-			case OP_GET_SCOPE: {
-				Value scopeVal = pop();
-				Value getVal = READ_CONSTANT();
-
-				ObjInstance* superScope = (ObjInstance*) valueToObject(OBJ_INST, scopeVal);
-				if(superScope){
-					ObjInstance* superScope = AS_INST(scopeVal);
-					ObjString* getString = AS_STRING(getVal);
-					Value stored = getValue(superScope->map, getString);
-					push(stored);	
-				}else{
-					if(IS_NULL(scopeVal)){
-						runtimeError("Cannot dereference a NULL value.");
-						return INTERPRET_RUNTIME_ERROR;
-					}else{
-						runtimeError("Only instances of classes can be dereferenced.");
-						return INTERPRET_RUNTIME_ERROR;
-					}
-				}
-			} break;
-			case OP_DEF_SCOPE: {
-				Value setVal = READ_CONSTANT();
-				Value encloseVal = READ_CONSTANT();
-				Value expr = pop();
-				Value scopeVal = pop();
-				if(IS_NULL(scopeVal) || !IS_INST(scopeVal)){
-					ObjString* encloseString = AS_STRING(encloseVal);
-					ObjString* setString = AS_STRING(setVal);
-					ObjInstance* newScope = allocateInstance(NULL);
-					add(newScope->map, setString, expr);
-					add(vm.currentScope->map, encloseString, OBJ_VAL(newScope));
-
-				}else{
-					ObjInstance* superScope = AS_INST(scopeVal);
-					ObjString* setString = AS_STRING(setVal);
-					add(superScope->map, setString, expr);
-				}
-				push(expr);
 			} break;
 			case OP_LOAD_INSTANCE: {
 				ObjInstance* currentInstance = currentStackFrame()->instanceObj;
@@ -447,7 +417,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
 
-							push(OBJ_VAL(internString(totalStr, combinedLength)));
+							push(OBJ_VAL(tokenString(totalStr, combinedLength)));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}
@@ -458,7 +428,7 @@ static InterpretResult run() {
 							char concat[combinedLength];
 							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
 
-							push(OBJ_VAL(internString(concat, combinedLength)));
+							push(OBJ_VAL(tokenString(concat, combinedLength)));
 						}else if(IS_NUM(a)){
 							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
 							char str[strLength];
@@ -468,7 +438,7 @@ static InterpretResult run() {
 							char totalStr[combinedLength];
 							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
 
-							push(OBJ_VAL(internString(totalStr, combinedLength)));
+							push(OBJ_VAL(tokenString(totalStr, combinedLength)));
 						}else{
 							runtimeError("Only number types and strings can be added.");
 						}

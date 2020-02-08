@@ -12,7 +12,7 @@ ObjInstance* allocateInstance(ObjInstance* super);
 ObjNative* allocateNative(void* func);
 ObjArray* allocateArray();
 ObjArray* allocateArrayWithCapacity(int capacity);
-
+ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
 
 ObjColor* makeRGB(Value r, Value g, Value b, Value a);
 #define RGB(r, g, b) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b), NUM_VAL(1))))
@@ -25,8 +25,12 @@ ObjColor* makeRGB(Value r, Value g, Value b, Value a);
 //#define iCMYK(c, m, y, k) (OBJ_VAL(makeCMYK(c, m, y, k)))
 
 bool isObjectType(Value value, OBJType type);
-ObjString* internString(char * start, int length);
+ObjString* tokenString(char * start, int length);
+ObjString* string(char* start);
+
 void freeObject(Obj* obj);
+
+void addSegment(ObjShape* shape, ObjShape* segment);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
 #define IS_INST(value) (isObjectType(value, OBJ_INST))
@@ -41,6 +45,7 @@ void freeObject(Obj* obj);
 #define AS_NATIVE(value) ((ObjNative*)AS_OBJ(value))
 #define AS_COLOR(value) ((ObjColor*)AS_OBJ(value))
 #define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
+#define AS_SHAPE(value) ((ObjShape*) AS_INST(value))
 
 #define ALLOCATE_OBJ(type, objType) \
 	(type*) allocateObject(sizeof(type), objType)

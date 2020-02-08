@@ -80,10 +80,6 @@ int printInstruction(Chunk* chunk, int offset){
 			return embeddedInstruction("OP_DEF_LOCAL", chunk, offset);
 		case OP_GET_LOCAL:
 			return embeddedInstruction("OP_GET_LOCAL", chunk, offset);
-		case OP_DEF_SCOPE:
-			return tripleInstruction("OP_DEF_SCOPE", chunk, offset);
-		case OP_GET_SCOPE:
-			return embeddedValueInstruction("OP_GET_SCOPE", chunk, offset);
 		case OP_JMP_FALSE:
 			return jumpInstruction("OP_JMP_FALSE", chunk, offset);
 		case OP_JMP:
@@ -107,7 +103,11 @@ int printInstruction(Chunk* chunk, int offset){
 		case OP_DEREF:
 			return embeddedValueInstruction("OP_DEREF", chunk, offset);
 		case OP_DEF_INST:
-			return embeddedInstruction("OP_DEF_INST", chunk, offset);
+			// add a 1 to account for the 1-byte pop mode flag
+			// TODO: add a more flexible option for including single byte flags
+			return 1 + embeddedInstruction("OP_DEF_INST", chunk, offset);
+		case OP_MERGE_INST:
+			return simpleInstruction("OP_MERGE_INST", offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;

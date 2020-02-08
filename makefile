@@ -17,7 +17,7 @@ INC_DIRS := $(shell find $(SRC_DIR) -type d)
 INC_HEADS := $(addprefix -I , $(HEAD_FILES))
 INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 
-CC = gcc
+CC = clang
 WASMC = emcc
 
 FLAGS = $(INC_FLAGS)
@@ -30,11 +30,11 @@ MKDIR = mkdir
 all : ./$(EXEC_FILE)
 
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
-	@$(CC) -D DEBUG $(FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS) -g
+	@$(CC) -g -D DEBUG $(FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
 
 $(BUILD)/%.c.o : %.c 
 	@$(MKDIR) -p $(dir $@)
-	@$(CC) -D DEBUG $(FLAGS) $(D_FLAGS) -c $< -o $@ -g
+	@$(CC) -g -D DEBUG $(FLAGS) $(D_FLAGS) -c $< -o $@
 
 .PHONY : clean
 

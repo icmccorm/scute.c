@@ -251,12 +251,12 @@ static void endLine(){
 }
 
 static Value getTokenStringValue(TK* token){
-	Value strObj = OBJ_VAL(internString(token->start, token->length));
+	Value strObj = OBJ_VAL(tokenString(token->start, token->length));
 	return strObj;
 }
 
 static ObjString* getTokenStringObject(TK* token){
-	return internString(token->start, token->length);
+	return tokenString(token->start, token->length);
 }
 
 static uint32_t getStringObjectIndex(TK* token){
@@ -280,7 +280,7 @@ static void number(bool canAssign);
 static void literal(bool canAssign);
 static void constant(bool canAssign);
 static void constant(bool canAssign);
-static void string(bool canAssign);
+static void stringLiteral(bool canAssign);
 static void array(bool canAssign);
 static void variable(bool canAssign);
 static void deref(bool canAssign);
@@ -315,7 +315,7 @@ ParseRule rules[] = {
 	{ literal,	NULL,	    PC_TERM },    // TK_TRUE,
 	{ literal,	NULL,	    PC_TERM },    // TK_FALSE,
 	{ literal,	NULL,	    PC_TERM },    // TK_NULL,
-	{ string,	NULL,	    PC_TERM },    // TK_STRING,
+	{ stringLiteral,	NULL,	    PC_TERM },    // TK_STRING,
 	{ variable, NULL,	    PC_TERM },    // TK_ID,
 	{ constant, NULL,	    PC_TERM },    // TK_ID,	
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
@@ -344,25 +344,6 @@ ParseRule rules[] = {
 	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
-	{ NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
-	{ NULL,		NULL,		PC_NONE },    // TK_T,
-	{ NULL, 	NULL, 		PC_NONE },	  // TK_DIMS
-	{ NULL,		NULL,		PC_NONE }, 	  // TK_POS
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
-	{ NULL,     NULL,       PC_NONE }     // TK_EOF
 };
 
 static void printStatement();
@@ -419,11 +400,6 @@ static void statement() {
 				advance();
 				drawStatement();
 				break;
-			case TK_POS:
-			case TK_DIMS:
-				advance();
-				attr();
-				break;
 			case TK_PRINT:
 				advance();
 				printStatement();
@@ -452,6 +428,10 @@ static void statement() {
 			case TK_REP:
 				advance();
 				repeatStatement();
+				break;
+			case TK_WITH:
+				advance();
+				withStatement();
 				break;
 			default:
 				expressionStatement();
@@ -501,25 +481,6 @@ static void literal(bool canAssign) {
 		default:
 			return;
 	}    
-}
-
-static void attr() {
-	TK attrType = parser.previous;
-	uint8_t attrOp;
-
-	switch(attrType.type){
-		case TK_DIMS:
-			attrOp = OP_DIMS;
-			break;
-		case TK_POS:
-			attrOp = OP_POS;
-			break;
-		default:
-			break;
-	}
-	uint8_t paramCount = emitParams();
-	emitBytes(attrOp, paramCount);
-	endLine();
 }
 
 static void returnStatement() {
@@ -690,6 +651,7 @@ static void drawStatement() {
 		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
 		emitBundle(OP_CONSTANT, scopeIndex);
 		emitBytes(OP_CALL, 0);
+
 	}else{
 		expression();
 	}
@@ -815,17 +777,32 @@ static void withStatement(){
 	expression();
 	endLine();
 
-	while(parser.current.type == TK_ID){
-		advance();
+	int currentScopeDepth = currentCompiler()->scopeDepth + 1;
+	while(parser.current.type != TK_EOF 
+			&& getIndentation() >= currentScopeDepth
+		){
 
+		switch(parser.current.type){
+			case TK_WITH:
+				withStatement();
+				break;
+			case TK_ID: ;
+				advance();
+				TK idToken = parser.previous;
+				consume(TK_ASSIGN, "Expected an '=' operator.");
+				expression();
+				
+				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+				emitByte(1);
 
-		// make a currentInstance pointer that is separate from the stackFrame? 
-		// set the value to a new instance before entering the with block, and assign each value to the instance
-		// swap the instances upon completion
-
+				endLine();
+				break;
+			default:	
+				errorAtCurrent("Expected an unqualified assignment or a nested with statement.");			
+				break;
+		}
 	}
-
-	
+	emitByte(OP_POP);
 }
 
 static void frameStatement() {
@@ -861,7 +838,7 @@ static void and_(bool canAssign) {
 	patchJump(endJump);
 }
 
-static void string(bool canAssign) {
+static void stringLiteral(bool canAssign) {
 	emitLinkedConstant(getTokenStringValue(&parser.previous), &parser.previous);
 }
 
@@ -1026,7 +1003,7 @@ static void constant(bool canAssign) {
 }
 
 static void initNative(void* func, TK* id){
-	ObjString* nativeString = internString(id->start, id->length);
+	ObjString* nativeString = tokenString(id->start, id->length);
 	ObjNative* nativeObj = allocateNative(func);
 	add(currentResult()->globals, nativeString, OBJ_VAL(nativeObj));
 }
@@ -1072,6 +1049,20 @@ static void native(bool canAssign){
 		case TK_SQRT:
 			func = nativeSqrt;
 			break;
+		case TK_MOVE:
+			func = move;
+			break;
+		case TK_VERT:
+			func = vertex;
+			break;
+		case TK_ARC:
+			func = arc;
+			break;
+		case TK_JUMP:
+			func = jump;
+			break;
+		case TK_TURN:
+			func = turn;
 		default:
 			break;
 	}
@@ -1096,6 +1087,7 @@ static void deref(bool canAssign){
 			if(canAssign && match(TK_ASSIGN)){
 				expression();
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+				emitByte(0);
 			}else{
 				emitBundle(OP_DEREF, getStringObjectIndex(&parser.previous));
 				if(parser.current.type == TK_DEREF) advance();

@@ -13,6 +13,7 @@ typedef struct sObjChunk ObjChunk;
 typedef struct sObjNative ObjNative;
 typedef struct sObjColor ObjColor;
 typedef struct sObjArray ObjArray;
+typedef struct sObjShape ObjShape;
 
 typedef enum {
 	VL_NULL,
@@ -69,5 +70,9 @@ int pushValueArray(ValueArray* array, Value value);
 Value popValueArray(ValueArray* array);
 Value getValueArray(ValueArray* array, int index);
 void setValueArray(ValueArray* array, int index, Value val);
+
+Value vector(Value x, Value y);
+
+#define VECTOR(x, y) (vector(NUM_VAL(x), NUM_VAL(y)))
 
 #endif
