@@ -33,7 +33,7 @@ void drawShape(HashMap* shapeMap, TKType type){
 		unsigned address = (unsigned) shapeMap;
 		newShape(address, type);
 
-		STYLE("strokeWidth", getValue(shapeMap, string("strokeWidth")));
+		Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
 		addStyle("strokeWidth", &strokeWidth);
 
 		Value fill = getValue(shapeMap, string("fill"));
