@@ -332,7 +332,6 @@ ParseRule rules[] = {
 	{ native,	NULL,		PC_TERM },    // TK_ATAN,
 	{ native,	NULL,		PC_TERM },    // TK_HSIN,
 	{ native,	NULL,		PC_TERM },    // TK_HCOS,
-	{ native,	NULL,		PC_TERM },    // TK_DEG,
 	{ native,	NULL,		PC_TERM },    // TK_RAD,
 	{ native,	NULL,		PC_TERM },    // TK_SQRT,
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
@@ -1078,12 +1077,6 @@ static void native(bool canAssign){
 			break;
 		case TK_HCOS:
 			func =  nativeHypcos;
-			break;
-		case TK_DEG:
-			func = nativeDegrees;
-			break;
-		case TK_RAD:
-			func = nativeRadians;
 			break;
 		case TK_SQRT:
 			func = nativeSqrt;

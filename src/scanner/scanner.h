@@ -40,7 +40,6 @@ typedef enum {
 	TK_ATAN,
 	TK_HSIN,
 	TK_HCOS,
-	TK_DEG,
 	TK_RAD,
 	TK_SQRT,
     TK_AND,

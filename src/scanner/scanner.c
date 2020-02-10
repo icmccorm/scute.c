@@ -302,7 +302,8 @@ static TKType findIdentifier(){
 						if(scanner.current - scanner.start > 2){
 							switch(scanner.start[2]){
 								case 'f': return TK_DEF;
-								case 'g': return checkKeyword(3, 4, "rees", TK_DEG);
+                                default:
+                                    return TK_ID;
 							}
 						}else{
 							return TK_ID;

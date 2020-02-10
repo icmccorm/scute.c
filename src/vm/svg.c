@@ -8,6 +8,7 @@
 #include "vm.h"
 #include "scanner.h"
 #include "color.h"
+#include "math.h"
 
 #ifdef EM_MAIN
 void resolveColor(const char* key, Value val){
@@ -84,6 +85,85 @@ void drawShape(HashMap* shapeMap, TKType type){
 	#endif
 }
 
+void drawPoints(ObjShape* shape){
+	unsigned address = (unsigned) shape->instance.map;
+	#ifdef EM_MAIN
+		newShape(address, shape->shapeType);
+	#endif
+	
+	double angle = 0;
+	int prevPoint[2];
+	prevPoint[0] = 0;
+	prevPoint[1] = 0;
+
+	for(int i = 0; i<shape->numSegments; ++i){
+		ObjShape* segment = shape->segments[i];
+		HashMap* map = segment->instance.map;
+
+		switch(segment->shapeType){
+			case TK_JUMP: ;
+				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
+				prevPoint[0] = (int) AS_NUM(vector->array->values[0]);
+				prevPoint[1] = (int) AS_NUM(vector->array->values[1]);
+				#ifdef EM_MAIN
+					em_addPoint(prevPoint);
+				#else
+					print(O_OUT, "%d, %d\n", prevPoint[0], prevPoint[1]);
+				#endif
+				break;
+			case TK_MOVE: ;
+				double distance = AS_NUM(getValue(map, string("distance")));
+				prevPoint[0] += (int) round(cos(angle) * distance);
+				prevPoint[1] += (int) round(sin(angle) * distance);
+				#ifdef EM_MAIN
+					em_addPoint(prevPoint);
+				#else
+					print(O_OUT, "%d, %d\n", prevPoint[0], prevPoint[1]);
+				#endif
+				break;
+			case TK_TURN:
+				angle += AS_NUM(getValue(map, string("degrees")));
+				break;
+			default:
+				break;
+		}
+	}
+	#ifdef EM_MAIN
+		paintShape();
+	#endif
+}
+
+
+void drawPath(ObjShape* shape){	
+	unsigned address = (unsigned) shape->instance.map;
+	#ifdef EM_MAIN
+		newShape(address, shape->shapeType);
+	#endif
+	int angle = 0;
+	int prevPoint[2];
+	prevPoint[0] = 0;
+	prevPoint[1] = 0;
+
+	for(int i = 0; i<shape->numSegments; ++i){
+		ObjShape* segment = shape->segments[i];
+		switch(segment->shapeType){
+			case TK_JUMP:
+				break;
+			case TK_MOVE:
+				break;
+			case TK_TURN:
+				break;
+			case TK_ARC:
+				break;
+			default:
+				break;
+		}
+	}
+	#ifdef EM_MAIN
+		paintShape();
+	#endif
+}	
+
 ObjShape* popShape(){
 	ObjShape* latestShape = vm.shapeStack[vm.shapeCount-1];
 	--vm.shapeCount;
@@ -103,6 +183,16 @@ void pushShape(ObjShape* close){
 void renderFrame(){
 	while(vm.shapeCount > 0){
 		ObjShape* top = popShape();
-		drawShape(top->instance.map, top->shapeType);
+		switch(top->shapeType){
+			case TK_POLY:
+			case TK_POLYL:
+				drawPoints(top);
+				break;
+			case TK_PATH:
+				drawPath(top);
+			default:
+				drawShape(top->instance.map, top->shapeType);	
+				break;
+		}
 	}
 }

@@ -1,6 +1,7 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
+	
 	valuePointerOffsets: {
 		type: 0,
 		union: 0,
@@ -89,6 +90,7 @@ mergeInto(LibraryManager.library, {
 			"id": idPtr,
 			"tag": tagPtr,
 			"attrs":{},
+			"components": [],
 			"style":{
 				"values":{},
 				"loc":{},
@@ -100,6 +102,26 @@ mergeInto(LibraryManager.library, {
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
 		_currentShape['attrs'][key] = meta;
+	},
+
+	em_addPoint: function(doubleArrayPtr){
+		if(!_currentShape['attrs']['points']) _currentShape['attrs']['points'] = [];
+		_currentShape['attrs']['points'].push({
+			x: getValue(doubleArrayPtr, "i32"),
+			y: getValue(doubleArrayPtr+1, "i32"),
+		});
+	},
+
+	em_addLine: function(valPtr){
+
+	},
+
+	em_addHorizontalLine: function(valPtr){
+
+	},
+
+	em_addVerticalLine: function(valPtr){
+
 	},
 
 	addStringStyle: function(keyPtr, valuePtr){
@@ -173,6 +195,10 @@ mergeInto(LibraryManager.library, {
 
 	lib_getValue__deps: [
 		'valueTypes'
+	],
+
+	em_addPoint__deps: [
+		'currentShape'
 	]
 
 	

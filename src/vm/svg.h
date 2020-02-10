@@ -18,6 +18,7 @@ extern void addAttribute(const char* key, Value* val);
 
 extern void addStyle(const char* key, Value* val);
 extern void addStringStyle(const char* key, Value* val);
+extern void em_addPoint(double* coords);
 
 extern void newShape(double id, double type);
 extern void paintShape();

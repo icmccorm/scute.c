@@ -93,6 +93,7 @@ ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
 	shape->segmentCapacity = 0;
 	shape->numSegments = 0;
 	shape->shapeType = shapeType;
+	shape->segments = NULL;
 
 	if(super != NULL){
 		HashEntry* current = super->map->first;

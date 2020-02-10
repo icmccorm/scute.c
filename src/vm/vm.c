@@ -56,7 +56,7 @@ void initGlobals(HashMap* map){
 void freeVM() {
 	freeMap(vm.globals);
 	freeObjects(vm.runtimeObjects);
-	FREE_ARRAY(ObjInstance*, vm.shapeStack, vm.shapeCapacity);
+	FREE_ARRAY(ObjShape*, vm.shapeStack, vm.shapeCapacity);
 	vm.chunk = NULL;
 }
 
