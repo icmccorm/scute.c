@@ -45,6 +45,7 @@ void addSegment(ObjShape* shape, ObjShape* segment);
 #define AS_NATIVE(value) ((ObjNative*)AS_OBJ(value))
 #define AS_COLOR(value) ((ObjColor*)AS_OBJ(value))
 #define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
+
 #define AS_SHAPE(value) ((ObjShape*) AS_INST(value))
 
 #define ALLOCATE_OBJ(type, objType) \

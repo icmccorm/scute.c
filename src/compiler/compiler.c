@@ -338,6 +338,7 @@ ParseRule rules[] = {
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
+	{ native,	NULL,		PC_TERM },    // TK_SHAPE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
@@ -494,16 +495,10 @@ static void returnStatement() {
 }
 
 static int getIndentation() {
-	int indentCount = 0;
-	 while(parser.current.type == TK_INDENT || parser.current.type == TK_NEWLINE){
-		if(parser.current.type == TK_INDENT){
-			++indentCount;
-		}else{
-			indentCount = 0;
-		}
-		advance();
+	if(parser.current.type == TK_INDENT){
+		return parser.current.length;
 	}
-	return indentCount;
+	return 0;
 }
 
 static void indentedBlock() {
@@ -512,6 +507,8 @@ static void indentedBlock() {
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
+		//clear indentations
+		advance();
 		statement();
 	}
 	Compiler* currentComp = currentCompiler();
@@ -786,7 +783,7 @@ static void withStatement(){
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
-
+		advance(); //clear indentation token
 		switch(parser.current.type){
 			case TK_WITH:
 				withStatement();
@@ -1021,6 +1018,43 @@ static void native(bool canAssign){
 
 	void* func;
 	switch(nativeId.type){
+		case TK_SHAPE: {
+			switch(nativeId.subtype){
+				case TK_MOVE:
+					func = move;
+					break;
+				case TK_VERT:
+					func = vertex;
+					break;
+				case TK_ARC:
+					func = arc;
+					break;
+				case TK_JUMP:
+					func = jump;
+					break;
+				case TK_TURN:
+					func = turn;
+					break;
+				case TK_RECT:
+					func = rect;
+					break;
+				case TK_CIRC:
+					func = circle;
+					break;
+				case TK_ELLIP:
+					func = ellipse;
+					break;
+				case TK_PATH:
+					func = path;
+					break;
+				case TK_POLY:
+					func = polygon;
+					break;
+				case TK_POLYL:
+					func = polyline;
+					break;
+			}
+		} break;
 		case TK_SIN:
 			func = nativeSine;
 			break;
@@ -1054,20 +1088,6 @@ static void native(bool canAssign){
 		case TK_SQRT:
 			func = nativeSqrt;
 			break;
-		case TK_MOVE:
-			func = move;
-			break;
-		case TK_VERT:
-			func = vertex;
-			break;
-		case TK_ARC:
-			func = arc;
-			break;
-		case TK_JUMP:
-			func = jump;
-			break;
-		case TK_TURN:
-			func = turn;
 		default:
 			break;
 	}

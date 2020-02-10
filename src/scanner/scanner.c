@@ -416,7 +416,7 @@ static TKType findIdentifier(){
                                                 if(scanner.current - scanner.start > 4){
                                                     switch(scanner.start[4]){
                                                         case 'l': return checkKeyword(5, 3, "ine", TK_POLYL);
-                                                        case 'g': return checkKeyword(5, 3, "on", TK_POLY);
+                                                        case 'g': return checkKeyword(5, 2, "on", TK_POLY);
                                                     }
                                                 }
                                                 break;
@@ -630,9 +630,11 @@ TK scanTK(){
             return makeNewline();
         case '\t':
             /* \r is included to handle Windows' \r\n. */
-            if(previous() == '\n' || previous() == '\t' || previous() == '\r'){
+            if(previous() == '\n' || previous() == '\r'){
+                while(*scanner.current == '\t'){
+                    advance();
+                }
                 return makeToken(TK_INDENT);
-
             }else{
                 return scanTK();
             }

@@ -125,21 +125,22 @@ void printObject(OutType out, Value value){
 			printChunk(AS_CHUNK(value)->chunk, NULL);
 			print(out, "------------\n");
 			break;
-		case OBJ_INST:
-			printMap(O_OUT, AS_INST(value)->map, 0);
+		case OBJ_INST: ;
+			ObjInstance* inst = AS_INST(value);
+			printMap(O_OUT, inst->map, 0);
+			if(inst->type == INST_SHAPE){
+				ObjShape* shape = (ObjShape*) inst;
+				for(int i = 0; i< shape->numSegments; ++i){
+					printMap(O_OUT, shape->segments[i]->instance.map, 1);
+					print(O_OUT, "\n");
+				}
+			}
 			break;
 		case OBJ_COLOR: ;
 			printColor(O_OUT, AS_COLOR(value)->color);
 			break;
 		case OBJ_ARRAY: ;
 			printArray(O_OUT, AS_ARRAY(value)->array);
-		case OBJ_INST_SHAPE: ;
-			ObjShape* shape = AS_SHAPE(value);
-			printMap(O_OUT, shape->map, 0);
-			for(int i = 0; i< shape->numSegments; ++i){
-				printMap(O_OUT, shape->segments[i]->map, 1);
-				print(O_OUT, "\n");
-			}
 			break;
 		default:
 			break;

@@ -39,6 +39,10 @@ void freeObject(Obj* obj){
 			break;
 		case(OBJ_INST): ;
 			ObjInstance* close = (ObjInstance*) obj;
+			if(close->type == INST_SHAPE){
+				ObjShape* shape = (ObjShape*) close;
+				FREE_ARRAY(ObjShape*, shape->segments, shape->segmentCapacity);
+			}
 			freeMap(close->map);
 			FREE(ObjInstance, close);
 			break;
@@ -75,21 +79,17 @@ void freeObject(Obj* obj){
 			freeValueArray(arrayObj->array);
 			FREE(ValueArray, arrayObj->array);
 			FREE(ObjArray, arrayObj);
-		case(OBJ_INST_SHAPE): ;
-			ObjShape* shape = (ObjShape*)(obj);
-			freeMap(shape->map);
-			FREE_ARRAY(ObjShape*, shape->segments, shape->segmentCapacity);
-			FREE(ObjShape, shape);
-			break;
 		default:
 			break;
 	}
 }
 
 ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
-	ObjShape* shape = ALLOCATE_OBJ(ObjShape, OBJ_INST_SHAPE);
-	
-	initMap(&shape->map);
+	ObjShape* shape = ALLOCATE_OBJ(ObjShape, OBJ_INST);
+	ObjInstance* inst = (ObjInstance*) shape;
+	inst->type = INST_SHAPE;
+
+	initMap(&inst->map);
 	shape->segmentCapacity = 0;
 	shape->numSegments = 0;
 	shape->shapeType = shapeType;
@@ -97,7 +97,7 @@ ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
 	if(super != NULL){
 		HashEntry* current = super->map->first;
 		while(current != NULL){
-			add(shape->map, current->key, current->value);
+			add(inst->map, current->key, current->value);
 			current = current->next;
 		}
 	}

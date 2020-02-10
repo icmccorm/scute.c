@@ -22,8 +22,13 @@ typedef enum {
 	OBJ_NATIVE,
 	OBJ_COLOR,
 	OBJ_ARRAY,
-	OBJ_INST_SHAPE,
 } OBJType;
+
+typedef enum {
+	INST_NONE,
+	INST_SHAPE,
+	INST_SEG
+} InstanceType;
 
 //definition for Obj
 struct sObj {
@@ -47,6 +52,7 @@ struct sObjArray{
 struct sObjInstance{
 	Obj object;
 	HashMap* map;
+	InstanceType type;
 };
 
 struct sObjChunk{
@@ -70,14 +76,18 @@ struct sObjColor {
 };
 
 struct sObjShape {
-	Obj object;
-	HashMap* map;
-	
+	ObjInstance instance;
+
 	struct sObjShape* nextShape;
 	TKType shapeType;
 	struct sObjShape** segments;
 	int numSegments;
 	int segmentCapacity;
+};
+
+struct sObjShapeSegment {
+	ObjInstance instance;
+	TKType segmentType;
 };
 
 #endif

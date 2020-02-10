@@ -18,11 +18,9 @@ uint32_t addLocal(Compiler* compiler, TK idName){
 uint32_t addDummyLocal(Compiler* compiler){
 	TK nullToken;
 	nullToken.start = NULL;
-	nullToken.length = 0;
 	nullToken.line = -1;
-	nullToken.length = 0;
+	nullToken.length = -1;
 	nullToken.type = -1;
-	nullToken.indent = -1;
 
     if(compiler->localCount + 1 > compiler->scopeCapacity){
         int oldCapacity = compiler->scopeCapacity;
@@ -35,7 +33,6 @@ uint32_t addDummyLocal(Compiler* compiler){
     ++compiler->localCount;	
 	return compiler->localCount-1;
 }
-
 
 void freeCompiler(Compiler* compiler){
 	freeMap(compiler->classes);

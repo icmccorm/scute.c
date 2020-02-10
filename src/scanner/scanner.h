@@ -47,6 +47,8 @@ typedef enum {
     TK_OR,
     TK_PRE,
  
+    TK_SHAPE,
+
     TK_SEMI, TK_L_BRACE, TK_R_BRACE, TK_L_PAREN, TK_R_PAREN, 
     TK_L_BRACK, TK_R_BRACK, TK_COMMA, TK_DEREF, TK_TILDA, TK_NEWLINE,
     TK_INDENT,
@@ -78,10 +80,10 @@ typedef enum {
     TK_TEXT,
 
     TK_T,
+
     TK_ERROR,
     TK_EOF,
     TK_AS,
-    TK_SHAPE,
     TK_DEF,
     TK_RET,
 	TK_REP,
@@ -130,7 +132,6 @@ typedef struct{
     int length;
     int line;
 	int inlineIndex;
-    int indent;
 } TK; 
 
 void initScanner(char* source);

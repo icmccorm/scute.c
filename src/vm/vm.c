@@ -308,13 +308,12 @@ static InterpretResult run() {
 							for(int i = numParams; i< chunkObj->numParameters; ++i){
 								push(NULL_VAL());
 							}
-							if(currentInstance()->object.type == OBJ_INST_SHAPE){
+
+							if(currentInstance()->type == INST_SHAPE){
 								ObjShape* shape = (ObjShape*) currentInstance();
 								shape->shapeType = chunkObj->instanceType;
-
 							}
 							} break;
-
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;
 							NativeFn function = native->function;
@@ -325,7 +324,6 @@ static InterpretResult run() {
 							Value result = function(params, numParams);
 							push(result);
 							} break;
-
 						default:
 							runtimeError("Only functions or constructors can be called.");
 							return INTERPRET_RUNTIME_ERROR;
@@ -338,9 +336,9 @@ static InterpretResult run() {
 			} break;
 			case OP_DRAW: {
 				Value drawVal = pop();
-				Obj* toObject = valueToObject(OBJ_INST_SHAPE, drawVal);
-				if(toObject){
-					ObjShape* shape = AS_SHAPE(drawVal);
+				Obj* toObject = valueToObject(OBJ_INST, drawVal);
+				if(((ObjInstance*) toObject)->type == INST_SHAPE){
+					ObjShape* shape = (ObjShape*) toObject;
 					pushShape(shape);
 				}else{
 					runtimeError("Only shapes and shape instances can be drawn.");

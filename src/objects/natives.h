@@ -22,5 +22,11 @@ Value vertex(Value* params, int numParams);
 Value turn(Value* params, int numParams);
 Value arc(Value* params, int numParams);
 Value jump(Value* params, int numParams);
+Value rect(Value* params, int numParams);
+Value circle(Value* params, int numParams);
+Value ellipse(Value* params, int numParams);
+Value polygon(Value* params, int numParams);
+Value polyline(Value* params, int numParams);
+Value path(Value* params, int numParams);
 
 #endif

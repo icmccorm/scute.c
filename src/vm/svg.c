@@ -103,6 +103,6 @@ void pushShape(ObjShape* close){
 void renderFrame(){
 	while(vm.shapeCount > 0){
 		ObjShape* top = popShape();
-		drawShape(top->map, top->shapeType);
+		drawShape(top->instance.map, top->shapeType);
 	}
 }
