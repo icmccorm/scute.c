@@ -13,6 +13,8 @@
 
 bool DEBUG_STACK = false;
 
+int numBytesAllocated = 0;
+
 static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
 	
@@ -46,11 +48,11 @@ static char* readFile(const char* path){
 }
 
 static void runFile(const char* path){
-	char* source = readFile(path);
-
 	#ifndef EM_MAIN
 		print(O_OUT, "[A] before init: %d bytes\n", numBytesAllocated);
 	#endif
+
+	char* source = readFile(path);
 
 	CompilePackage* compiled = initCompilationPackage();
 	
@@ -63,12 +65,12 @@ static void runFile(const char* path){
 	
 	freeCompilationPackage(compiled);
 
+
+	int length = strlen(source) + 1;
+	FREE_ARRAY(char, source, length);
 	#ifndef EM_MAIN
 		print(O_OUT, "[A] after fcompile: %d bytes\n", numBytesAllocated);
 	#endif
-	int length = strlen(source);
-	FREE_ARRAY(char, source, length);
-
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }

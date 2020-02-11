@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include "common.h"
 #include "hashmap.h"
 #include "value.h"
 #include "memory.h"

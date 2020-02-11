@@ -7,6 +7,8 @@
 #include "hashmap.h"
 #include "chunk.h"
 #include "debug.h"
+#include "common.h"
+
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;

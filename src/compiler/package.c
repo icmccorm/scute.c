@@ -6,6 +6,7 @@
 #include "value.h"
 #include "memory.h"
 #include "obj.h"
+#include "common.h"
 
 CompilePackage* initCompilationPackage(){
 	CompilePackage* code = ALLOCATE(CompilePackage, 1);

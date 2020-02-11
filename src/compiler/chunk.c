@@ -58,6 +58,7 @@ void freeChunk(Chunk* chunk){
 	FREE_ARRAY(int, chunk->opsPerLine, chunk->lineCapacity);
 	FREE_ARRAY(int, chunk->lineNums, chunk->lineCapacity);
 	freeValueArray(&chunk->constants);
+	FREE(Chunk, chunk);
 }
 
 void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, int line){

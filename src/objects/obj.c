@@ -158,7 +158,7 @@ ObjString* allocateString(char* chars, int length){
 
 ObjNative* allocateNative(void* func){
 	ObjNative* obj = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
-	obj->function = (NativeFn) func;
+	obj->function = (NativeFn*) func;
 	return obj;
 }
 

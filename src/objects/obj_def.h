@@ -12,6 +12,8 @@
 #include "chunk.h"
 #include "natives.h"
 #include "color.h"
+#include "common.h"
+
 
 typedef enum {
 	OBJ_STRING,
@@ -67,7 +69,7 @@ struct sObjChunk{
 
 struct sObjNative {
 	Obj object;
-	NativeFn function;
+	NativeFn* function;
 };
 
 struct sObjColor {
