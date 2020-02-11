@@ -84,11 +84,25 @@ void drawShape(HashMap* shapeMap, TKType type){
 		printMap(O_OUT, shapeMap, 0);
 	#endif
 }
+#ifdef EM_MAIN
+void assignStyles(ObjShape* shape){
+	HashMap* shapeMap = shape->instance.map;
+	Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
+	em_addStyle("strokeWidth", &strokeWidth);
+
+	Value fill = getValue(shapeMap, string("fill"));
+	resolveColor("fill", fill);
+
+	Value stroke = getValue(shapeMap, string("stroke"));
+	resolveColor("stroke", stroke);
+}
+#endif
 
 void drawPoints(ObjShape* shape){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
+		assignStyles(shape);
 	#endif
 
 	for(int i = 0; i<shape->numSegments; ++i){
@@ -97,8 +111,8 @@ void drawPoints(ObjShape* shape){
 
 		switch(segment->shapeType){
 			case TK_JUMP: ;
-				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
 				#ifdef EM_MAIN
+					ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
 					em_addJump(vector->array->values);
 				#endif
 				break;

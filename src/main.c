@@ -13,7 +13,9 @@
 
 bool DEBUG_STACK = false;
 
-int numBytesAllocated = 0;
+#ifndef EM_MAIN
+	int numBytesAllocated = 0;
+#endif
 
 static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
@@ -68,9 +70,11 @@ static void runFile(const char* path){
 
 	int length = strlen(source) + 1;
 	FREE_ARRAY(char, source, length);
+
 	#ifndef EM_MAIN
 		print(O_OUT, "[A] after fcompile: %d bytes\n", numBytesAllocated);
 	#endif
+	
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
