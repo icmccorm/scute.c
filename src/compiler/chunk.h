@@ -22,7 +22,6 @@ struct sChunk {
 	int lineCount;
 	int lineCapacity;
 	int previousLine;
-	HashMap* map; 
 };
 
 typedef enum {

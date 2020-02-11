@@ -120,8 +120,8 @@ static Compiler* exitCompilationScope(){
 		emitByte(OP_POP);
 	}
 	emitReturn();
-	freeMap(compiler->classes);
-	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);
+	freeMap(toFree->classes);
+	FREE_ARRAY(Local, toFree->locals, toFree->scopeCapacity);
 	FREE(Compiler, toFree);
 	return superComp;
 }
