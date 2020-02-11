@@ -55,8 +55,8 @@ void initGlobals(HashMap* map){
 
 void freeVM() {
 	freeMap(vm.globals);
-	freeObjects(vm.runtimeObjects);
 	FREE_ARRAY(ObjShape*, vm.shapeStack, vm.shapeCapacity);
+	freeObjects(vm.runtimeObjects);
 	vm.chunk = NULL;
 }
 
@@ -522,16 +522,14 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 	InterpretResult result = code->result;
 
 	if(result != INTERPRET_COMPILE_ERROR) {
-		result = executeCompiled(code, index);
+		//result = executeCompiled(code, index);
 	}
 
 
 	return result;
 }
 
-void runCompiler(CompilePackage* package, char* source){
-	vm.runtimeObjects = NULL;
-	
+void runCompiler(CompilePackage* package, char* source){	
 	bool compiled = compile(source, package);
 	print(O_OUT, "[A] after compile: %d\n", numBytesAllocated);
 

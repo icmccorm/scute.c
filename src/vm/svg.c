@@ -31,10 +31,10 @@ void resolveColor(const char* key, Value val){
 void drawShape(HashMap* shapeMap, TKType type){
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
-		newShape(address, type);
+		em_newShape(address, type);
 
 		Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
-		addStyle("strokeWidth", &strokeWidth);
+		em_addStyle("strokeWidth", &strokeWidth);
 
 		Value fill = getValue(shapeMap, string("fill"));
 		resolveColor("fill", fill);
@@ -50,16 +50,16 @@ void drawShape(HashMap* shapeMap, TKType type){
 				ObjString* hStr = string("height");
 
 				Value xVal = getValue(shapeMap, xStr);
-				addAttribute("x", &xVal);
+				em_addAttribute("x", &xVal);
 
 				Value yVal = getValue(shapeMap, yStr);
-				addAttribute("y", &yVal);
+				em_addAttribute("y", &yVal);
 
 				Value wVal = getValue(shapeMap, wStr);
-				addAttribute("width", &wVal);
+				em_addAttribute("width", &wVal);
 
 				Value hVal = getValue(shapeMap, hStr);
-				addAttribute("height", &hVal);
+				em_addAttribute("height", &hVal);
 			} break;
 
 			case TK_CIRC:{
@@ -68,18 +68,18 @@ void drawShape(HashMap* shapeMap, TKType type){
 				ObjString* rStr = string("r");
 
 				Value cxVal = getValue(shapeMap, cxStr);
-				addAttribute("cx", &cxVal);
+				em_addAttribute("cx", &cxVal);
 
 				Value cyVal = getValue(shapeMap, cyStr);
-				addAttribute("cy", &cyVal);
+				em_addAttribute("cy", &cyVal);
 
 				Value rVal = getValue(shapeMap, rStr);
-				addAttribute("r", &rVal);
+				em_addAttribute("r", &rVal);
 				} break;
 			default:
 				break;
 		}
-		paintShape();
+		em_paintShape();
 	#else
 		printMap(O_OUT, shapeMap, 0);
 	#endif
@@ -88,13 +88,8 @@ void drawShape(HashMap* shapeMap, TKType type){
 void drawPoints(ObjShape* shape){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
-		newShape(address, shape->shapeType);
+		em_newShape(address, shape->shapeType);
 	#endif
-	
-	double angle = 0;
-	int prevPoint[2];
-	prevPoint[0] = 0;
-	prevPoint[1] = 0;
 
 	for(int i = 0; i<shape->numSegments; ++i){
 		ObjShape* segment = shape->segments[i];
@@ -103,33 +98,28 @@ void drawPoints(ObjShape* shape){
 		switch(segment->shapeType){
 			case TK_JUMP: ;
 				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
-				prevPoint[0] = (int) AS_NUM(vector->array->values[0]);
-				prevPoint[1] = (int) AS_NUM(vector->array->values[1]);
 				#ifdef EM_MAIN
-					em_addPoint(prevPoint);
-				#else
-					print(O_OUT, "%d, %d\n", prevPoint[0], prevPoint[1]);
+					em_addJump(vector->array->values);
 				#endif
 				break;
 			case TK_MOVE: ;
-				double distance = AS_NUM(getValue(map, string("distance")));
-				prevPoint[0] += (int) round(cos(angle) * distance);
-				prevPoint[1] += (int) round(sin(angle) * distance);
 				#ifdef EM_MAIN
-					em_addPoint(prevPoint);
-				#else
-					print(O_OUT, "%d, %d\n", prevPoint[0], prevPoint[1]);
+					Value distance = getValue(map, string("distance"));
+					em_addMove(&distance);				
 				#endif
 				break;
-			case TK_TURN:
-				angle += AS_NUM(getValue(map, string("degrees")));
+			case TK_TURN: ;
+				#ifdef EM_MAIN
+					Value degrees = getValue(map, string("degrees"));
+					em_addTurn(&degrees);				
+				#endif
 				break;
 			default:
 				break;
 		}
 	}
 	#ifdef EM_MAIN
-		paintShape();
+		em_paintShape();
 	#endif
 }
 
@@ -137,7 +127,7 @@ void drawPoints(ObjShape* shape){
 void drawPath(ObjShape* shape){	
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
-		newShape(address, shape->shapeType);
+		em_newShape(address, shape->shapeType);
 	#endif
 	int angle = 0;
 	int prevPoint[2];
@@ -160,7 +150,7 @@ void drawPath(ObjShape* shape){
 		}
 	}
 	#ifdef EM_MAIN
-		paintShape();
+		em_paintShape();
 	#endif
 }	
 

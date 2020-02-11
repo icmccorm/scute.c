@@ -14,16 +14,18 @@ void assignPosition(ObjShape* close, Value* values, uint8_t numValues);
 void assignDimensions(ObjShape* close, Value* values, uint8_t numValues);
 
 #ifdef EM_MAIN
-extern void addAttribute(const char* key, Value* val);
+extern void em_addAttribute(const char* key, Value* val);
 
-extern void addStyle(const char* key, Value* val);
-extern void addStringStyle(const char* key, Value* val);
-extern void em_addPoint(int* coords);
+extern void em_addStyle(const char* key, Value* val);
+extern void em_addStringStyle(const char* key, Value* val);
+extern void em_addTurn(Value* degPtr);
+extern void em_addJump(Value* vecPtr);
+extern void em_addMove(Value* distPtr);
 
-extern void newShape(double id, double type);
-extern void paintShape();
+extern void em_newShape(double id, double type);
+extern void em_paintShape();
 
-extern void setCanvas(Value* width, Value* height, Value* originX, Value* originY);
+extern void em_setCanvas(Value* width, Value* height, Value* originX, Value* originY);
 #endif
 
 void drawShape(HashMap* shapeMap, TKType type);

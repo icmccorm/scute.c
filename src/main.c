@@ -25,7 +25,7 @@ static char* readFile(const char* path){
 	size_t fileSize = ftell(file);
 	rewind(file);
 	
-	char* buffer = (char*) malloc(fileSize + 1);
+	char* buffer = GROW_ARRAY(NULL, char, 0, fileSize + 1);
 
 	if(buffer == NULL){
 		print(O_ERR, "Not enough memory to read \"%s\".\n", path);
@@ -66,8 +66,8 @@ static void runFile(const char* path){
 	#ifndef EM_MAIN
 		print(O_OUT, "[A] after fcompile: %d bytes\n", numBytesAllocated);
 	#endif
-
-	free(source);
+	int length = strlen(source);
+	FREE_ARRAY(char, source, length);
 
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);

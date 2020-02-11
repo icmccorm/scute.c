@@ -17,6 +17,12 @@ mergeInto(LibraryManager.library, {
 		4: "VL_CLR",
 	},
 
+	segmentTypes: {
+		JUMP: 0,
+		MOVE: 1,
+		TURN: 2,
+	},
+
 	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
 		_valuePointerOffsets.type = type;
 		_valuePointerOffsets.union = union;
@@ -85,7 +91,7 @@ mergeInto(LibraryManager.library, {
 		self.postMessage({type: 5, payload: Module.UTF8ToString(ptr)})
 	},
 	
-	newShape: function(idPtr, tagPtr){
+	em_newShape: function(idPtr, tagPtr){
 		_currentShape = {
 			"id": idPtr,
 			"tag": tagPtr,
@@ -98,18 +104,10 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 
-	addAttribute: function(keyPtr, valuePtr){
+	em_addAttribute: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
 		_currentShape['attrs'][key] = meta;
-	},
-
-	em_addPoint: function(doubleArrayPtr){
-		if(!_currentShape['attrs']['points']) _currentShape['attrs']['points'] = [];
-		_currentShape['attrs']['points'].push({
-			x: getValue(doubleArrayPtr, "i32"),
-			y: getValue(doubleArrayPtr+1, "i32"),
-		});
 	},
 
 	em_addLine: function(valPtr){
@@ -124,19 +122,19 @@ mergeInto(LibraryManager.library, {
 
 	},
 
-	addStringStyle: function(keyPtr, valuePtr){
+	em_addStringStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
 		_currentShape['style'][key] = meta;
 	},
 
-	addStyle: function(keyPtr, valuePtr){
+	em_addStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
 		_currentShape['style'][key] = meta;
 	},
 
-	paintShape: function(){
+	em_paintShape: function(){
 		Module._currentFrame.push(_currentShape);
 	},
 
@@ -144,34 +142,58 @@ mergeInto(LibraryManager.library, {
 		Module._maxFrameIndex = num;
 	},
 
-	setCanvas: function(widthPtr, heightPtr, xPtr, yPtr){
+	em_setCanvas: function(widthPtr, heightPtr, xPtr, yPtr){
 
 	},
+	em_addJump: function(vecPtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.JUMP,
+			x: _lib_getValueMeta(vecPtr),
+			y: _lib_getValueMeta(vecPtr+1),
+		});
+	},
 
-	newShape__deps: [
+	em_addMove: function(distancePtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.MOVE,
+			distance: _lib_getValueMeta(distancePtr),
+		});
+	},
+
+	em_addTurn: function(degreesPtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.TURN,
+			degrees: _lib_getValueMeta(degreesPtr),
+		});
+	},
+
+	em_newShape__deps: [
 		'currentShape'
 	],
 	
-	paintShape__deps: [
+	em_paintShape__deps: [
 		'currentShape'
 	],
 
-	addStyle__deps: [
+	em_addStyle__deps: [
 		'currentShape',
 		'lib_getValueMeta'
 	],
 
-	addStringStyle__deps: [
+	em_addStringStyle__deps: [
 		'currentShape',
 		'lib_getValueMeta'
 	],
 
-	addAttribute__deps: [
+	em_addAttribute__deps: [
 		'currentShape',
 		'lib_getValueMeta',
 	],
 
-	addStringAttribute__deps: [
+	em_addStringAttribute__deps: [
 		'currentShape',
 		'lib_getValueMeta'
 	],
@@ -197,9 +219,20 @@ mergeInto(LibraryManager.library, {
 		'valueTypes'
 	],
 
-	em_addPoint__deps: [
-		'currentShape'
-	]
+	em_addJump__deps: [
+		'currentShape',
+		'segmentTypes'
+	],
 
-	
+	em_addTurn__deps: [
+		'currentShape',
+		'segmentTypes'
+
+	],
+
+	em_addMove__deps: [
+		'currentShape',
+		'segmentTypes'
+
+	]
 });

@@ -51,10 +51,8 @@ void freeObject(Obj* obj){
 			break;
 		case(OBJ_CHUNK): ;
 			ObjChunk* chunkObj = (ObjChunk*) obj;
-
 			freeChunk(chunkObj->chunk);
 			FREE(ObjChunk, chunkObj);
-
 			break;
 		case(OBJ_NATIVE): ;
 			ObjNative* nativeObj = (ObjNative*) obj;
@@ -85,6 +83,7 @@ void freeObject(Obj* obj){
 			FREE(ValueArray, arrayObj->array);
 			FREE(ObjArray, arrayObj);
 		default:
+			print(O_OUT, "Object type not found.");
 			break;
 	}
 }
