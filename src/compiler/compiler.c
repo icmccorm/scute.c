@@ -67,8 +67,10 @@ int getTokenIndex(char* tokenStart){
 static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	Compiler* newComp = ALLOCATE(Compiler, 1);
 	Compiler* comp = currentCompiler();
-	initMap(&newComp->classes);
+	newComp->super = comp;
 
+
+	initMap(&newComp->classes);
 	if(comp){
 		mergeMaps(comp->classes, newComp->classes);
 		newComp->scopeDepth = comp->scopeDepth + 1;
@@ -79,11 +81,13 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	newComp->scopeCapacity = 0;
 	newComp->localCount = 0;
 	newComp->locals = NULL;
+
 	newComp->enclosed = true;
+	
 	newComp->instanceType = TK_NULL;
-	newComp->super = comp;
 
 	newComp->compilingChunk = chunkObj;
+
 	return newComp;
 }
 
@@ -116,6 +120,8 @@ static Compiler* exitCompilationScope(){
 		emitByte(OP_POP);
 	}
 	emitReturn();
+	freeMap(compiler->classes);
+	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);
 	FREE(Compiler, toFree);
 	return superComp;
 }
@@ -1303,10 +1309,15 @@ bool compile(char* source, CompilePackage* package){
 		prepareValueConversion();
 		
 	#endif
+
 	initScanner(source);
-	compiler = enterCompilationScope(package->compiled);
 	initParser(&parser, source);
+
 	result = package;
+	package->compiled = allocateChunkObject(NULL);
+	package->compiled->chunkType = CK_MAIN;
+
+	compiler = enterCompilationScope(package->compiled);
 
 	advance();
 	while(parser.current.type != TK_EOF){

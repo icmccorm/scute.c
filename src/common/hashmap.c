@@ -31,7 +31,7 @@ bool shouldGrow(HashMap* map){
 void grow(HashMap* map){
 	//#define GROW_ARRAY(array, type, oldCount, newCount)
 	int oldCapacity = map->capacity;
-	map->capacity = GROW_CAPACITY(map->capacity);
+	map->capacity = GROW_CAPACITY(oldCapacity);
 
 	HashEntry* newBuckets = NULL;
 	newBuckets = GROW_ARRAY(newBuckets, HashEntry, 0, map->capacity);
@@ -72,6 +72,7 @@ void grow(HashMap* map){
 
 void freeMap(HashMap* map){
 	FREE_ARRAY(HashEntry, map->entries, map->capacity);
+	FREE(HashMap, map);
 }
 
 uint32_t hashFunction(char* keyString, int length){
@@ -127,7 +128,6 @@ void add(HashMap* map, ObjString* key, Value value){
 			}else{
 				map->previous = &map->entries[index];
 			}
-
 		}
 	}
 }

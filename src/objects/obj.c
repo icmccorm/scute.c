@@ -12,6 +12,7 @@
 #include "scanner.h"
 #include "natives.h"
 #include "color.h"
+#include "compiler.h"
 
 bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
@@ -24,8 +25,8 @@ Obj* allocateObject(size_t size, OBJType type){
 		obj->next = vm.runtimeObjects;
 		vm.runtimeObjects = obj;
 	}else{
-		obj->next = vm.runtimeObjects;
-		vm.runtimeObjects = obj;
+		obj->next = currentResult()->objects;
+		currentResult()->objects = obj;
 	}
 	return obj;
 }
@@ -34,22 +35,26 @@ void freeObject(Obj* obj){
 	switch(obj->type){
 		case(OBJ_STRING): ;
 			ObjString* string = (ObjString*) obj;
-			FREE_ARRAY(char, string->chars, string->length);
+			FREE_ARRAY(char, string->chars, string->length + 1);
 			FREE(ObjString, string);
 			break;
 		case(OBJ_INST): ;
 			ObjInstance* close = (ObjInstance*) obj;
+			freeMap(close->map);
 			if(close->type == INST_SHAPE){
 				ObjShape* shape = (ObjShape*) close;
 				FREE_ARRAY(ObjShape*, shape->segments, shape->segmentCapacity);
+				FREE(ObjShape, shape);
+			}else{
+				FREE(ObjInstance, close);
 			}
-			freeMap(close->map);
-			FREE(ObjInstance, close);
 			break;
 		case(OBJ_CHUNK): ;
 			ObjChunk* chunkObj = (ObjChunk*) obj;
+
 			freeChunk(chunkObj->chunk);
 			FREE(ObjChunk, chunkObj);
+
 			break;
 		case(OBJ_NATIVE): ;
 			ObjNative* nativeObj = (ObjNative*) obj;

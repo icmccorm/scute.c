@@ -498,10 +498,15 @@ CompilePackage* initCompilationPackage();
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
 	if(index <= 0){
+		
 		initVM(code, index);
+		print(O_OUT, "[A] before runtime: %d\n\n-----\n", numBytesAllocated);
 		result = run();
+		print(O_OUT, "-----\n\n[A] after runtime: %d\n", numBytesAllocated);
+
 		renderFrame();
 		freeVM();
+		print(O_OUT, "[A] after fruntime: %d\n", numBytesAllocated);
 	}else{
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
@@ -515,15 +520,21 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 
 InterpretResult interpretCompiled(CompilePackage* code, int index){
 	InterpretResult result = code->result;
+
 	if(result != INTERPRET_COMPILE_ERROR) {
 		result = executeCompiled(code, index);
 	}
+
+
 	return result;
 }
 
 void runCompiler(CompilePackage* package, char* source){
 	vm.runtimeObjects = NULL;
+	
 	bool compiled = compile(source, package);
+	print(O_OUT, "[A] after compile: %d\n", numBytesAllocated);
+
 	if(!compiled) package->result = INTERPRET_COMPILE_ERROR;
 
 	#ifdef EM_MAIN

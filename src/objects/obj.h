@@ -6,6 +6,8 @@
 #include "scanner.h"
 #include "natives.h"
 
+extern size_t objectBytesAllocated;
+
 Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);

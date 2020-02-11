@@ -47,12 +47,26 @@ static char* readFile(const char* path){
 
 static void runFile(const char* path){
 	char* source = readFile(path);
+
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] before init: %d bytes\n", numBytesAllocated);
+	#endif
+
 	CompilePackage* compiled = initCompilationPackage();
 	
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] after init: %d bytes\n", numBytesAllocated);
+	#endif
+
 	runCompiler(compiled, source);
 	InterpretResult result = interpretCompiled(compiled, -1);
 	
 	freeCompilationPackage(compiled);
+
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] after fcompile: %d bytes\n", numBytesAllocated);
+	#endif
+
 	free(source);
 
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);

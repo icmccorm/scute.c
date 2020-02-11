@@ -46,7 +46,9 @@ int pushValueArray(ValueArray* array, Value value){
 
 void freeValueArray(ValueArray* array){
 	FREE_ARRAY(Value, array->values, array->capacity);
-	initValueArray(array);
+	array->values = NULL;
+	array->capacity = 0;
+	array->count = 0;
 }
 
 Value getValueArray(ValueArray* array, int index){

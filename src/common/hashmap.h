@@ -12,6 +12,8 @@ typedef struct HashEntry {
 	struct HashEntry * next;
 } HashEntry;
 
+extern int numHashmapBytesAllocated;
+
 typedef struct {
 	HashEntry* entries;
 	int numEntries;

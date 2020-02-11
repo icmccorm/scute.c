@@ -26,7 +26,6 @@ typedef struct{
 } Local;
 
  struct sCompiler{
-    HashMap* globals;
     Local* locals;
     int localCount;
     int scopeDepth;
