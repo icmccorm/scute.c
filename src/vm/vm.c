@@ -500,13 +500,23 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	if(index <= 0){
 		
 		initVM(code, index);
-		print(O_OUT, "[A] before runtime: %d\n\n-----\n", numBytesAllocated);
+		#ifndef EM_MAIN
+			print(O_OUT, "[A] before runtime: %d\n\n-----\n", numBytesAllocated);
+		#endif
+		
 		result = run();
-		print(O_OUT, "-----\n\n[A] after runtime: %d\n", numBytesAllocated);
-
+		
+		#ifndef EM_MAIN
+			print(O_OUT, "-----\n\n[A] after runtime: %d\n", numBytesAllocated);
+		#endif
+		
 		renderFrame();
 		freeVM();
-		print(O_OUT, "[A] after fruntime: %d\n", numBytesAllocated);
+
+		#ifndef EM_MAIN
+			print(O_OUT, "[A] after fruntime: %d\n", numBytesAllocated);
+		#endif
+
 	}else{
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
@@ -531,7 +541,9 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 
 void runCompiler(CompilePackage* package, char* source){	
 	bool compiled = compile(source, package);
-	print(O_OUT, "[A] after compile: %d\n", numBytesAllocated);
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] after compile: %d\n", numBytesAllocated);
+	#endif
 
 	if(!compiled) package->result = INTERPRET_COMPILE_ERROR;
 

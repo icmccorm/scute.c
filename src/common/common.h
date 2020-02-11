@@ -6,7 +6,10 @@
 #include <stdint.h>
 
 extern bool DEBUG_STACK;
-extern int numBytesAllocated;
+
+#ifndef EM_MAIN
+	extern int numBytesAllocated;
+#endif
 
 typedef enum {
 	INTERPRET_OK,
