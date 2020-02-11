@@ -69,7 +69,7 @@ struct sObjChunk{
 
 struct sObjNative {
 	Obj object;
-	NativeFn* function;
+	NativeFn function;
 };
 
 struct sObjColor {

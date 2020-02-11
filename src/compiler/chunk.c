@@ -10,8 +10,8 @@ void initChunk(Chunk* chunk){
 	chunk -> count = 0;
 	chunk -> capacity = 0;
 	chunk -> code = NULL;
-	
-	initValueArray(&chunk->constants);
+	chunk -> constants = ALLOCATE(ValueArray, 1);
+	initValueArray(chunk->constants);
 	chunk -> opsPerLine = NULL;
 	chunk -> lineNums = NULL;
 	chunk -> lineCount = -1;
@@ -57,7 +57,7 @@ void freeChunk(Chunk* chunk){
 	FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
 	FREE_ARRAY(int, chunk->opsPerLine, chunk->lineCapacity);
 	FREE_ARRAY(int, chunk->lineNums, chunk->lineCapacity);
-	freeValueArray(&chunk->constants);
+	freeValueArray(chunk->constants);
 	FREE(Chunk, chunk);
 }
 
@@ -77,12 +77,12 @@ int writeVariableData(Chunk* chunk, uint64_t value){
 }
 
 void writeConstant(Chunk* chunk, Value value, int line){
-	uint64_t valIndex = pushValueArray(&chunk->constants, value);
+	uint64_t valIndex = pushValueArray(chunk->constants, value);
 	writeOperatorBundle(chunk, OP_CONSTANT, valIndex, line);
 }
 
 uint64_t writeValue(Chunk* chunk, Value value, int line){
-	return pushValueArray(&chunk->constants, value);
+	return pushValueArray(chunk->constants, value);
 }
 
 int getLine(Chunk* chunk, int opIndex) {

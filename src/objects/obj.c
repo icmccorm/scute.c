@@ -80,7 +80,6 @@ void freeObject(Obj* obj){
 		case(OBJ_ARRAY): ;
 			ObjArray* arrayObj = (ObjArray*) obj;
 			freeValueArray(arrayObj->array);
-			FREE(ValueArray, arrayObj->array);
 			FREE(ObjArray, arrayObj);
 		default:
 			print(O_OUT, "Object type not found.");
@@ -158,7 +157,7 @@ ObjString* allocateString(char* chars, int length){
 
 ObjNative* allocateNative(void* func){
 	ObjNative* obj = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
-	obj->function = (NativeFn*) func;
+	obj->function = (NativeFn) func;
 	return obj;
 }
 

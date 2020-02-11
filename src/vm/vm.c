@@ -185,8 +185,8 @@ static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
 #define READ_INT() (readInteger())
-#define READ_CONSTANT() (currentChunk()->constants.values[readInteger()])
-#define CONSTANT(index) (currentChunk()->constants.values[index])
+#define READ_CONSTANT() (currentChunk()->constants->values[readInteger()])
+#define CONSTANT(index) (currentChunk()->constants->values[index])
 #define BINARY_OP(op, valueType, operandType) \
 	do { \
 		if(!IS_NUM(peek(0)) || !IS_NUM(peek(1))){ \
@@ -316,12 +316,12 @@ static InterpretResult run() {
 							} break;
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;
-							NativeFn* function = native->function;
+							NativeFn function = native->function;
 							Value params[numParams];
 							for(int i = 0; i<numParams; ++i){
 								params[i] = pop();
 							}
-							Value result = (*function)(params, numParams);
+							Value result = function(params, numParams);
 							push(result);
 							} break;
 						default:
@@ -522,7 +522,7 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 	InterpretResult result = code->result;
 
 	if(result != INTERPRET_COMPILE_ERROR) {
-		//result = executeCompiled(code, index);
+		result = executeCompiled(code, index);
 	}
 
 

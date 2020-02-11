@@ -16,7 +16,7 @@ struct sChunk {
 	int count;
 	int capacity;
 	uint8_t* code;
-	ValueArray constants;
+	ValueArray* constants;
 	int* opsPerLine;
 	int* lineNums;
 	int lineCount;

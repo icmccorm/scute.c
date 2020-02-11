@@ -37,4 +37,5 @@ uint32_t addDummyLocal(Compiler* compiler){
 void freeCompiler(Compiler* compiler){
 	freeMap(compiler->classes);
 	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);
+	FREE(Compiler, compiler);
 }
