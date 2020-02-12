@@ -96,11 +96,8 @@ mergeInto(LibraryManager.library, {
 			"id": idPtr,
 			"tag": tagPtr,
 			"attrs":{},
-			"components": [],
-			"style":{
-				"values":{},
-				"loc":{},
-			},
+			"styles":{},
+			"segments": [],
 		}
 	},
 
@@ -125,13 +122,13 @@ mergeInto(LibraryManager.library, {
 	em_addStringStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
-		_currentShape['style'][key] = meta;
+		_currentShape['styles'][key] = meta;
 	},
 
 	em_addStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
-		_currentShape['style'][key] = meta;
+		_currentShape['styles'][key] = meta;
 	},
 
 	em_paintShape: function(){

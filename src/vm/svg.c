@@ -19,7 +19,7 @@ void resolveColor(const char* key, Value val){
 			case OBJ_COLOR: ;
 				ObjColor* colorObj = AS_COLOR(val);
 				color = colorObj->color;
-				addColorAttribute(key, color);
+				//addColorAttribute(key, color);
 				break;
 			default:
 				break;

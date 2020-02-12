@@ -69,7 +69,7 @@ void printArray(OutType out, ValueArray* array){
 			printValue(out, array->values[i]);
 		}
 	}
-	print(out, "]\n");
+	print(out, "]");
 }
 
 void setValueArray(ValueArray* array, int index, Value val){
@@ -135,7 +135,6 @@ void printObject(OutType out, Value value){
 				ObjShape* shape = (ObjShape*) inst;
 				for(int i = 0; i< shape->numSegments; ++i){
 					printMap(O_OUT, shape->segments[i]->instance.map, 1);
-					print(O_OUT, "\n");
 				}
 			}
 			break;

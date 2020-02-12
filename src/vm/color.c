@@ -30,13 +30,13 @@ void printColor(OutType out, Color* cl){
 }
 
 #ifdef EM_MAIN
-void addColorAttribute(const char* key, Color* cl){
-/*	if(cl){
+/*void addColorAttribute(const char* key, Color* cl){
+	if(cl){
 		char* colorString = allocateColorString(cl);
 		addStringStyle(key, );
 		FREE(char, colorString);
 	}else{
-		addStringStyle(key, "rgba(0, 0, 0, 1)", -1, -1);
-	}*/
-}
+		addStringStyle(key, "rgba(0, 0, 0, 1)");
+	}
+}*/
 #endif
