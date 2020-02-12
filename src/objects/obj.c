@@ -81,6 +81,7 @@ void freeObject(Obj* obj){
 			ObjArray* arrayObj = (ObjArray*) obj;
 			freeValueArray(arrayObj->array);
 			FREE(ObjArray, arrayObj);
+			break;
 		default:
 			print(O_OUT, "Object type not found.");
 			break;
