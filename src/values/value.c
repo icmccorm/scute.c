@@ -158,3 +158,17 @@ void printShapeType(OutType out, TKType type){
 			print(out, "none");
 	}
 }
+
+Value* getMaxValueByLocation(Value* a, Value* b){
+	if(a->lineIndex > b->lineIndex){
+		return a;
+	}else if(a->lineIndex == b->lineIndex){
+		if(a -> inlineIndex > b->inlineIndex){
+			return a;
+		}else{
+			return b;
+		}
+	}else{
+		return b;
+	}
+}

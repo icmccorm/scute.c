@@ -20,7 +20,8 @@ extern void em_addStyle(const char* key, Value* val);
 extern void em_addStringStyle(const char* key, Value* val);
 extern void em_addTurn(Value* degPtr);
 extern void em_addJump(Value* vecPtr);
-extern void em_addMove(Value* distPtr);
+extern void em_addMove(int* point, Value* distPtr);
+extern void em_addVertex(Value* vecPtr);
 
 extern void em_newShape(double id, double type);
 extern void em_paintShape();

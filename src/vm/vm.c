@@ -193,10 +193,16 @@ static InterpretResult run() {
 			runtimeError("Operands must be numbers"); \
 			return INTERPRET_RUNTIME_ERROR; \
 		} \
-		operandType b = AS_NUM(pop()); \
-		operandType a = AS_NUM(pop()); \
-		push(valueType(a op b)); \
-	} while(false);
+		Value b = pop(); \
+		Value a = pop(); \
+		operandType typeB = AS_NUM(b); \
+		operandType typeA = AS_NUM(a); \
+		Value* greatest = getMaxValueByLocation(&a, &b); \
+		Value result = valueType(typeA op typeB); \
+		result.lineIndex = greatest->lineIndex; \
+		result.inlineIndex = greatest->inlineIndex;	\
+		push(result); \
+	} while(false); \
 
 	for(;;) {
 		Value a;

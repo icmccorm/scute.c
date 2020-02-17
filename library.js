@@ -1,6 +1,7 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
+	currentTurtle: null,
 	
 	valuePointerOffsets: {
 		type: 0,
@@ -17,10 +18,16 @@ mergeInto(LibraryManager.library, {
 		4: "VL_CLR",
 	},
 
+	attrStatus: {
+		CONST: 0,
+		COMP: 1,
+		OPEN: 2,
+	},
+
 	segmentTypes: {
 		JUMP: 0,
-		MOVE: 1,
-		TURN: 2,
+		TURTLE: 1,
+		VERTEX: 3,
 	},
 
 	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
@@ -32,11 +39,23 @@ mergeInto(LibraryManager.library, {
 
 	//getValue(ptr, type) and setValue(ptr, value, type)
 	lib_getValueMeta: function (valPtr){
-		return {
-			type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
-			lineIndex: getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32'),
-			inlineIndex: getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32'),
+		let lineIndex = getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32');
+		if(lineIndex > -1){
+			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
+			return {
+				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
+				status: _attrStatus.const,
+				lineIndex: lineIndex,
+				inlineIndex: inlineIndex,
+			}
+		}else{
+			return {
+				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
+				status: lineIndex > -1 ? _attrStatus.CONST : _attrStatus.COMP,
+				value: _lib_getValue(valPtr),
+			}
 		}
+	
 	},
 
 	lib_getValue: function(valPtr){
@@ -139,32 +158,71 @@ mergeInto(LibraryManager.library, {
 		Module._maxFrameIndex = num;
 	},
 
-	em_setCanvas: function(widthPtr, heightPtr, xPtr, yPtr){
-
+	em_setCanvas: function(dimsPtr, originPtr){
+		Module._canvas = {
+			width: _lib_getValue(dimsPtr),
+			height: _lib_getValue(dimsPtr + 1),
+			originX: _lib_getValue(originPtr),
+			originY: _lib_getValue(originPtr + 1),
+		}
 	},
+
+	lib_intArrayToPoint: function(intPtr) {
+		let x = getValue(intPtr, 'i32');
+		let y = getValue(intPtr + 1, 'i32');
+		return x + "," + y;
+	},
+
 	em_addJump: function(vecPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.JUMP,
 			x: _lib_getValueMeta(vecPtr),
 			y: _lib_getValueMeta(vecPtr+1),
+			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+1)],
 		});
 	},
 
-	em_addMove: function(distancePtr){
+	em_addVertex: function(vecPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.MOVE,
-			distance: _lib_getValueMeta(distancePtr),
+			type: _segmentTypes.VERTEX,
+			x: _lib_getValueMeta(vecPtr),
+			y: _lib_getValueMeta(vecPtr+1),
+			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+1)],
+		});ß
+	},
+
+	em_addMove: function(intPtr, distancePtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		if(!_currentTurtle) {
+			_currentTurtle = {
+				move: null,
+				turn: null,
+				point: null,
+			}
+		}
+		_currentTurtle.move = _lib_getValueMeta(distancePtr);
+		_currentShape.segments.push({
+			type: _segmentTypes.TURTLE,
+			move: _currentTurtle.move,
+			turn: _currentTurtle.turn,
+			point: [getValue(intPtr, 'i32'), getValue(intPtr+1, 'i32')],
+
 		});
 	},
+
 
 	em_addTurn: function(degreesPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
-			type: _segmentTypes.TURN,
-			degrees: _lib_getValueMeta(degreesPtr),
-		});
+		if(!_currentTurtle) {
+			_currentTurtle = {
+				move: null,
+				turns: null,
+				point: null,
+			}
+		}
+		_currentTurtle.turn = _lib_getValueMeta(degreesPtr);
 	},
 
 	em_newShape__deps: [
@@ -223,13 +281,19 @@ mergeInto(LibraryManager.library, {
 
 	em_addTurn__deps: [
 		'currentShape',
-		'segmentTypes'
+		'segmentTypes',
+		'currentTurtle'
 
 	],
 
 	em_addMove__deps: [
 		'currentShape',
-		'segmentTypes'
+		'segmentTypes',
+		'currentTurtle',
+		'lib_intArrayToPoint'
+	],
 
+	lib_getValueMeta__deps: [
+		'attrStatus'
 	]
 });

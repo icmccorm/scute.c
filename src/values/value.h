@@ -70,6 +70,7 @@ int pushValueArray(ValueArray* array, Value value);
 Value popValueArray(ValueArray* array);
 Value getValueArray(ValueArray* array, int index);
 void setValueArray(ValueArray* array, int index, Value val);
+Value* getMaxValueByLocation(Value* a, Value* b);
 
 Value vector(Value x, Value y);
 

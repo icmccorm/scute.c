@@ -105,27 +105,53 @@ void drawPoints(ObjShape* shape){
 		assignStyles(shape);
 	#endif
 
+	int angle = 0;
+	int points[2];
+	points[0] = 0;
+	points[1] = 1;
+
 	for(int i = 0; i<shape->numSegments; ++i){
 		ObjShape* segment = shape->segments[i];
 		HashMap* map = segment->instance.map;
 
 		switch(segment->shapeType){
-			case TK_JUMP: ;
+			case TK_JUMP: {
+				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
+				points[0] = AS_NUM(getValueArray(vector->array, 0));
+				points[1] = AS_NUM(getValueArray(vector->array, 1));
 				#ifdef EM_MAIN
-					ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
 					em_addJump(vector->array->values);
+				#else
+					print(O_OUT, "Jump: (%d, %d)\n", points[0], points[1]);
+				#endif
+			} break;
+			case TK_VERT: ;
+				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
+				points[0] = AS_NUM(getValueArray(vector->array, 0));
+				points[1] = AS_NUM(getValueArray(vector->array, 1));
+				#ifdef EM_MAIN
+					em_addVertex(vector->array->values);
+				#else
+					print(O_OUT, "Vertex: (%d, %d)\n", points[0], points[1]);
 				#endif
 				break;
 			case TK_MOVE: ;
+				Value distance = getValue(map, string("distance"));
+				points[0] += (int) round(cos(angle)*AS_NUM(distance));
+				points[1] += (int) round(sin(angle)*AS_NUM(distance));
 				#ifdef EM_MAIN
-					Value distance = getValue(map, string("distance"));
-					em_addMove(&distance);				
+					em_addMove(points, &distance);				
+				#else
+					print(O_OUT, "Move %f: (%d, %d)\n", AS_NUM(distance), points[0], points[1]);
 				#endif
 				break;
 			case TK_TURN: ;
+				Value degrees = getValue(map, string("degrees"));
+				angle += AS_NUM(degrees);
 				#ifdef EM_MAIN
-					Value degrees = getValue(map, string("degrees"));
 					em_addTurn(&degrees);				
+				#else
+					print(O_OUT, "Turn by %d deg to %d deg\n", degrees, angle);
 				#endif
 				break;
 			default:

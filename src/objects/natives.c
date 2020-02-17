@@ -6,6 +6,7 @@
 #include "vm.h"
 #include "natives.h"
 #include "obj.h"
+#include "svg.h"
 
 Value nativeSine(Value* params, int numParams){
 	if(numParams > 0) {
@@ -122,19 +123,19 @@ Value nativeSqrt(Value* params, int numParams){
 }
 
 Value jump(Value* params, int numParams){
+	ObjShape* jumpInstance = allocateShape(NULL, TK_JUMP);
+	add(jumpInstance->instance.map, string("position"), VECTOR(0, 0));
+
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType >= TK_POLY){
-			ObjShape* jumpInstance = allocateShape(NULL, TK_JUMP);
-			add(jumpInstance->instance.map, string("position"), VECTOR(0, 0));
-
 			addSegment(shape, jumpInstance);
 			return OBJ_VAL((ObjInstance*) jumpInstance);
 		}
 	}
 	runtimeError("Only polylines, polygons, and paths can accept move commands.");
-	return NULL_VAL();
+	return OBJ_VAL((ObjInstance*) jumpInstance);
 }
 
 Value move(Value* params, int numParams){
@@ -187,7 +188,7 @@ Value turn(Value* params, int numParams){
 }
 
 Value arc(Value* params, int numParams){
-	ObjShape* arcInstance = allocateShape(NULL, TK_TURN);
+	ObjShape* arcInstance = allocateShape(NULL, TK_ARC);
 	add(arcInstance->instance.map, string("center"), VECTOR(0, 0));
 	add(arcInstance->instance.map, string("degrees"), NUM_VAL(0));
 
@@ -205,43 +206,45 @@ Value arc(Value* params, int numParams){
 }
 
 Value rect(Value* params, int numParams){
-	ObjShape* rectInstance = allocateShape(NULL, TK_TURN);
+	ObjShape* rectInstance = allocateShape(NULL, TK_RECT);
 	add(rectInstance->instance.map, string("position"), VECTOR(0, 0));
 	add(rectInstance->instance.map, string("dimensions"), NUM_VAL(0));
-
+	pushShape(rectInstance);
 	return OBJ_VAL((ObjInstance*) rectInstance);
 }
 
 Value circle(Value* params, int numParams){
-	ObjShape* circInstance = allocateShape(NULL, TK_TURN);
+	ObjShape* circInstance = allocateShape(NULL, TK_CIRC);
 	add(circInstance->instance.map, string("position"), VECTOR(0, 0));
 	add(circInstance->instance.map, string("radius"), NUM_VAL(0));
-
+	pushShape(circInstance);
 	return OBJ_VAL((ObjInstance*) circInstance);
 }
 
 Value ellipse(Value* params, int numParams){
-	ObjShape* rectInstance = allocateShape(NULL, TK_TURN);
-	add(rectInstance->instance.map, string("radius"), VECTOR(0, 0));
-	add(rectInstance->instance.map, string("position"), VECTOR(0, 0));
-
-	return OBJ_VAL((ObjInstance*) rectInstance);
+	ObjShape* ellipseInstance = allocateShape(NULL, TK_ELLIP);
+	add(ellipseInstance->instance.map, string("radius"), VECTOR(0, 0));
+	add(ellipseInstance->instance.map, string("position"), VECTOR(0, 0));
+	pushShape(ellipseInstance);
+	return OBJ_VAL((ObjInstance*) ellipseInstance);
 }
 
 Value polyline(Value* params, int numParams){
-	ObjShape* polylInstance = allocateShape(NULL, TK_TURN);
-	
+	ObjShape* polylInstance = allocateShape(NULL, TK_POLYL);
+	pushShape(polylInstance);
+
 	return OBJ_VAL((ObjInstance*) polylInstance);
 }
 
 Value polygon(Value* params, int numParams){
-	ObjShape* polygInstance = allocateShape(NULL, TK_TURN);
-	
+	ObjShape* polygInstance = allocateShape(NULL, TK_POLY);
+	pushShape(polygInstance);
+
 	return OBJ_VAL((ObjInstance*) polygInstance);
 }
 
 Value path(Value* params, int numParams){
-	ObjShape* pathInstance = allocateShape(NULL, TK_TURN);
-	
+	ObjShape* pathInstance = allocateShape(NULL, TK_PATH);
+	pushShape(pathInstance);
 	return OBJ_VAL((ObjInstance*) pathInstance);
 }
