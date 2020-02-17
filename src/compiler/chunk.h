@@ -15,13 +15,16 @@ typedef enum {
 struct sChunk {
 	int count;
 	int capacity;
-	uint8_t* code;
-	ValueArray* constants;
-	int* opsPerLine;
-	int* lineNums;
+
 	int lineCount;
 	int lineCapacity;
-	int previousLine;
+
+	uint8_t* code;
+	ValueArray* constants;
+
+	uint32_t* bytesPerLine;
+	uint32_t* lineNums;
+	uint32_t previousLine;
 };
 
 typedef enum {
@@ -73,14 +76,14 @@ typedef enum {
 } OpCode;
 
 void initChunk(Chunk* chunk);
-void writeChunk(Chunk* chunk, uint8_t byte, int line);
+void writeChunk(Chunk* chunk, uint8_t byte, uint32_t line);
 void freeChunk(Chunk* chunk);
 
-int getLine(Chunk* chunk, int opIndex);
+int getLine(Chunk* chunk, uint32_t opIndex);
 
-void writeConstant(Chunk* chunk, Value value, int line);
-void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, int line);
-uint64_t writeValue(Chunk* chunk, Value value, int line);
+void writeConstant(Chunk* chunk, Value value, uint32_t line);
+void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, uint32_t line);
+uint64_t writeValue(Chunk* chunk, Value value, uint32_t line);
 int writeVariableData(Chunk* chunk, uint64_t value);
 
 #endif

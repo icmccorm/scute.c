@@ -25,6 +25,8 @@ typedef struct{
     int depth;
 } Local;
 
+extern Parser parser;
+
  struct sCompiler{
     Local* locals;
     int localCount;
@@ -64,6 +66,6 @@ typedef struct{
 } ParseRule;
 
 uint32_t addLocal(Compiler* compiler, TK idName);
-uint32_t addDummyLocal(Compiler* compiler);
+uint32_t addDummyLocal(Compiler* compiler, uint32_t line);
 void freeCompiler(Compiler* compiler);
 #endif

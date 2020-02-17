@@ -333,7 +333,6 @@ static InterpretResult run() {
 						default:
 							runtimeError("Only functions or constructors can be called.");
 							return INTERPRET_RUNTIME_ERROR;
-							break;
 					}
 				}else{
 					runtimeError("Only functions or constructors can be called.");

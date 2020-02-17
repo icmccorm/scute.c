@@ -513,6 +513,7 @@ static void indentedBlock() {
 		//clear indentations
 		advance();
 		statement();
+
 	}
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
@@ -582,7 +583,7 @@ static void repeatStatement() {
 					errorAtCurrent("Upper bound identifier is NULL.");
 				}*/
 				expression();
-				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+				int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 				endLine();		
 				initialJumpIndex = currentChunk()->count-2;
 				emitBundle(OP_GET_LOCAL,counterLocalIndex);
@@ -590,7 +591,7 @@ static void repeatStatement() {
 				
 			}else if (parser.current.type == TK_INTEGER){
 				expression();
-				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+				int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 				endLine();		
 				initialJumpIndex = currentChunk()->count-2;
 				emitBundle(OP_GET_LOCAL,counterLocalIndex);
@@ -602,7 +603,7 @@ static void repeatStatement() {
 			if(!isInitialized(&firstId)){
 				errorAt(&firstId, "Upper bound identifier is NULL.");
 			}
-			counterLocalIndex = addDummyLocal(currentCompiler());
+			counterLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 			emitConstant(NUM_VAL(0));
 			endLine();		
 			initialJumpIndex = currentChunk()->count-2;
@@ -612,10 +613,10 @@ static void repeatStatement() {
 
 	}else{
 		emitConstant(NUM_VAL(0));
-		counterLocalIndex = addDummyLocal(currentCompiler());
+		counterLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 		expression();
 		endLine();
-		int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+		int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 		initialJumpIndex = currentChunk()->count-2;
 		emitBundle(OP_GET_LOCAL,counterLocalIndex);
 		emitBundle(OP_GET_LOCAL, maxRangeLocalIndex);		
@@ -1268,7 +1269,7 @@ static void binary(bool canAssign){
 		case TK_BANG_EQUALS:
 			emitBytes(OP_EQUALS, OP_NOT);
 			break;
-		default: 
+		default:
 			break;
 	}
 }

@@ -5,10 +5,16 @@
 #include "chunk.h"
 #include "output.h"
 
+static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine);
+
 void printChunk(Chunk* chunk, const char* name) {
 	if(name != NULL) print(O_DEBUG, "== %s ==\n", name);
+	int prevLine = 0;
+	int currLine = 0;
 	for (int offset = 0; offset < chunk->count;) {
-		offset = printInstruction(chunk, offset);
+		currLine = getLine(chunk, offset);
+		offset = printInstruction(chunk, offset, currLine, prevLine);
+		prevLine = currLine;
 	}
 	if(name != NULL) print(O_DEBUG, "======\n");
 }
@@ -22,15 +28,14 @@ static int scopeInstruction(const char* name, Chunk* chunk, int offset);
 static int paramInstruction(const char* name, Chunk* chunk, int offset);
 
 
-int printInstruction(Chunk* chunk, int offset){
+static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine){
 	print(O_DEBUG, "%4d ", offset);
 	
-	int currLine = getLine(chunk, offset);
-/*	if(currLine == -1 || offset > 0 && getLine(chunk, offset - 1) == currLine){
-		print(O_DEBUG, "   | ");
-*///	}else{
-	print(O_DEBUG, "%4d ", currLine);
-//	}
+	if(currLine == prevLine){
+		print(O_OUT, "    |   ");
+	}else{
+		print(O_DEBUG, "%4d    ", currLine);
+	}
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){

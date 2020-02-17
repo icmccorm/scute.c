@@ -5,7 +5,6 @@
 #include "value.h"
 
 void printChunk(Chunk* chunk, const char* name);
-int printInstruction(Chunk* chunk, int offset);
-int getLine(Chunk* chunk, int opIndex);
+int getLine(Chunk* chunk, uint32_t opIndex);
 
 #endif
