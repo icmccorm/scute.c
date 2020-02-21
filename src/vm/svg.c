@@ -98,6 +98,10 @@ void assignStyles(ObjShape* shape){
 }
 #endif
 
+double toRadians(int degrees){
+	return (PI/180) * degrees;
+}
+
 void drawPoints(ObjShape* shape){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
@@ -137,10 +141,10 @@ void drawPoints(ObjShape* shape){
 				break;
 			case TK_MOVE: ;
 				Value distance = getValue(map, string("distance"));
-				points[0] += (int) round(cos(angle)*AS_NUM(distance));
-				points[1] += (int) round(sin(angle)*AS_NUM(distance));
+				points[0] += (int) round(cos(toRadians(angle))*AS_NUM(distance));
+				points[1] += (int) round(sin(toRadians(angle))*AS_NUM(distance));
 				#ifdef EM_MAIN
-					em_addMove(points, &distance);				
+					em_addMove(points[0], points[1], &distance);				
 				#else
 					print(O_OUT, "Move %f: (%d, %d)\n", AS_NUM(distance), points[0], points[1]);
 				#endif

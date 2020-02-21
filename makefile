@@ -21,7 +21,7 @@ CC = clang
 WASMC = emcc
 
 FLAGS = $(INC_FLAGS)
-D_FLAGS = -MMD -MP
+D_FLAGS = -MMD -MP   
 
 END_FLAGS = -lm
 RM = rm

@@ -44,7 +44,7 @@ mergeInto(LibraryManager.library, {
 			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
 			return {
 				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
-				status: _attrStatus.const,
+				status: _attrStatus.CONST,
 				lineIndex: lineIndex,
 				inlineIndex: inlineIndex,
 			}
@@ -193,7 +193,7 @@ mergeInto(LibraryManager.library, {
 		});ß
 	},
 
-	em_addMove: function(intPtr, distancePtr){
+	em_addMove: function(x, y, distancePtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
@@ -207,8 +207,7 @@ mergeInto(LibraryManager.library, {
 			type: _segmentTypes.TURTLE,
 			move: _currentTurtle.move,
 			turn: _currentTurtle.turn,
-			point: [getValue(intPtr, 'i32'), getValue(intPtr+1, 'i32')],
-
+			point: [x, y],
 		});
 	},
 
