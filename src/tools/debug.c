@@ -39,6 +39,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
+		case OP_DIVIDE:
+			return simpleInstruction("OP_DIVIDE", offset);
 		case OP_RETURN:
 			return simpleInstruction("OP_RETURN", offset);
 		case OP_NEGATE:

@@ -398,7 +398,9 @@ static void statement() {
 	}
 	while(parser.current.type == TK_NEWLINE || parser.current.type == TK_INDENT){
 		advance();
+		if(parser.previous.type == TK_NEWLINE) 	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;;
 	}
+
 	if(parser.current.type != TK_EOF){
 		switch(parser.current.type){
 			case TK_DEF:
@@ -454,8 +456,7 @@ static void statement() {
 
 static void synchronize() {
 	parser.panicMode = false;
-	while(parser.current.type != TK_EOF){
-		if(parser.previous.type == TK_NEWLINE) return;
+	while(parser.current.type != TK_EOF & parser.previous.type != TK_NEWLINE){
 		switch(parser.current.type){
 			case TK_PRINT:
 			case TK_DRAW:
@@ -465,6 +466,7 @@ static void synchronize() {
 		}
 		advance();
 	}
+	if(parser.previous.type == TK_NEWLINE) parser.lastNewline = parser.previous.start;
 }
 
 static void expression() {
