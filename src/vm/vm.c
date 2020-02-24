@@ -38,7 +38,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.shapeCapacity = 0;
 	vm.shapeCount = 0;
 	vm.shapeStack = NULL;
-
+	vm.links = package->links;
 	vm.ip = NULL;	
 
 	resetStack();
@@ -225,12 +225,14 @@ static InterpretResult run() {
 				} break;
 			case OP_DEF_INST: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
-				uint32_t linkIndex = READ_INT();
-				print(O_OUT, "%d\n", linkIndex);
+				uint32_t linkIndex = readInteger();
 				bool pushBackInstance = (bool) READ_BYTE();
 
 				Value expression = pop();
-				expression.linkIndex = linkIndex;
+
+				ValueLink link = vm.links[linkIndex];
+				expression.lineIndex = link.lineIndex;
+				expression.inlineIndex = link.inlineIndex;
 
 				Value instanceVal = pop();
 				if(IS_INST(instanceVal)){
@@ -501,16 +503,8 @@ void runCompiler(CompilePackage* package, char* source);
 void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
 
-#ifdef EM_MAIN
-	extern void em_initializeLinks(ValueLink* linkPtr);
-#endif
-
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
-
-	#ifdef EM_MAIN
-		em_initializeLinks(code->links);	
-	#endif
 
 	if(index <= 0){
 		

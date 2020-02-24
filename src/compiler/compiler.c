@@ -22,10 +22,8 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	extern void em_configureValuePointerOffsets(int type, int as, int link);
-	extern void em_configureValueLinkOffsets(int line, int inlineIndex);
-
-	extern void em_addValue(Value* value, int inlineOffset, int length);
+	extern void em_configureValuePointerOffsets(int type, int un, int line, int in);
+	extern void em_addValue(double value, TKType role, int inlineOffset, int length);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
 	
@@ -36,15 +34,9 @@ CompilePackage* result;
 		void* base = (void*) &val;
 		int type = (int) ((void*)&(val.type) - base);
 		int as = (int) ((void*)&(val.as) - base);
-		int link = (int) ((void*)&(val.linkIndex) - base);
-		em_configureValuePointerOffsets(type, as, link);
-
-
-		ValueLink valLink;
-		base = (void*) &valLink;
-		int lineIndex = (int) ((void*)&(valLink.lineIndex) - base);
-		int inlineIndex = (int) ((void*)&(valLink.inlineIndex) - base);
-		em_configureValueLinkOffsets(lineIndex, inlineIndex);
+		int lineIndex = (int) ((void*)&(val.lineIndex) - base);
+		int inlineIndex = (int) ((void*)&(val.inlineIndex) - base);
+		em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
 	}
 	
 #endif
@@ -176,7 +168,7 @@ static void emitLinkedConstant(Value value, TK* token){
 		if(value.type == VL_OBJ && AS_OBJ(value)->type == OBJ_STRING){
 			em_addStringValue(AS_CSTRING(value), token->inlineIndex, token->length);
 		}else{
-			em_addValue(&value, token->inlineIndex, token->length);
+			em_addValue(AS_NUM(value), parser.lastOperator, token->inlineIndex, token->length);
 		}
 	}
 	#endif
@@ -320,35 +312,35 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_LIMIT, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_LIMIT,
-	{ literal,  NULL,       PC_TERM },    // TK_REAL,
-	{ literal,  NULL,       PC_TERM },    // TK_INTEGER,
-	{ literal,	NULL,	    PC_TERM },    // TK_TRUE,
-	{ literal,	NULL,	    PC_TERM },    // TK_FALSE,
-	{ literal,	NULL,	    PC_TERM },    // TK_NULL,
-	{ stringLiteral,	NULL,	    PC_TERM },    // TK_STRING,
-	{ variable, NULL,	    PC_TERM },    // TK_ID,
-	{ constant, NULL,	    PC_TERM },    // TK_ID,	
+	{ literal,  NULL,       PC_NONE },    // TK_REAL,
+	{ literal,  NULL,       PC_NONE },    // TK_INTEGER,
+	{ literal,	NULL,	    PC_NONE },    // TK_TRUE,
+	{ literal,	NULL,	    PC_NONE },    // TK_FALSE,
+	{ literal,	NULL,	    PC_NONE },    // TK_NULL,
+	{ stringLiteral,	NULL,	    PC_NONE },    // TK_STRING,
+	{ variable, NULL,	    PC_NONE },    // TK_ID,
+	{ constant, NULL,	    PC_NONE },    // TK_ID,	
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
-	{ native,	NULL,		PC_TERM },    // TK_SIN,
-	{ native,	NULL,		PC_TERM },    // TK_COS,
-	{ native,	NULL,		PC_TERM },    // TK_TAN,
-	{ native,	NULL,		PC_TERM },    // TK_ASIN,
-	{ native,	NULL,		PC_TERM },    // TK_ACOS,
-	{ native,	NULL,		PC_TERM },    // TK_ATAN,
-	{ native,	NULL,		PC_TERM },    // TK_HSIN,
-	{ native,	NULL,		PC_TERM },    // TK_HCOS,
-	{ native,	NULL,		PC_TERM },    // TK_RAD,
-	{ native,	NULL,		PC_TERM },    // TK_SQRT,
+	{ native,	NULL,		PC_NONE },    // TK_SIN,
+	{ native,	NULL,		PC_NONE },    // TK_COS,
+	{ native,	NULL,		PC_NONE },    // TK_TAN,
+	{ native,	NULL,		PC_NONE },    // TK_ASIN,
+	{ native,	NULL,		PC_NONE },    // TK_ACOS,
+	{ native,	NULL,		PC_NONE },    // TK_ATAN,
+	{ native,	NULL,		PC_NONE },    // TK_HSIN,
+	{ native,	NULL,		PC_NONE },    // TK_HCOS,
+	{ native,	NULL,		PC_NONE },    // TK_RAD,
+	{ native,	NULL,		PC_NONE },    // TK_SQRT,
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
+	{ NULL,	    NULL,	    PC_OR },    // TK_OR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
-	{ native,	NULL,		PC_TERM },    // TK_SHAPE,
+	{ native,	NULL,		PC_NONE },    // TK_SHAPE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
 	{ grouping, NULL,       PC_NONE },    // TK_L_PAREN,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_PAREN, 
-	{ array,	NULL,	    PC_TERM },    // TK_L_BRACK,
+	{ array,	NULL,	    PC_NONE },    // TK_L_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
 	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
@@ -483,6 +475,14 @@ static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	emitConstant(val);
+}
+
+static double tokenToNumber(TK token){
+	if(token.type == TK_INTEGER || token.type == TK_REAL){
+		return strtod(parser.previous.start, NULL);
+	}else{
+		return 0;
+	}
 }
 
 static void literal(bool canAssign) {
@@ -811,11 +811,9 @@ static void withStatement(){
 				
 				uint32_t linkIndex = addLink(result, parser.lineIndex, parser.currentLineValueIndex);
 				++parser.currentLineValueIndex;
-				Value v = NULL_VAL();
 				#ifdef EM_MAIN
-					em_addValue(&v, parser.manipToken.inlineIndex, parser.manipToken.length);	
+					em_addValue(tokenToNumber(parser.manipToken), parser.lastOperator, parser.manipToken.inlineIndex, parser.manipToken.length);	
 				#endif
-				
 				emitTriple(OP_DEF_INST, getStringObjectIndex(&idToken), linkIndex);
 				emitByte(1);
 
@@ -1127,12 +1125,12 @@ static void deref(bool canAssign){
 			
 			if(canAssign && match(TK_ASSIGN)){
 				expression();
-				
+
 				uint32_t linkIndex = addLink(result, parser.lineIndex, parser.currentLineValueIndex);
+
 				++parser.currentLineValueIndex;
-				Value v = NULL_VAL();
 				#ifdef EM_MAIN
-					em_addValue(&v, parser.manipToken.inlineIndex, parser.manipToken.length);	
+					em_addValue(tokenToNumber(parser.manipToken), parser.lastOperator, parser.manipToken.inlineIndex, parser.manipToken.length);	
 				#endif
 				
 				emitTriple(OP_DEF_INST, getStringObjectIndex(&idToken), linkIndex);

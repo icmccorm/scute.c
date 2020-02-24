@@ -185,9 +185,10 @@ static int tripleInstruction(const char* name, Chunk* chunk, int offset){
 	offset = offset + 1 + numBytes;
 
 	uint8_t numSecondBytes = chunk->code[offset+1];
+	uint32_t linkIndex = readEmbeddedInteger(chunk, numBytes, offset);
 	offset = offset + 1 + numSecondBytes;
 
-	print(O_DEBUG, "%-16s %4d ", name, valIndex);
+	print(O_DEBUG, "%-16s %4d %4d ", name, valIndex, linkIndex);
 	printValue(O_DEBUG, chunk->constants->values[valIndex]);
 	print(O_DEBUG, "\n");
 

@@ -39,6 +39,7 @@ typedef struct {
 	int shapeCapacity;
 	ObjShape** shapeStack;
 	int frameIndex;
+	ValueLink* links;
 	
 	ObjInstance* currentScope;
 } VM;

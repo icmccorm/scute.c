@@ -25,14 +25,14 @@ typedef enum {
 
 typedef struct {
 	VLType type;		//0
+	uint32_t lineIndex;
+	uint32_t inlineIndex;
 	union {				//8
 		bool boolean;
 		double number;
 		Obj* obj;		
 	} as;
-	uint32_t linkIndex;
 } Value;
-
 
 typedef struct {
 	int capacity;
@@ -40,10 +40,10 @@ typedef struct {
 	Value * values;
 } ValueArray;	
 
-#define BOOL_VAL(value) ((Value){VL_BOOL, {.boolean = value}, -1})
-#define NULL_VAL() ((Value){VL_NULL, {.number = 0}, -1})
-#define NUM_VAL(value) ((Value){VL_NUM, {.number = value}, -1})
-#define OBJ_VAL(value) ((Value){VL_OBJ, {.obj = (Obj*)(value)}, -1})
+#define BOOL_VAL(value) ((Value){VL_BOOL, -1, -1, {.boolean = value}})
+#define NULL_VAL() ((Value){VL_NULL, -1, -1, {.number = 0}})
+#define NUM_VAL(value) ((Value){VL_NUM, -1, -1, {.number = value}})
+#define OBJ_VAL(value) ((Value){VL_OBJ, -1, -1, {.obj = (Obj*)(value)}})
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUM(value) ((value).as.number)

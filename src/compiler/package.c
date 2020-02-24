@@ -16,6 +16,8 @@ CompilePackage* initCompilationPackage(){
 	code->objects = NULL;
 	code->compiled = NULL;
 	code->links = NULL;
+	code->linkCapacity = 0;
+	code->linkCount = 0;
 	initMap(&code->strings);
 	initMap(&code->globals);
 	return code;
@@ -44,9 +46,7 @@ uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex){
 		code->links = GROW_ARRAY(code->links, ValueLink,
 		oldCapacity, code->linkCapacity);
 	}
-	code->links[code->linkCount].lineIndex = inlineIndex;
+	code->links[code->linkCount].lineIndex = lineIndex;
 	code->links[code->linkCount].inlineIndex = inlineIndex;
-	++code->linkCount;
-
-	return (code->linkCount - 1);
+	return code->linkCount++;
 }

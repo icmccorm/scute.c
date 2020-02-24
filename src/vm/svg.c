@@ -32,18 +32,20 @@ void resolveColor(const char* key, Value val){
 void drawShape(ObjShape* shape, ValueLink* links){
 	HashMap* shapeMap = shape->instance.map;
 	TKType type = shape->shapeType;
+
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
 		em_newShape(address, type);
 
 		Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
 		em_addStyle("strokeWidth", &strokeWidth);
-
+/*
 		Value fill = getValue(shapeMap, string("fill"));
-		resolveColor("fill", fill);
+		resolveColor("fill", fill, links);
 
 		Value stroke = getValue(shapeMap, string("stroke"));
-		resolveColor("stroke", stroke);
+		resolveColor("stroke", stroke, links);*/
+		ValueLink link;
 
 		switch(type){
 			case TK_RECT: { 
@@ -88,7 +90,7 @@ void drawShape(ObjShape* shape, ValueLink* links){
 	#endif
 }
 #ifdef EM_MAIN
-void assignStyles(ObjShape* shape){
+void assignStyles(ObjShape* shape, ValueLink* links){
 	HashMap* shapeMap = shape->instance.map;
 	Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
 	em_addStyle("strokeWidth", &strokeWidth);
@@ -109,7 +111,7 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
-		assignStyles(shape);
+	//assignStyles(shape, link);
 	#endif
 
 	int angle = 0;

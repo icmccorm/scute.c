@@ -6,8 +6,8 @@
 #include "value.h"
 
 typedef struct {
-    uint32_t lineIndex;
-    uint32_t inlineIndex;
+    int lineIndex;
+    int inlineIndex;
 } ValueLink;
 
 typedef struct {
