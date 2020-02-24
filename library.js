@@ -2,10 +2,15 @@ mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
 	currentTurtle: null,
+	valueLinks: -1,
 	
 	valuePointerOffsets: {
 		type: 0,
 		union: 0,
+		link: 0,
+	},
+
+	valueLinkOffsets: {
 		lineIndex: 0,
 		inlineIndex: 0,
 	},
@@ -28,20 +33,29 @@ mergeInto(LibraryManager.library, {
 		JUMP: 0,
 		TURTLE: 1,
 		VERTEX: 3,
-	},
+	}, 
 
-	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
+	em_configureValuePointerOffsets: function (type, union, link){
 		_valuePointerOffsets.type = type;
 		_valuePointerOffsets.union = union;
-		_valuePointerOffsets.lineIndex = lineIndex;
-		_valuePointerOffsets.inlineIndex = inlineIndex;
+		_valuePointerOffsets.link = link;
+	},
+
+	em_configureValueLinkOffsets: function(line, inline){
+		_valueLinkOffsets.lineIndex = line;
+		_valueLinkOffsets.inlineIndex = inline;
+	},
+
+	em_initializeLinks: function(linkPtr){
+		_valueLinks = linkPtr;
 	},
 
 	//getValue(ptr, type) and setValue(ptr, value, type)
 	lib_getValueMeta: function (valPtr){
-		let lineIndex = getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32');
+		let linkPtr = _valueLinks + getValue(valPtr + valuePointerOffsets.link, 'i32');
+		let lineIndex = getValue(linkPtr + valueLinkOffsets.lineIndex, 'i32');
+		let inlineIndex = getValue(linkPtr + valueLinkOffsets.inlineIndex, 'i32');
 		if(lineIndex > -1){
-			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
 			return {
 				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
 				status: _attrStatus.CONST,
@@ -55,7 +69,6 @@ mergeInto(LibraryManager.library, {
 				value: _lib_getValue(valPtr),
 			}
 		}
-	
 	},
 
 	lib_getValue: function(valPtr){
@@ -262,7 +275,10 @@ mergeInto(LibraryManager.library, {
 	],
 
 	em_getValueMeta__deps: [
-		'valuePointerOffsets'
+		'valuePointerOffsets',
+		'valueLinkOffsets',
+		'valueLinks',
+		'attrStatus',
 	],
 
 	em_configureValuePointerOffsets__deps:[
@@ -292,7 +308,8 @@ mergeInto(LibraryManager.library, {
 		'lib_intArrayToPoint'
 	],
 
-	lib_getValueMeta__deps: [
-		'attrStatus'
+	em_initializeLinks: [
+		'valueLinks'
 	]
+
 });

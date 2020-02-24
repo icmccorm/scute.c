@@ -7,22 +7,45 @@
 #include "vm.h"
 #include "package.h"
 
+typedef enum{
+	PC_NONE,
+	PC_ASSIGN,
+	PC_OR,
+	PC_AND,
+	PC_EQUALS, // == !=
+	PC_COMPARE, // > < <= >=
+	PC_TERM, // + -
+	PC_FACTOR, // * / %
+	PC_UNARY, // - -- ++ !
+	PC_CALL, // . [] ()
+	PC_PRIMARY
+
+} PCType;
+
 typedef struct {
     TK current;
     TK previous;
     TK lastID;
+    TKType lastOperator;
+    PCType lastOperatorPrecedence;
     bool hadError;
     bool panicMode;
     char* codeStart;
 	bool lineHadValue;
 	int lineIndex;
 	int currentLineValueIndex;
-    char* lastNewline;
+    char* lastNewline; 
+    PCType lastPrecedence;
+    PCType currentPrecedence;
+    PCType manipPrecedence;
+    TK manipToken;
 } Parser;
 
 typedef struct{
     TK id;
     int depth;
+    int lineIndex;
+    int inlineIndex;
 } Local;
 
 extern Parser parser;
@@ -42,20 +65,6 @@ extern Parser parser;
 
 typedef struct sCompiler Compiler;
 
-typedef enum{
-	PC_NONE,
-	PC_ASSIGN,
-	PC_OR,
-	PC_AND,
-	PC_EQUALS, // == !=
-	PC_COMPARE, // > < <= >=
-	PC_TERM, // + -
-	PC_FACTOR, // * / %
-	PC_UNARY, // - -- ++ !
-	PC_CALL, // . [] ()
-	PC_PRIMARY
-
-} PCType;
 
 typedef void (*ParseFn)(bool canAssign);
 

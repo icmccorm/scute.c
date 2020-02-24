@@ -49,7 +49,6 @@ int pushValueArray(ValueArray* array, Value value){
 void freeValueArray(ValueArray* array){
 	FREE_ARRAY(Value, array->values, array->capacity);
 	FREE(ValueArray, array);
-
 }
 
 Value getValueArray(ValueArray* array, int index){
@@ -156,19 +155,5 @@ void printShapeType(OutType out, TKType type){
 			break;
 		default:
 			print(out, "none");
-	}
-}
-
-Value* getMaxValueByLocation(Value* a, Value* b){
-	if(a->lineIndex > b->lineIndex){
-		return a;
-	}else if(a->lineIndex == b->lineIndex){
-		if(a -> inlineIndex > b->inlineIndex){
-			return a;
-		}else{
-			return b;
-		}
-	}else{
-		return b;
 	}
 }

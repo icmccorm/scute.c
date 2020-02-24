@@ -112,7 +112,7 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 		case OP_DEF_INST:
 			// add a 1 to account for the 1-byte pop mode flag
 			// TODO: add a more flexible option for including single byte flags
-			return 1 + embeddedInstruction("OP_DEF_INST", chunk, offset);
+			return 1 + tripleInstruction("OP_DEF_INST", chunk, offset);
 		case OP_MERGE_INST:
 			return simpleInstruction("OP_MERGE_INST", offset);
 		default:

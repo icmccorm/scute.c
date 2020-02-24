@@ -131,6 +131,7 @@ typedef struct{
     char* start;
     int length;
     int line;
+    int lineIndex;
 	int inlineIndex;
 } TK; 
 

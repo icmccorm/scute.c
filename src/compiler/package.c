@@ -15,7 +15,7 @@ CompilePackage* initCompilationPackage(){
 	code->upperLimit = 0;
 	code->objects = NULL;
 	code->compiled = NULL;
-
+	code->links = NULL;
 	initMap(&code->strings);
 	initMap(&code->globals);
 	return code;
@@ -33,5 +33,20 @@ void freeCompilationPackage(CompilePackage* code){
 	freeMap(code->strings);
 	freeMap(code->globals);
 	freeObjects(code->objects);
+	FREE_ARRAY(ValueLink, code->links, code->linkCapacity);
 	FREE(CompilePackage, code);
+}
+
+uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex){
+	if(code->linkCount + 1 >= code->linkCapacity){
+		int oldCapacity = code->linkCapacity;
+		code->linkCapacity = GROW_CAPACITY(oldCapacity);
+		code->links = GROW_ARRAY(code->links, ValueLink,
+		oldCapacity, code->linkCapacity);
+	}
+	code->links[code->linkCount].lineIndex = inlineIndex;
+	code->links[code->linkCount].inlineIndex = inlineIndex;
+	++code->linkCount;
+
+	return (code->linkCount - 1);
 }

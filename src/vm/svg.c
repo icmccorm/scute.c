@@ -9,6 +9,7 @@
 #include "scanner.h"
 #include "color.h"
 #include "math.h"
+#include "package.h"
 
 #ifdef EM_MAIN
 void resolveColor(const char* key, Value val){
@@ -28,7 +29,9 @@ void resolveColor(const char* key, Value val){
 }
 #endif
 
-void drawShape(HashMap* shapeMap, TKType type){
+void drawShape(ObjShape* shape, ValueLink* links){
+	HashMap* shapeMap = shape->instance.map;
+	TKType type = shape->shapeType;
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
 		em_newShape(address, type);
@@ -102,7 +105,7 @@ double toRadians(int degrees){
 	return (PI/180) * degrees;
 }
 
-void drawPoints(ObjShape* shape){
+void drawPoints(ObjShape* shape, ValueLink* link){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
@@ -168,7 +171,7 @@ void drawPoints(ObjShape* shape){
 }
 
 
-void drawPath(ObjShape* shape){	
+void drawPath(ObjShape* shape, ValueLink* links){	
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
@@ -214,18 +217,18 @@ void pushShape(ObjShape* close){
 	++vm.shapeCount;
 }
 
-void renderFrame(){
+void renderFrame(CompilePackage* code){
 	while(vm.shapeCount > 0){
 		ObjShape* top = popShape();
 		switch(top->shapeType){
 			case TK_POLY:
 			case TK_POLYL:
-				drawPoints(top);
+				drawPoints(top, code->links);
 				break;
 			case TK_PATH:
-				drawPath(top);
+				drawPath(top, code->links);
 			default:
-				drawShape(top->instance.map, top->shapeType);	
+				drawShape(top, code->links);	
 				break;
 		}
 	}
