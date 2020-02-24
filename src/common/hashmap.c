@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include "common.h"
 #include "hashmap.h"
 #include "value.h"
 #include "memory.h"
@@ -31,7 +32,7 @@ bool shouldGrow(HashMap* map){
 void grow(HashMap* map){
 	//#define GROW_ARRAY(array, type, oldCount, newCount)
 	int oldCapacity = map->capacity;
-	map->capacity = GROW_CAPACITY(map->capacity);
+	map->capacity = GROW_CAPACITY(oldCapacity);
 
 	HashEntry* newBuckets = NULL;
 	newBuckets = GROW_ARRAY(newBuckets, HashEntry, 0, map->capacity);
@@ -72,6 +73,7 @@ void grow(HashMap* map){
 
 void freeMap(HashMap* map){
 	FREE_ARRAY(HashEntry, map->entries, map->capacity);
+	FREE(HashMap, map);
 }
 
 uint32_t hashFunction(char* keyString, int length){
@@ -121,9 +123,12 @@ void add(HashMap* map, ObjString* key, Value value){
 			map->entries[index].key = key;
 			map->entries[index].value = value;
 			++map->numEntries;
-
-			map->previous->next = &map->entries[index];
-			map->previous = &map->entries[index];
+			if(map->previous){
+				map->previous->next = &map->entries[index];
+				map->previous = &map->entries[index];
+			}else{
+				map->previous = &map->entries[index];
+			}
 		}
 	}
 }

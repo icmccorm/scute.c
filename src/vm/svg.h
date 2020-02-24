@@ -10,31 +10,28 @@ typedef struct {
 	char* chars;
 } Attribute;
 
-void assignPosition(ObjInstance* close, Value* values, uint8_t numValues);
-void assignDimensions(ObjInstance* close, Value* values, uint8_t numValues);
+void assignPosition(ObjShape* close, Value* values, uint8_t numValues);
+void assignDimensions(ObjShape* close, Value* values, uint8_t numValues);
 
 #ifdef EM_MAIN
-extern void addAttribute(const char* key, double value, int lineIndex, int inlineIndex);
-extern void addStringAttribute(const char* key, char* valuePtr, int lineIndex, int inlineIndex);
+extern void em_addAttribute(const char* key, Value* val);
 
-extern void addStyle(const char* key, double value, int lineIndex, int inlineIndex);
-extern void addStringStyle(const char* key, char* valuePtr, int lineIndex, int inlineIndex);
+extern void em_addStyle(const char* key, Value* val);
+extern void em_addStringStyle(const char* key, Value* val);
+extern void em_addTurn(Value* degPtr);
+extern void em_addJump(Value* vecPtr);
+extern void em_addMove(int x, int y, Value* distPtr);
+extern void em_addVertex(Value* vecPtr);
 
-extern void newShape(double id, double type);
-extern void paintShape();
+extern void em_newShape(double id, double type);
+extern void em_paintShape();
 
-#define ATTR(name, value) (addAttribute(name, AS_NUM(value), value.lineIndex, value.inlineIndex));
-#define CATTR(name, value) (addStringAttribute(name, AS_CSTRING(value), value.lineIndex, value.inlineIndex));
-
-#define STYLE(name, value) (addStyle(name, AS_NUM(value), value.lineIndex, value.inlineIndex));
-#define CSTYLE(name, value) (addStringStyle(name, AS_CSTRING(value), value.lineIndex, value.inlineIndex));
+extern void em_setCanvas(Value* width, Value* height, Value* originX, Value* originY);
 #endif
 
 void drawShape(HashMap* shapeMap, TKType type);
 void renderFrame();
-void pushShape(ObjInstance* close);
-ObjInstance* popShape();
-
-
+void pushShape(ObjShape* close);
+ObjShape* popShape();
 
 #endif

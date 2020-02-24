@@ -22,9 +22,26 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	extern void em_addValue(int inlineOffset, int length);
+	extern void em_configureValuePointerOffsets(int type, int as, int lineIndex, int inlineIndex);
+	extern void em_addValue(Value* value, int inlineOffset, int length);
+	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
+
+	void prepareValueConversion(){
+		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
+		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
+		Value val = NULL_VAL();
+		void* base = (void*) &val;
+		int type = (int) ((void*)&(val.type) - base);
+		int as = (int) ((void*)&(val.as) - base);
+		int lineIndex = (int) ((void*)&(val.lineIndex) - base);
+		int inlineIndex = (int) ((void*)&(val.inlineIndex) - base);
+
+		em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
+	}
 #endif
+
+
 
 static Compiler* currentCompiler() {
 	return compiler;
@@ -50,8 +67,10 @@ int getTokenIndex(char* tokenStart){
 static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	Compiler* newComp = ALLOCATE(Compiler, 1);
 	Compiler* comp = currentCompiler();
-	initMap(&newComp->classes);
+	newComp->super = comp;
 
+
+	initMap(&newComp->classes);
 	if(comp){
 		mergeMaps(comp->classes, newComp->classes);
 		newComp->scopeDepth = comp->scopeDepth + 1;
@@ -62,11 +81,13 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	newComp->scopeCapacity = 0;
 	newComp->localCount = 0;
 	newComp->locals = NULL;
+
 	newComp->enclosed = true;
+	
 	newComp->instanceType = TK_NULL;
-	newComp->super = comp;
 
 	newComp->compilingChunk = chunkObj;
+
 	return newComp;
 }
 
@@ -99,7 +120,7 @@ static Compiler* exitCompilationScope(){
 		emitByte(OP_POP);
 	}
 	emitReturn();
-	FREE(Compiler, toFree);
+	freeCompiler(toFree);
 	return superComp;
 }
 
@@ -150,9 +171,14 @@ static void emitLinkedConstant(Value value, TK* token){
 	++parser.currentLineValueIndex;
 
 	#ifdef EM_MAIN
-		em_addValue(token->inlineIndex, token->length);
+	if(!IS_NULL(value)){
+		if(value.type == VL_OBJ && AS_OBJ(value)->type == OBJ_STRING){
+			em_addStringValue(AS_CSTRING(value), token->inlineIndex, token->length);
+		}else{
+			em_addValue(&value, token->inlineIndex, token->length);
+		}
+	}
 	#endif
-
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
 
@@ -234,12 +260,12 @@ static void endLine(){
 }
 
 static Value getTokenStringValue(TK* token){
-	Value strObj = OBJ_VAL(internString(token->start, token->length));
+	Value strObj = OBJ_VAL(tokenString(token->start, token->length));
 	return strObj;
 }
 
 static ObjString* getTokenStringObject(TK* token){
-	return internString(token->start, token->length);
+	return tokenString(token->start, token->length);
 }
 
 static uint32_t getStringObjectIndex(TK* token){
@@ -263,7 +289,7 @@ static void number(bool canAssign);
 static void literal(bool canAssign);
 static void constant(bool canAssign);
 static void constant(bool canAssign);
-static void string(bool canAssign);
+static void stringLiteral(bool canAssign);
 static void array(bool canAssign);
 static void variable(bool canAssign);
 static void deref(bool canAssign);
@@ -298,7 +324,7 @@ ParseRule rules[] = {
 	{ literal,	NULL,	    PC_TERM },    // TK_TRUE,
 	{ literal,	NULL,	    PC_TERM },    // TK_FALSE,
 	{ literal,	NULL,	    PC_TERM },    // TK_NULL,
-	{ string,	NULL,	    PC_TERM },    // TK_STRING,
+	{ stringLiteral,	NULL,	    PC_TERM },    // TK_STRING,
 	{ variable, NULL,	    PC_TERM },    // TK_ID,
 	{ constant, NULL,	    PC_TERM },    // TK_ID,	
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
@@ -310,12 +336,12 @@ ParseRule rules[] = {
 	{ native,	NULL,		PC_TERM },    // TK_ATAN,
 	{ native,	NULL,		PC_TERM },    // TK_HSIN,
 	{ native,	NULL,		PC_TERM },    // TK_HCOS,
-	{ native,	NULL,		PC_TERM },    // TK_DEG,
 	{ native,	NULL,		PC_TERM },    // TK_RAD,
 	{ native,	NULL,		PC_TERM },    // TK_SQRT,
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_OR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
+	{ native,	NULL,		PC_TERM },    // TK_SHAPE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
@@ -327,25 +353,6 @@ ParseRule rules[] = {
 	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
-	{ NULL,	    NULL,	    PC_PRIMARY }, // TK_PRINT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
-	{ NULL,		NULL,		PC_NONE },    // TK_T,
-	{ NULL, 	NULL, 		PC_NONE },	  // TK_DIMS
-	{ NULL,		NULL,		PC_NONE }, 	  // TK_POS
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
-	{ NULL,     NULL,       PC_NONE }     // TK_EOF
 };
 
 static void printStatement();
@@ -359,6 +366,7 @@ static void attr();
 static void drawStatement();
 static void returnStatement();
 static void repeatStatement();
+static void withStatement();
 
 static ParseRule* getRule(TKType type){
 	return &rules[type];
@@ -390,7 +398,9 @@ static void statement() {
 	}
 	while(parser.current.type == TK_NEWLINE || parser.current.type == TK_INDENT){
 		advance();
+		if(parser.previous.type == TK_NEWLINE) 	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;;
 	}
+
 	if(parser.current.type != TK_EOF){
 		switch(parser.current.type){
 			case TK_DEF:
@@ -400,11 +410,6 @@ static void statement() {
 			case TK_DRAW:
 				advance();
 				drawStatement();
-				break;
-			case TK_POS:
-			case TK_DIMS:
-				advance();
-				attr();
 				break;
 			case TK_PRINT:
 				advance();
@@ -435,6 +440,10 @@ static void statement() {
 				advance();
 				repeatStatement();
 				break;
+			case TK_WITH:
+				advance();
+				withStatement();
+				break;
 			default:
 				expressionStatement();
 				break;
@@ -447,8 +456,7 @@ static void statement() {
 
 static void synchronize() {
 	parser.panicMode = false;
-	while(parser.current.type != TK_EOF){
-		if(parser.previous.type == TK_NEWLINE) return;
+	while(parser.current.type != TK_EOF & parser.previous.type != TK_NEWLINE){
 		switch(parser.current.type){
 			case TK_PRINT:
 			case TK_DRAW:
@@ -458,6 +466,7 @@ static void synchronize() {
 		}
 		advance();
 	}
+	if(parser.previous.type == TK_NEWLINE) parser.lastNewline = parser.previous.start;
 }
 
 static void expression() {
@@ -485,41 +494,16 @@ static void literal(bool canAssign) {
 	}    
 }
 
-static void attr() {
-	TK attrType = parser.previous;
-	uint8_t attrOp;
-
-	switch(attrType.type){
-		case TK_DIMS:
-			attrOp = OP_DIMS;
-			break;
-		case TK_POS:
-			attrOp = OP_POS;
-			break;
-		default:
-			break;
-	}
-	uint8_t paramCount = emitParams();
-	emitBytes(attrOp, paramCount);
-	endLine();
-}
-
 static void returnStatement() {
 	expression();
 	emitByte(OP_RETURN);
 }
 
 static int getIndentation() {
-	int indentCount = 0;
-	 while(parser.current.type == TK_INDENT || parser.current.type == TK_NEWLINE){
-		if(parser.current.type == TK_INDENT){
-			++indentCount;
-		}else{
-			indentCount = 0;
-		}
-		advance();
+	if(parser.current.type == TK_INDENT){
+		return parser.current.length;
 	}
-	return indentCount;
+	return 0;
 }
 
 static void indentedBlock() {
@@ -528,7 +512,10 @@ static void indentedBlock() {
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
+		//clear indentations
+		advance();
 		statement();
+
 	}
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
@@ -598,7 +585,7 @@ static void repeatStatement() {
 					errorAtCurrent("Upper bound identifier is NULL.");
 				}*/
 				expression();
-				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+				int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 				endLine();		
 				initialJumpIndex = currentChunk()->count-2;
 				emitBundle(OP_GET_LOCAL,counterLocalIndex);
@@ -606,7 +593,7 @@ static void repeatStatement() {
 				
 			}else if (parser.current.type == TK_INTEGER){
 				expression();
-				int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+				int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 				endLine();		
 				initialJumpIndex = currentChunk()->count-2;
 				emitBundle(OP_GET_LOCAL,counterLocalIndex);
@@ -618,7 +605,7 @@ static void repeatStatement() {
 			if(!isInitialized(&firstId)){
 				errorAt(&firstId, "Upper bound identifier is NULL.");
 			}
-			counterLocalIndex = addDummyLocal(currentCompiler());
+			counterLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 			emitConstant(NUM_VAL(0));
 			endLine();		
 			initialJumpIndex = currentChunk()->count-2;
@@ -628,10 +615,10 @@ static void repeatStatement() {
 
 	}else{
 		emitConstant(NUM_VAL(0));
-		counterLocalIndex = addDummyLocal(currentCompiler());
+		counterLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 		expression();
 		endLine();
-		int maxRangeLocalIndex = addDummyLocal(currentCompiler());
+		int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
 		initialJumpIndex = currentChunk()->count-2;
 		emitBundle(OP_GET_LOCAL,counterLocalIndex);
 		emitBundle(OP_GET_LOCAL, maxRangeLocalIndex);		
@@ -672,6 +659,7 @@ static void drawStatement() {
 		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
 		emitBundle(OP_CONSTANT, scopeIndex);
 		emitBytes(OP_CALL, 0);
+
 	}else{
 		expression();
 	}
@@ -793,6 +781,38 @@ static void defStatement() {
 	}
 }
 
+static void withStatement(){
+	expression();
+	endLine();
+
+	int currentScopeDepth = currentCompiler()->scopeDepth + 1;
+	while(parser.current.type != TK_EOF 
+			&& getIndentation() >= currentScopeDepth
+		){
+		advance(); //clear indentation token
+		switch(parser.current.type){
+			case TK_WITH:
+				withStatement();
+				break;
+			case TK_ID: ;
+				advance();
+				TK idToken = parser.previous;
+				consume(TK_ASSIGN, "Expected an '=' operator.");
+				expression();
+				
+				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+				emitByte(1);
+
+				endLine();
+				break;
+			default:	
+				errorAtCurrent("Expected an unqualified assignment or a nested with statement.");			
+				break;
+		}
+	}
+	emitByte(OP_POP);
+}
+
 static void frameStatement() {
 	if(parser.previous.type == TK_T){
 		consume(TK_R_LIMIT, "Expected right limit.");
@@ -826,7 +846,7 @@ static void and_(bool canAssign) {
 	patchJump(endJump);
 }
 
-static void string(bool canAssign) {
+static void stringLiteral(bool canAssign) {
 	emitLinkedConstant(getTokenStringValue(&parser.previous), &parser.previous);
 }
 
@@ -991,7 +1011,7 @@ static void constant(bool canAssign) {
 }
 
 static void initNative(void* func, TK* id){
-	ObjString* nativeString = internString(id->start, id->length);
+	ObjString* nativeString = tokenString(id->start, id->length);
 	ObjNative* nativeObj = allocateNative(func);
 	add(currentResult()->globals, nativeString, OBJ_VAL(nativeObj));
 }
@@ -1004,6 +1024,43 @@ static void native(bool canAssign){
 
 	void* func;
 	switch(nativeId.type){
+		case TK_SHAPE: {
+			switch(nativeId.subtype){
+				case TK_MOVE:
+					func = move;
+					break;
+				case TK_VERT:
+					func = vertex;
+					break;
+				case TK_ARC:
+					func = arc;
+					break;
+				case TK_JUMP:
+					func = jump;
+					break;
+				case TK_TURN:
+					func = turn;
+					break;
+				case TK_RECT:
+					func = rect;
+					break;
+				case TK_CIRC:
+					func = circle;
+					break;
+				case TK_ELLIP:
+					func = ellipse;
+					break;
+				case TK_PATH:
+					func = path;
+					break;
+				case TK_POLY:
+					func = polygon;
+					break;
+				case TK_POLYL:
+					func = polyline;
+					break;
+			}
+		} break;
 		case TK_SIN:
 			func = nativeSine;
 			break;
@@ -1027,12 +1084,6 @@ static void native(bool canAssign){
 			break;
 		case TK_HCOS:
 			func =  nativeHypcos;
-			break;
-		case TK_DEG:
-			func = nativeDegrees;
-			break;
-		case TK_RAD:
-			func = nativeRadians;
 			break;
 		case TK_SQRT:
 			func = nativeSqrt;
@@ -1061,6 +1112,7 @@ static void deref(bool canAssign){
 			if(canAssign && match(TK_ASSIGN)){
 				expression();
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+				emitByte(0);
 			}else{
 				emitBundle(OP_DEREF, getStringObjectIndex(&parser.previous));
 				if(parser.current.type == TK_DEREF) advance();
@@ -1219,7 +1271,7 @@ static void binary(bool canAssign){
 		case TK_BANG_EQUALS:
 			emitBytes(OP_EQUALS, OP_NOT);
 			break;
-		default: 
+		default:
 			break;
 	}
 }
@@ -1254,10 +1306,19 @@ void initParser(Parser* parser, char* source){
 
 
 bool compile(char* source, CompilePackage* package){
+	#ifdef EM_MAIN
+		prepareValueConversion();
+		
+	#endif
+
 	initScanner(source);
-	compiler = enterCompilationScope(package->compiled);
 	initParser(&parser, source);
+
 	result = package;
+	package->compiled = allocateChunkObject(NULL);
+	package->compiled->chunkType = CK_MAIN;
+
+	compiler = enterCompilationScope(package->compiled);
 
 	advance();
 	while(parser.current.type != TK_EOF){

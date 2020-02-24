@@ -37,7 +37,7 @@ typedef struct {
 	
 	int shapeCount;
 	int shapeCapacity;
-	ObjInstance** shapeStack;
+	ObjShape** shapeStack;
 	int frameIndex;
 	
 	ObjInstance* currentScope;
@@ -50,5 +50,6 @@ Value pop();
 
 InterpretResult interpretCompiled(CompilePackage* code, int index);
 void runCompiler(CompilePackage* package, char* source);
+ObjInstance* currentInstance();
 
 #endif

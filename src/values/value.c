@@ -7,6 +7,8 @@
 #include "hashmap.h"
 #include "chunk.h"
 #include "debug.h"
+#include "common.h"
+
 
 void initValueArray(ValueArray* array){
 	array-> values = NULL;
@@ -46,7 +48,8 @@ int pushValueArray(ValueArray* array, Value value){
 
 void freeValueArray(ValueArray* array){
 	FREE_ARRAY(Value, array->values, array->capacity);
-	initValueArray(array);
+	FREE(ValueArray, array);
+
 }
 
 Value getValueArray(ValueArray* array, int index){
@@ -66,7 +69,7 @@ void printArray(OutType out, ValueArray* array){
 			printValue(out, array->values[i]);
 		}
 	}
-	print(out, "]\n");
+	print(out, "]");
 }
 
 void setValueArray(ValueArray* array, int index, Value val){
@@ -83,6 +86,13 @@ Value popValueArray(ValueArray* array){
 	}else{
 		return NULL_VAL();
 	}
+}
+
+Value vector(Value x, Value y){
+	ObjArray* arrayObj = allocateArray();
+	pushValueArray(arrayObj->array, x);
+	pushValueArray(arrayObj->array, y);
+	return OBJ_VAL(arrayObj);
 }
 
 void printObject(OutType out, Value value);
@@ -118,14 +128,22 @@ void printObject(OutType out, Value value){
 			printChunk(AS_CHUNK(value)->chunk, NULL);
 			print(out, "------------\n");
 			break;
-		case OBJ_INST:
-			printMap(O_OUT, AS_INST(value)->map, 0);
+		case OBJ_INST: ;
+			ObjInstance* inst = AS_INST(value);
+			printMap(O_OUT, inst->map, 0);
+			if(inst->type == INST_SHAPE){
+				ObjShape* shape = (ObjShape*) inst;
+				for(int i = 0; i< shape->numSegments; ++i){
+					printMap(O_OUT, shape->segments[i]->instance.map, 1);
+				}
+			}
 			break;
 		case OBJ_COLOR: ;
 			printColor(O_OUT, AS_COLOR(value)->color);
 			break;
 		case OBJ_ARRAY: ;
 			printArray(O_OUT, AS_ARRAY(value)->array);
+			break;
 		default:
 			break;
 	}
@@ -138,5 +156,19 @@ void printShapeType(OutType out, TKType type){
 			break;
 		default:
 			print(out, "none");
+	}
+}
+
+Value* getMaxValueByLocation(Value* a, Value* b){
+	if(a->lineIndex > b->lineIndex){
+		return a;
+	}else if(a->lineIndex == b->lineIndex){
+		if(a -> inlineIndex > b->inlineIndex){
+			return a;
+		}else{
+			return b;
+		}
+	}else{
+		return b;
 	}
 }

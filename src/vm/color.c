@@ -9,7 +9,7 @@ char* allocateColorString(Color* cl){
 	switch(cl->colorType){
 		case CL_RGB: ;
 			ColorRGB* rgb = (ColorRGB*) cl;
-			char* result = ALLOCATE(char, 32);
+			char* result = GROW_ARRAY(NULL, char, 0, 32);
 			int r = (int) AS_NUM(rgb->r);
 			int g = (int) AS_NUM(rgb->g);
 			int b = (int) AS_NUM(rgb->b);
@@ -26,17 +26,17 @@ char* allocateColorString(Color* cl){
 void printColor(OutType out, Color* cl){
 	char * colorString = allocateColorString(cl);
 	print(out, colorString);
-	FREE(char, colorString);
+	FREE_ARRAY(char, colorString, 32);
 }
 
 #ifdef EM_MAIN
-void addColorAttribute(const char* key, Color* cl){
+/*void addColorAttribute(const char* key, Color* cl){
 	if(cl){
 		char* colorString = allocateColorString(cl);
-		addStringStyle(key, colorString, -1, -1);
+		addStringStyle(key, );
 		FREE(char, colorString);
 	}else{
-		addStringStyle(key, "rgba(0, 0, 0, 1)", -1, -1);
+		addStringStyle(key, "rgba(0, 0, 0, 1)");
 	}
-}
+}*/
 #endif

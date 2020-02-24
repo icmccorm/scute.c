@@ -13,6 +13,10 @@
 
 bool DEBUG_STACK = false;
 
+#ifndef EM_MAIN
+	int numBytesAllocated = 0;
+#endif
+
 static char* readFile(const char* path){
 	FILE* file = fopen(path, "rb");
 	
@@ -25,7 +29,7 @@ static char* readFile(const char* path){
 	size_t fileSize = ftell(file);
 	rewind(file);
 	
-	char* buffer = (char*) malloc(fileSize + 1);
+	char* buffer = GROW_ARRAY(NULL, char, 0, fileSize + 1);
 
 	if(buffer == NULL){
 		print(O_ERR, "Not enough memory to read \"%s\".\n", path);
@@ -46,15 +50,31 @@ static char* readFile(const char* path){
 }
 
 static void runFile(const char* path){
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] before init: %d bytes\n", numBytesAllocated);
+	#endif
+
 	char* source = readFile(path);
+
 	CompilePackage* compiled = initCompilationPackage();
 	
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] after init: %d bytes\n", numBytesAllocated);
+	#endif
+
 	runCompiler(compiled, source);
 	InterpretResult result = interpretCompiled(compiled, -1);
 	
 	freeCompilationPackage(compiled);
-	free(source);
 
+
+	int length = strlen(source) + 1;
+	FREE_ARRAY(char, source, length);
+
+	#ifndef EM_MAIN
+		print(O_OUT, "[A] after fcompile: %d bytes\n", numBytesAllocated);
+	#endif
+	
 	if(result == INTERPRET_COMPILE_ERROR) exit(65);
 	if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }

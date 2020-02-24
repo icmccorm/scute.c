@@ -1,9 +1,92 @@
 mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
+	currentTurtle: null,
+	
+	valuePointerOffsets: {
+		type: 0,
+		union: 0,
+		lineIndex: 0,
+		inlineIndex: 0,
+	},
 
-	em_addValue: function(inlineOffset, length){
+	valueTypes: {
+		0: "VL_NULL",
+		1: "VL_BOOL",
+		2: "VL_NUM",
+		3: "VL_OBJ",
+		4: "VL_CLR",
+	},
+
+	attrStatus: {
+		CONST: 0,
+		COMP: 1,
+		OPEN: 2,
+	},
+
+	segmentTypes: {
+		JUMP: 0,
+		TURTLE: 1,
+		VERTEX: 3,
+	},
+
+	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
+		_valuePointerOffsets.type = type;
+		_valuePointerOffsets.union = union;
+		_valuePointerOffsets.lineIndex = lineIndex;
+		_valuePointerOffsets.inlineIndex = inlineIndex;
+	},
+
+	//getValue(ptr, type) and setValue(ptr, value, type)
+	lib_getValueMeta: function (valPtr){
+		let lineIndex = getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32');
+		if(lineIndex > -1){
+			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
+			return {
+				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
+				status: _attrStatus.CONST,
+				lineIndex: lineIndex,
+				inlineIndex: inlineIndex,
+			}
+		}else{
+			return {
+				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
+				status: lineIndex > -1 ? _attrStatus.CONST : _attrStatus.COMP,
+				value: _lib_getValue(valPtr),
+			}
+		}
+	
+	},
+
+	lib_getValue: function(valPtr){
+		let type = _valueTypes[getValue(valPtr + _valuePointerOffsets.type, 'i32')];
+		let value = getValue(valPtr + _valuePointerOffsets.union, 'double');
+		switch(type){
+			case 'VL_BOOL':
+				value = Boolean(value);
+				break;
+			case 'VL_NULL':
+				value = null;
+				break;
+			case 'VL_NUM':
+			default:
+				break;
+		}
+		return value;
+	},
+
+	em_addValue: function(valuePtr, inlineOffset, length){
+		let convertVal = _lib_getValue(valuePtr);
 		_values.push({
+			value: convertVal,
+			inlineOffset: inlineOffset,
+			length: length,
+		})
+	},
+
+	em_addStringValue: function(charPtr, inlineOffset, length){
+		_values.push({
+			value: Module.UTF8ToString(charPtr),
 			inlineOffset: inlineOffset,
 			length: length,
 		})
@@ -27,57 +110,47 @@ mergeInto(LibraryManager.library, {
 		self.postMessage({type: 5, payload: Module.UTF8ToString(ptr)})
 	},
 	
-	newShape: function(idPtr, tagPtr){
+	em_newShape: function(idPtr, tagPtr){
 		_currentShape = {
 			"id": idPtr,
 			"tag": tagPtr,
 			"attrs":{},
-			"style":{
-				"values":{},
-				"loc":{},
-			},
+			"styles":{},
+			"segments": [],
 		}
 	},
 
-	addStringAttribute: function(keyPtr, valPtr, lineIndex, inlineIndex){
+	em_addAttribute: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
-		let value = Module.UTF8ToString(valPtr);
-		_currentShape['attrs'][key] = {
-			value: value,
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex,
-		};
+		let meta = _lib_getValueMeta(valuePtr);
+		_currentShape['attrs'][key] = meta;
 	},
 
-	addAttribute: function(keyPtr, value, lineIndex, inlineIndex){
-		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['attrs'][key] = {
-			value: value,
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex,
-		};
+	em_addLine: function(valPtr){
+
 	},
 
-	addStringStyle: function(keyPtr, valuePtr, lineIndex, inlineIndex){
-		let key = Module.UTF8ToString(keyPtr);
-		let value = Module.UTF8ToString(valuePtr);
-		_currentShape['style']['values'][key] = value;
-		_currentShape['style']['loc'][key] = {
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex, 
-		}
+	em_addHorizontalLine: function(valPtr){
+
 	},
 
-	addStyle: function(keyPtr, value, lineIndex, inlineIndex){
-		let key = Module.UTF8ToString(keyPtr);
-		_currentShape['style']['values'][key] = value;
-		_currentShape['style']['loc'][key] = {
-			lineIndex: lineIndex,
-			inlineIndex: inlineIndex, 
-		}
+	em_addVerticalLine: function(valPtr){
+
 	},
 
-	paintShape: function(){
+	em_addStringStyle: function(keyPtr, valuePtr){
+		let key = Module.UTF8ToString(keyPtr);
+		let meta = _lib_getValueMeta(valuePtr);
+		_currentShape['styles'][key] = meta;
+	},
+
+	em_addStyle: function(keyPtr, valuePtr){
+		let key = Module.UTF8ToString(keyPtr);
+		let meta = _lib_getValueMeta(valuePtr);
+		_currentShape['styles'][key] = meta;
+	},
+
+	em_paintShape: function(){
 		Module._currentFrame.push(_currentShape);
 	},
 
@@ -85,36 +158,141 @@ mergeInto(LibraryManager.library, {
 		Module._maxFrameIndex = num;
 	},
 
-	newShape__deps: [
+	em_setCanvas: function(dimsPtr, originPtr){
+		Module._canvas = {
+			width: _lib_getValue(dimsPtr),
+			height: _lib_getValue(dimsPtr + 1),
+			originX: _lib_getValue(originPtr),
+			originY: _lib_getValue(originPtr + 1),
+		}
+	},
+
+	lib_intArrayToPoint: function(intPtr) {
+		let x = getValue(intPtr, 'i32');
+		let y = getValue(intPtr + 1, 'i32');
+		return x + "," + y;
+	},
+
+	em_addJump: function(vecPtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.JUMP,
+			x: _lib_getValueMeta(vecPtr),
+			y: _lib_getValueMeta(vecPtr+1),
+			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+1)],
+		});
+	},
+
+	em_addVertex: function(vecPtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.VERTEX,
+			x: _lib_getValueMeta(vecPtr),
+			y: _lib_getValueMeta(vecPtr+1),
+			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+1)],
+		});ß
+	},
+
+	em_addMove: function(x, y, distancePtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		if(!_currentTurtle) {
+			_currentTurtle = {
+				move: null,
+				turn: null,
+				point: null,
+			}
+		}
+		_currentTurtle.move = _lib_getValueMeta(distancePtr);
+		_currentShape.segments.push({
+			type: _segmentTypes.TURTLE,
+			move: _currentTurtle.move,
+			turn: _currentTurtle.turn,
+			point: [x, y],
+		});
+	},
+
+
+	em_addTurn: function(degreesPtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		if(!_currentTurtle) {
+			_currentTurtle = {
+				move: null,
+				turns: null,
+				point: null,
+			}
+		}
+		_currentTurtle.turn = _lib_getValueMeta(degreesPtr);
+	},
+
+	em_newShape__deps: [
 		'currentShape'
 	],
 	
-	paintShape__deps: [
+	em_paintShape__deps: [
 		'currentShape'
 	],
 
-	addStyle__deps: [
-        'currentShape'
+	em_addStyle__deps: [
+		'currentShape',
+		'lib_getValueMeta'
 	],
 
-	addStringStyle__deps: [
-        'currentShape'
+	em_addStringStyle__deps: [
+		'currentShape',
+		'lib_getValueMeta'
 	],
 
-	addAttribute__deps: [
-		'currentShape'
+	em_addAttribute__deps: [
+		'currentShape',
+		'lib_getValueMeta',
 	],
 
-	addStringAttribute__deps: [
-		'currentShape'
+	em_addStringAttribute__deps: [
+		'currentShape',
+		'lib_getValueMeta'
 	],
 
 	em_addValue__deps: [
 		'values',
+		'lib_getValue'
 	],
 
 	em_endLine__deps: [
 		'values',
+	],
+
+	em_getValueMeta__deps: [
+		'valuePointerOffsets'
+	],
+
+	em_configureValuePointerOffsets__deps:[
+		'valuePointerOffsets'
+	],
+
+	lib_getValue__deps: [
+		'valueTypes'
+	],
+
+	em_addJump__deps: [
+		'currentShape',
+		'segmentTypes'
+	],
+
+	em_addTurn__deps: [
+		'currentShape',
+		'segmentTypes',
+		'currentTurtle'
+
+	],
+
+	em_addMove__deps: [
+		'currentShape',
+		'segmentTypes',
+		'currentTurtle',
+		'lib_intArrayToPoint'
+	],
+
+	lib_getValueMeta__deps: [
+		'attrStatus'
 	]
-	
 });

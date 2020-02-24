@@ -1,36 +1,21 @@
-# new behavior:
-	* shape styles and attributes are read at drawtime,
-	  and default to NULL (0) if unset
+* implement "with" statements
 
-	* string objects are no longer deallocated during runtime
+	assume that each member is an assignment statement
 
-	* new scope attribute syntax
+	with canvas
+		origin = [50, 50]
+		dims = [100, 100]
+
+* implement default shape object constructors
+
+	draw rect		becomes			draw rect()
+		...								...
+
+
+	def a as path
+		with vertex()
 		
-		dims = (50, 50)
-		// is equivalent to
-		x = 50
-		y = 50
-		// within a shape statement
-
-	* fix/implement/debug assignment expressions to autoresolve to local, global
-
-	* when a shape-scope is created, subscope members are autodefined (without attributes)
-		* for example, stroke
-		
-		stroke 		//initialized as a hashmap at runtime (scope allocation)
-		stroke.width 	//initialized as a member at runtime
-
-		* this means that stroke can be dereferenced without initialization
-	          
-		stroke.width = 5
-
-		//instead of having to predeclare stroke
-
-		stroke = (/*color*/, /*width*/)
-		stroke.width = 5
-		
-	* explore behavior for direct manipulation resolving to local variables/inserting addition statements
-		* when should each behavior occur? 
-		* should this be a used-configured mode? 
-
-	* create a syntax for points
+		with vertex()
+			pos = [0, 0]
+		with vertex()
+			

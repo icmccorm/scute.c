@@ -12,6 +12,8 @@
 #include "chunk.h"
 #include "natives.h"
 #include "color.h"
+#include "common.h"
+
 
 typedef enum {
 	OBJ_STRING,
@@ -23,6 +25,12 @@ typedef enum {
 	OBJ_COLOR,
 	OBJ_ARRAY,
 } OBJType;
+
+typedef enum {
+	INST_NONE,
+	INST_SHAPE,
+	INST_SEG
+} InstanceType;
 
 //definition for Obj
 struct sObj {
@@ -46,8 +54,7 @@ struct sObjArray{
 struct sObjInstance{
 	Obj object;
 	HashMap* map;
-	TKType instanceType;
-	ObjInstance* nextShape;
+	InstanceType type;
 };
 
 struct sObjChunk{
@@ -68,6 +75,21 @@ struct sObjNative {
 struct sObjColor {
 	Obj object;
 	Color* color;
+};
+
+struct sObjShape {
+	ObjInstance instance;
+
+	struct sObjShape* nextShape;
+	TKType shapeType;
+	struct sObjShape** segments;
+	int numSegments;
+	int segmentCapacity;
+};
+
+struct sObjShapeSegment {
+	ObjInstance instance;
+	TKType segmentType;
 };
 
 #endif

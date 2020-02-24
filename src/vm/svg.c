@@ -8,6 +8,7 @@
 #include "vm.h"
 #include "scanner.h"
 #include "color.h"
+#include "math.h"
 
 #ifdef EM_MAIN
 void resolveColor(const char* key, Value val){
@@ -18,7 +19,7 @@ void resolveColor(const char* key, Value val){
 			case OBJ_COLOR: ;
 				ObjColor* colorObj = AS_COLOR(val);
 				color = colorObj->color;
-				addColorAttribute(key, color);
+				//addColorAttribute(key, color);
 				break;
 			default:
 				break;
@@ -30,72 +31,184 @@ void resolveColor(const char* key, Value val){
 void drawShape(HashMap* shapeMap, TKType type){
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
-		newShape(address, type);
+		em_newShape(address, type);
 
-		STYLE("strokeWidth", getValue(shapeMap, internString("strokeWidth", 11)));
+		Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
+		em_addStyle("strokeWidth", &strokeWidth);
 
-		Value fill = getValue(shapeMap, internString("fill", 4));
+		Value fill = getValue(shapeMap, string("fill"));
 		resolveColor("fill", fill);
 
-		Value stroke = getValue(shapeMap, internString("stroke", 6));
+		Value stroke = getValue(shapeMap, string("stroke"));
 		resolveColor("stroke", stroke);
 
 		switch(type){
 			case TK_RECT: { 
-				ObjString* xStr = internString("x", 1);
-				ObjString* yStr = internString("y", 1);
-				ObjString* wStr = internString("width", 5);
-				ObjString* hStr = internString("height", 6);
+				ObjString* xStr = string("x");
+				ObjString* yStr = string("y");
+				ObjString* wStr = string("width");
+				ObjString* hStr = string("height");
 
 				Value xVal = getValue(shapeMap, xStr);
-				ATTR("x", xVal);
+				em_addAttribute("x", &xVal);
 
 				Value yVal = getValue(shapeMap, yStr);
-				ATTR("y", yVal);
+				em_addAttribute("y", &yVal);
 
 				Value wVal = getValue(shapeMap, wStr);
-				ATTR("width", wVal);
+				em_addAttribute("width", &wVal);
 
 				Value hVal = getValue(shapeMap, hStr);
-				ATTR("height", hVal);
+				em_addAttribute("height", &hVal);
 			} break;
 
 			case TK_CIRC:{
-				ObjString* cxStr = internString("cx", 2);
-				ObjString* cyStr = internString("cy", 2);
-				ObjString* rStr = internString("r", 1);
+				ObjString* cxStr = string("cx");
+				ObjString* cyStr = string("cy");
+				ObjString* rStr = string("r");
 
 				Value cxVal = getValue(shapeMap, cxStr);
-				ATTR("cx", cxVal);
+				em_addAttribute("cx", &cxVal);
 
 				Value cyVal = getValue(shapeMap, cyStr);
-				ATTR("cy", cyVal);
+				em_addAttribute("cy", &cyVal);
 
 				Value rVal = getValue(shapeMap, rStr);
-				ATTR("r", rVal);
-
+				em_addAttribute("r", &rVal);
 				} break;
 			default:
 				break;
 		}
-		paintShape();
+		em_paintShape();
 	#else
 		printMap(O_OUT, shapeMap, 0);
 	#endif
 }
+#ifdef EM_MAIN
+void assignStyles(ObjShape* shape){
+	HashMap* shapeMap = shape->instance.map;
+	Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
+	em_addStyle("strokeWidth", &strokeWidth);
+
+	Value fill = getValue(shapeMap, string("fill"));
+	resolveColor("fill", fill);
+
+	Value stroke = getValue(shapeMap, string("stroke"));
+	resolveColor("stroke", stroke);
+}
+#endif
+
+double toRadians(int degrees){
+	return (PI/180) * degrees;
+}
+
+void drawPoints(ObjShape* shape){
+	unsigned address = (unsigned) shape->instance.map;
+	#ifdef EM_MAIN
+		em_newShape(address, shape->shapeType);
+		assignStyles(shape);
+	#endif
+
+	int angle = 0;
+	int points[2];
+	points[0] = 0;
+	points[1] = 1;
+
+	for(int i = 0; i<shape->numSegments; ++i){
+		ObjShape* segment = shape->segments[i];
+		HashMap* map = segment->instance.map;
+
+		switch(segment->shapeType){
+			case TK_JUMP: {
+				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
+				points[0] = AS_NUM(getValueArray(vector->array, 0));
+				points[1] = AS_NUM(getValueArray(vector->array, 1));
+				#ifdef EM_MAIN
+					em_addJump(vector->array->values);
+				#else
+					print(O_OUT, "Jump: (%d, %d)\n", points[0], points[1]);
+				#endif
+			} break;
+			case TK_VERT: ;
+				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
+				points[0] = AS_NUM(getValueArray(vector->array, 0));
+				points[1] = AS_NUM(getValueArray(vector->array, 1));
+				#ifdef EM_MAIN
+					em_addVertex(vector->array->values);
+				#else
+					print(O_OUT, "Vertex: (%d, %d)\n", points[0], points[1]);
+				#endif
+				break;
+			case TK_MOVE: ;
+				Value distance = getValue(map, string("distance"));
+				points[0] += (int) round(cos(toRadians(angle))*AS_NUM(distance));
+				points[1] += (int) round(sin(toRadians(angle))*AS_NUM(distance));
+				#ifdef EM_MAIN
+					em_addMove(points[0], points[1], &distance);				
+				#else
+					print(O_OUT, "Move %f: (%d, %d)\n", AS_NUM(distance), points[0], points[1]);
+				#endif
+				break;
+			case TK_TURN: ;
+				Value degrees = getValue(map, string("degrees"));
+				angle += AS_NUM(degrees);
+				#ifdef EM_MAIN
+					em_addTurn(&degrees);				
+				#else
+					print(O_OUT, "Turn by %d deg to %d deg\n", degrees, angle);
+				#endif
+				break;
+			default:
+				break;
+		}
+	}
+	#ifdef EM_MAIN
+		em_paintShape();
+	#endif
+}
 
 
-ObjInstance* popShape(){
-	ObjInstance* latestShape = vm.shapeStack[vm.shapeCount-1];
+void drawPath(ObjShape* shape){	
+	unsigned address = (unsigned) shape->instance.map;
+	#ifdef EM_MAIN
+		em_newShape(address, shape->shapeType);
+	#endif
+	int angle = 0;
+	int prevPoint[2];
+	prevPoint[0] = 0;
+	prevPoint[1] = 0;
+
+	for(int i = 0; i<shape->numSegments; ++i){
+		ObjShape* segment = shape->segments[i];
+		switch(segment->shapeType){
+			case TK_JUMP:
+				break;
+			case TK_MOVE:
+				break;
+			case TK_TURN:
+				break;
+			case TK_ARC:
+				break;
+			default:
+				break;
+		}
+	}
+	#ifdef EM_MAIN
+		em_paintShape();
+	#endif
+}	
+
+ObjShape* popShape(){
+	ObjShape* latestShape = vm.shapeStack[vm.shapeCount-1];
 	--vm.shapeCount;
 	return latestShape;
 }
 
-void pushShape(ObjInstance* close){
+void pushShape(ObjShape* close){
 	if(vm.shapeCount + 1 > vm.shapeCapacity){
 		int oldCapacity = vm.shapeCapacity;
 		vm.shapeCapacity = GROW_CAPACITY(oldCapacity);
-		vm.shapeStack = GROW_ARRAY(vm.shapeStack, ObjInstance*, oldCapacity, vm.shapeCapacity);
+		vm.shapeStack = GROW_ARRAY(vm.shapeStack, ObjShape*, oldCapacity, vm.shapeCapacity);
 	}
 	vm.shapeStack[vm.shapeCount] = close;
 	++vm.shapeCount;
@@ -103,7 +216,17 @@ void pushShape(ObjInstance* close){
 
 void renderFrame(){
 	while(vm.shapeCount > 0){
-		ObjInstance* top = popShape();
-		drawShape(top->map, top->instanceType);
+		ObjShape* top = popShape();
+		switch(top->shapeType){
+			case TK_POLY:
+			case TK_POLYL:
+				drawPoints(top);
+				break;
+			case TK_PATH:
+				drawPath(top);
+			default:
+				drawShape(top->instance.map, top->shapeType);	
+				break;
+		}
 	}
 }

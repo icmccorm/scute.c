@@ -6,15 +6,16 @@
 #include "value.h"
 #include "memory.h"
 #include "obj.h"
+#include "common.h"
 
 CompilePackage* initCompilationPackage(){
 	CompilePackage* code = ALLOCATE(CompilePackage, 1);
-	code->compiled = allocateChunkObject(NULL);
-	code->compiled->chunkType = CK_MAIN;
 
 	code->lowerLimit = 0;
 	code->upperLimit = 0;
 	code->objects = NULL;
+	code->compiled = NULL;
+
 	initMap(&code->strings);
 	initMap(&code->globals);
 	return code;
@@ -29,8 +30,8 @@ void freeObjects(Obj* list){
 }
 
 void freeCompilationPackage(CompilePackage* code){
-	freeObjects(code->objects);
 	freeMap(code->strings);
 	freeMap(code->globals);
+	freeObjects(code->objects);
 	FREE(CompilePackage, code);
 }

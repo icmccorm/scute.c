@@ -13,6 +13,7 @@ typedef struct sObjChunk ObjChunk;
 typedef struct sObjNative ObjNative;
 typedef struct sObjColor ObjColor;
 typedef struct sObjArray ObjArray;
+typedef struct sObjShape ObjShape;
 
 typedef enum {
 	VL_NULL,
@@ -23,16 +24,17 @@ typedef enum {
 } VLType;
 
 typedef struct {
-	VLType type;
-	union {
+	VLType type;		//0
+	union {				//8
 		bool boolean;
 		double number;
-		Obj* obj;
+		Obj* obj;		
 	} as;
 
-	int lineIndex;
-	int inlineIndex;
+	int lineIndex;		//16
+	int inlineIndex;	//20
 } Value;
+
 
 typedef struct {
 	int capacity;
@@ -68,5 +70,10 @@ int pushValueArray(ValueArray* array, Value value);
 Value popValueArray(ValueArray* array);
 Value getValueArray(ValueArray* array, int index);
 void setValueArray(ValueArray* array, int index, Value val);
+Value* getMaxValueByLocation(Value* a, Value* b);
+
+Value vector(Value x, Value y);
+
+#define VECTOR(x, y) (vector(NUM_VAL(x), NUM_VAL(y)))
 
 #endif

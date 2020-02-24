@@ -1,0 +1,22 @@
+def nuclear as polyline
+	with jump()
+		position = [265, 250]
+
+	repeat 9
+		with move()
+			distance = 20
+		with turn()
+			degrees = 120
+		with move()
+			distance = 34
+		with turn()
+			degrees = 120
+		with move()
+			distance = 50
+
+	with circle()
+		cx = 250
+		cy = 250
+		r = 40
+
+draw nuclear()

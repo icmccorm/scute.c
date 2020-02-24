@@ -1,4 +1,4 @@
- def circleStyles
+def circleStyles
 	.stroke = :black
 	.strokeWidth = 1
 	.fill = :transparent

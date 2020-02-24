@@ -7,6 +7,10 @@
 
 extern bool DEBUG_STACK;
 
+#ifndef EM_MAIN
+	extern int numBytesAllocated;
+#endif
+
 typedef enum {
 	INTERPRET_OK,
 	INTERPRET_COMPILE_ERROR,
