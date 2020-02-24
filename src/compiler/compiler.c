@@ -22,11 +22,13 @@ Compiler* compiler = NULL;
 CompilePackage* result;
 
 #ifdef EM_MAIN
-	extern void em_configureValuePointerOffsets(int type, int as, int lineIndex, int inlineIndex);
+	extern void em_configureValuePointerOffsets(int type, int as, int link);
+	extern void em_configureValueLinkOffsets(int line, int inline);
+
 	extern void em_addValue(Value* value, int inlineOffset, int length);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
-
+	
 	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
 		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
@@ -34,14 +36,18 @@ CompilePackage* result;
 		void* base = (void*) &val;
 		int type = (int) ((void*)&(val.type) - base);
 		int as = (int) ((void*)&(val.as) - base);
-		int lineIndex = (int) ((void*)&(val.lineIndex) - base);
-		int inlineIndex = (int) ((void*)&(val.inlineIndex) - base);
+		int link = (int) ((void*)&(val.linkIndex) - base);
+		em_configureValuePointerOffsets(type, as, link);
 
-		em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
+
+		ValueLink link;
+		base = (void*) &link;
+		int line = (int) ((void*)&(link.lineIndex) - base);
+		int inline = (int) ((void*)&(link.inlineIndex) - base);
+		em_configureValueLinkOffsets(line, inline);
 	}
+	
 #endif
-
-
 
 static Compiler* currentCompiler() {
 	return compiler;
@@ -68,7 +74,6 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	Compiler* newComp = ALLOCATE(Compiler, 1);
 	Compiler* comp = currentCompiler();
 	newComp->super = comp;
-
 
 	initMap(&newComp->classes);
 	if(comp){
@@ -166,10 +171,6 @@ static int emitLimit(int low, int high){
 }
 
 static void emitLinkedConstant(Value value, TK* token){
-	value.lineIndex = parser.lineIndex;
-	value.inlineIndex = parser.currentLineValueIndex;
-	++parser.currentLineValueIndex;
-
 	#ifdef EM_MAIN
 	if(!IS_NULL(value)){
 		if(value.type == VL_OBJ && AS_OBJ(value)->type == OBJ_STRING){
@@ -252,11 +253,11 @@ static void endLine(){
 	if(parser.currentLineValueIndex != 0) {
 		++parser.lineIndex;
 		#ifdef EM_MAIN
-			em_endLine(parser.lastNewline - parser.codeStart);
+			em_endLine(parser.lastNewline);
 		#endif
 		parser.currentLineValueIndex = 0;
 	}
-	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;
+	parser.lastNewline = (parser.previous.start + parser.previous.length);
 }
 
 static Value getTokenStringValue(TK* token){
@@ -369,22 +370,28 @@ static void repeatStatement();
 static void withStatement();
 
 static ParseRule* getRule(TKType type){
-	return &rules[type];
+	ParseRule* rule = &rules[type];
+	parser.lastPrecedence = parser.currentPrecedence;
+	parser.currentPrecedence = rule->precedence;
+	return rule;
 }
 
 static void parsePrecedence(PCType precedence){
 	advance();
-	ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-	if(prefixRule == NULL){
+	ParseRule* prefixRule = getRule(parser.previous.type);
+	
+	if(prefixRule->prefix == NULL){
 		errorAtCurrent("Expect expression.");
 		return;
 	}
 	bool canAssign = precedence <= PC_ASSIGN;
-	prefixRule(canAssign);
+	prefixRule->prefix(canAssign);
 	while(precedence <= getRule(parser.current.type)->precedence){
 		advance();
-		ParseFn infix = getRule(parser.previous.type)->infix;
-		infix(canAssign);
+		ParseRule* infixRule = getRule(parser.previous.type);
+		parser.lastOperator = parser.previous.type;
+		parser.lastOperatorPrecedence = infixRule->precedence;
+		infixRule->infix(canAssign);
 	}
 	if(!canAssign && match(TK_ASSIGN)){
 		error("Invalid assignment target.");
@@ -473,12 +480,14 @@ static void expression() {
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
-	/*val.charIndex = getTokenIndex(parser.previous.start);
-	val.line = parser.previous.line;*/
-	emitLinkedConstant(val, &parser.previous);
+	emitConstant(val);
 }
 
 static void literal(bool canAssign) {
+	if(parser.lastOperatorPrecedence <= parser.manipPrecedence){
+		parser.manipToken = parser.previous;
+		parser.manipPrecedence = parser.lastOperatorPrecedence;
+	}
 	switch(parser.previous.type){
 		case TK_FALSE:  emitByte(OP_FALSE); break;
 		case TK_TRUE:   emitByte(OP_TRUE); break;
@@ -489,7 +498,7 @@ static void literal(bool canAssign) {
 			break;
 		default:
 			return;
-	}    
+	}
 }
 
 static void returnStatement() {
@@ -798,7 +807,14 @@ static void withStatement(){
 				consume(TK_ASSIGN, "Expected an '=' operator.");
 				expression();
 				
-				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+				uint32_t linkIndex = addLink(result, parser.lineIndex, parser.currentLineValueIndex);
+				++parser.currentLineValueIndex;
+				Value v = NULL_VAL();
+				#ifdef EM_MAIN
+					em_addValue(&v, parser.manipToken.inlineIndex, parser.manipToken.length);	
+				#endif
+				
+				emitTriple(OP_DEF_INST, getStringObjectIndex(&idToken), linkIndex);
 				emitByte(1);
 
 				endLine();
@@ -1109,7 +1125,15 @@ static void deref(bool canAssign){
 			
 			if(canAssign && match(TK_ASSIGN)){
 				expression();
-				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
+				
+				uint32_t linkIndex = addLink(result, parser.lineIndex, parser.currentLineValueIndex);
+				++parser.currentLineValueIndex;
+				Value v = NULL_VAL();
+				#ifdef EM_MAIN
+					em_addValue(&v, parser.manipToken.inlineIndex, parser.manipToken.length);	
+				#endif
+				
+				emitTriple(OP_DEF_INST, getStringObjectIndex(&idToken), linkIndex);
 				emitByte(0);
 			}else{
 				emitBundle(OP_DEREF, getStringObjectIndex(&parser.previous));
@@ -1217,13 +1241,12 @@ static void assignStatement(bool enforceGlobal){
 		}
 		addLocal(currentCompiler(), idToken);
 		parseAssignment();
+
 		markInitialized(/*idToken*/);
 		emitBundle(OP_DEF_LOCAL, latestLocal());
 	}else{
 		parseAssignment();
-		
 		uint32_t stringIndex = getStringObjectIndex(&idToken);
-
 		emitBundle(OP_DEF_GLOBAL, stringIndex);
 	}
 	endLine();
@@ -1300,13 +1323,15 @@ void initParser(Parser* parser, char* source){
 	parser->lineIndex = 0;
 	parser->currentLineValueIndex = 0;
 	parser->lastNewline = source;
+	parser->manipPrecedence = PC_PRIMARY;
+	parser->lastOperator = TK_NULL;
+	parser->lastOperatorPrecedence = PC_PRIMARY;
 }
 
 
 bool compile(char* source, CompilePackage* package){
 	#ifdef EM_MAIN
 		prepareValueConversion();
-		
 	#endif
 
 	initScanner(source);

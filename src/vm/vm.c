@@ -197,10 +197,7 @@ static InterpretResult run() {
 		Value a = pop(); \
 		operandType typeB = AS_NUM(b); \
 		operandType typeA = AS_NUM(a); \
-		Value* greatest = getMaxValueByLocation(&a, &b); \
 		Value result = valueType(typeA op typeB); \
-		result.lineIndex = greatest->lineIndex; \
-		result.inlineIndex = greatest->inlineIndex;	\
 		push(result); \
 	} while(false); \
 
@@ -228,9 +225,13 @@ static InterpretResult run() {
 				} break;
 			case OP_DEF_INST: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
+				uint32_t linkIndex = READ_INT();
+				print(O_OUT, "%d\n", linkIndex);
 				bool pushBackInstance = (bool) READ_BYTE();
 
 				Value expression = pop();
+				expression.linkIndex = linkIndex;
+
 				Value instanceVal = pop();
 				if(IS_INST(instanceVal)){
 					ObjInstance* inst = AS_INST(instanceVal);
@@ -500,8 +501,17 @@ void runCompiler(CompilePackage* package, char* source);
 void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
 
+#ifdef EM_MAIN
+	extern void em_initializeLinks(ValueLink* linkPtr);
+#endif
+
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
+
+	#ifdef EM_MAIN
+		em_initializeLinks(code->links);	
+	#endif
+
 	if(index <= 0){
 		
 		initVM(code, index);
@@ -515,7 +525,7 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 			print(O_OUT, "-----\n\n[A] after runtime: %d\n", numBytesAllocated);
 		#endif
 		
-		renderFrame();
+		renderFrame(code);
 		freeVM();
 
 		#ifndef EM_MAIN
@@ -526,7 +536,7 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
 			initVM(code, i);
 			result = run();
-			renderFrame();
+			renderFrame(code);
 			freeVM();
 		}
 	}

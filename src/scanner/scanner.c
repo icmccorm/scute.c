@@ -149,8 +149,8 @@ static TK number(){
 
         return makeToken(TK_REAL);
     }
-
-    return makeToken(TK_INTEGER);
+    TK numericalToken = makeToken(TK_INTEGER);
+    return numericalToken;
 }
 
 static TKType checkKeyword(int start, int length, char* rest, TKType type){

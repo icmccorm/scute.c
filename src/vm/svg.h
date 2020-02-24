@@ -4,6 +4,7 @@
 #include "value.h"
 #include "hashmap.h"
 #include "scanner.h"
+#include "package.h"
 
 typedef struct {
 	int length;
@@ -29,8 +30,7 @@ extern void em_paintShape();
 extern void em_setCanvas(Value* width, Value* height, Value* originX, Value* originY);
 #endif
 
-void drawShape(HashMap* shapeMap, TKType type);
-void renderFrame();
+void renderFrame(CompilePackage* code);
 void pushShape(ObjShape* close);
 ObjShape* popShape();
 
