@@ -23,7 +23,7 @@ CompilePackage* result;
 
 #ifdef EM_MAIN
 	extern void em_configureValuePointerOffsets(int type, int as, int link);
-	extern void em_configureValueLinkOffsets(int line, int inline);
+	extern void em_configureValueLinkOffsets(int line, int inlineIndex);
 
 	extern void em_addValue(Value* value, int inlineOffset, int length);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
@@ -40,11 +40,11 @@ CompilePackage* result;
 		em_configureValuePointerOffsets(type, as, link);
 
 
-		ValueLink link;
-		base = (void*) &link;
-		int line = (int) ((void*)&(link.lineIndex) - base);
-		int inline = (int) ((void*)&(link.inlineIndex) - base);
-		em_configureValueLinkOffsets(line, inline);
+		ValueLink valLink;
+		base = (void*) &valLink;
+		int lineIndex = (int) ((void*)&(valLink.lineIndex) - base);
+		int inlineIndex = (int) ((void*)&(valLink.inlineIndex) - base);
+		em_configureValueLinkOffsets(lineIndex, inlineIndex);
 	}
 	
 #endif
@@ -253,7 +253,7 @@ static void endLine(){
 	if(parser.currentLineValueIndex != 0) {
 		++parser.lineIndex;
 		#ifdef EM_MAIN
-			em_endLine(parser.lastNewline);
+			em_endLine(parser.lastNewline - parser.codeStart);
 		#endif
 		parser.currentLineValueIndex = 0;
 	}

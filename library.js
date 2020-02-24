@@ -153,14 +153,31 @@ mergeInto(LibraryManager.library, {
 
 	em_addStringStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
+<<<<<<< HEAD
 		let meta = _lib_getValueMeta(valuePtr);
 		_currentShape['styles'][key] = meta;
+=======
+		let value = Module.UTF8ToString(valuePtr);
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
+			lineIndex: lineIndex,
+			inlineIndex: inlineIndex, 
+		}
+>>>>>>> master
 	},
 
 	em_addStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
+<<<<<<< HEAD
 		let meta = _lib_getValueMeta(valuePtr);
 		_currentShape['styles'][key] = meta;
+=======
+		_currentShape['style']['values'][key] = value;
+		_currentShape['style']['loc'][key] = {
+			lineIndex: lineIndex,
+			inlineIndex: inlineIndex, 
+		}
+>>>>>>> master
 	},
 
 	em_paintShape: function(){
