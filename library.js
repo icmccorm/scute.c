@@ -43,15 +43,12 @@ mergeInto(LibraryManager.library, {
 		if(lineIndex > -1){
 			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
 			return {
-				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
-				status: _attrStatus.CONST,
+				value: _lib_getValue(valPtr),
 				lineIndex: lineIndex,
 				inlineIndex: inlineIndex,
 			}
 		}else{
 			return {
-				type: getValue(valPtr + _valuePointerOffsets.type, 'i32'),
-				status: lineIndex > -1 ? _attrStatus.CONST : _attrStatus.COMP,
 				value: _lib_getValue(valPtr),
 			}
 		}
@@ -75,10 +72,11 @@ mergeInto(LibraryManager.library, {
 		return value;
 	},
 
-	em_addValue: function(valuePtr, inlineOffset, length){
-		let convertVal = _lib_getValue(valuePtr);
+	em_addValue: function(value, role, inlineOffset, length){
 		_values.push({
-			value: convertVal,
+			delta: 0,
+			targetValue: value,
+			role: role,
 			inlineOffset: inlineOffset,
 			length: length,
 		})
