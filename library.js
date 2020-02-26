@@ -74,7 +74,7 @@ mergeInto(LibraryManager.library, {
 
 	em_addValue: function(value, role, inlineOffset, length){
 		_values.push({
-			delta: 0,
+			mouseDelta: 0,
 			targetValue: value,
 			role: role,
 			inlineOffset: inlineOffset,
