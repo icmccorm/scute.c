@@ -72,14 +72,8 @@ struct sObjNative {
 	NativeFn function;
 };
 
-struct sObjColor {
-	Obj object;
-	Color* color;
-};
-
 struct sObjShape {
 	ObjInstance instance;
-
 	struct sObjShape* nextShape;
 	TKType shapeType;
 	struct sObjShape** segments;

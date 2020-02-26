@@ -72,7 +72,7 @@ void grow(HashMap* map){
 }
 
 void freeMap(HashMap* map){
-	FREE_ARRAY(HashEntry, map->entries, map->capacity);
+	if(map->capacity) FREE_ARRAY(HashEntry, map->entries, map->capacity);
 	FREE(HashMap, map);
 }
 

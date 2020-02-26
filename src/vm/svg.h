@@ -26,8 +26,8 @@ extern void em_addVertex(Value* vecPtr);
 
 extern void em_newShape(double id, double type);
 extern void em_paintShape();
-
 extern void em_setCanvas(Value* width, Value* height, Value* originX, Value* originY);
+extern void em_addColorStyle(const char* key, int length, Value* values);
 #endif
 
 void renderFrame(CompilePackage* code);

@@ -16,16 +16,6 @@ ObjArray* allocateArray();
 ObjArray* allocateArrayWithCapacity(int capacity);
 ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
 
-ObjColor* makeRGB(Value r, Value g, Value b, Value a);
-#define RGB(r, g, b) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b), NUM_VAL(1))))
-#define RGBA(r, g, b, a) (OBJ_VAL(makeRGB(NUM_VAL(r), NUM_VAL(g), NUM_VAL(b), NUM_VAL(a))))
-
-//ObjColor* makeHSL(Value h, Value s, Value l);
-//ObjColor* makeCMYK(Value c, Value m, Value y, Value k);
-
-//#define iHSL(h, s, l) (OBJ_VAL(makeHSL(h, s, l)))
-//#define iCMYK(c, m, y, k) (OBJ_VAL(makeCMYK(c, m, y, k)))
-
 bool isObjectType(Value value, OBJType type);
 ObjString* tokenString(char * start, int length);
 ObjString* string(char* start);

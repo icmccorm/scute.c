@@ -11,21 +11,38 @@
 #include "math.h"
 #include "package.h"
 
+
+
 #ifdef EM_MAIN
+
 void resolveColor(const char* key, Value val){
-	Color* color = NULL;
 	if(IS_OBJ(val)){
 		Obj* objVal = AS_OBJ(val);
 		switch(objVal->type){
-			case OBJ_COLOR: ;
-				ObjColor* colorObj = AS_COLOR(val);
-				color = colorObj->color;
-				//addColorAttribute(key, color);
+			case OBJ_ARRAY: ;
+		 		ValueArray* vArray = AS_ARRAY(val)->array;
+				em_addColorStyle(key, vArray->count, vArray->values);
 				break;
 			default:
 				break;
 		}
+	}else{
+		if(IS_NUM(val)){
+			
+		}
 	}
+}
+
+void assignStyles(ObjShape* shape){
+	HashMap* shapeMap = shape->instance.map;
+	Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
+	em_addStyle("strokeWidth", &strokeWidth);
+
+	Value fill = getValue(shapeMap, string("fill"));
+	resolveColor("fill", fill);
+
+	Value stroke = getValue(shapeMap, string("stroke"));
+	resolveColor("stroke", stroke);
 }
 #endif
 
@@ -36,16 +53,8 @@ void drawShape(ObjShape* shape, ValueLink* links){
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
 		em_newShape(address, type);
-
-		Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
-		em_addStyle("strokeWidth", &strokeWidth);
-/*
-		Value fill = getValue(shapeMap, string("fill"));
-		resolveColor("fill", fill, links);
-
-		Value stroke = getValue(shapeMap, string("stroke"));
-		resolveColor("stroke", stroke, links);*/
-		ValueLink link;
+		
+		assignStyles(shape);
 
 		switch(type){
 			case TK_RECT: { 
@@ -89,19 +98,6 @@ void drawShape(ObjShape* shape, ValueLink* links){
 		printMap(O_OUT, shapeMap, 0);
 	#endif
 }
-#ifdef EM_MAIN
-void assignStyles(ObjShape* shape, ValueLink* links){
-	HashMap* shapeMap = shape->instance.map;
-	Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
-	em_addStyle("strokeWidth", &strokeWidth);
-
-	Value fill = getValue(shapeMap, string("fill"));
-	resolveColor("fill", fill);
-
-	Value stroke = getValue(shapeMap, string("stroke"));
-	resolveColor("stroke", stroke);
-}
-#endif
 
 double toRadians(int degrees){
 	return (PI/180) * degrees;

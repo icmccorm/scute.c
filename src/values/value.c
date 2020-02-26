@@ -46,6 +46,18 @@ int pushValueArray(ValueArray* array, Value value){
 	return array->count - 1;
 }
 
+void addValues(ValueArray* array, int numValues, ...){
+	va_list arglist;
+	va_start(arglist, numValues);
+
+	for(int i = 0; i<numValues; ++i){
+		pushValueArray(array, NUM_VAL(va_arg(arglist, double)));
+	}
+
+	va_end(arglist);
+}
+
+
 void freeValueArray(ValueArray* array){
 	FREE_ARRAY(Value, array->values, array->capacity);
 	FREE(ValueArray, array);
@@ -136,9 +148,6 @@ void printObject(OutType out, Value value){
 					printMap(O_OUT, shape->segments[i]->instance.map, 1);
 				}
 			}
-			break;
-		case OBJ_COLOR: ;
-			printColor(O_OUT, AS_COLOR(value)->color);
 			break;
 		case OBJ_ARRAY: ;
 			printArray(O_OUT, AS_ARRAY(value)->array);

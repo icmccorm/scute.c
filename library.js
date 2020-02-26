@@ -8,6 +8,7 @@ mergeInto(LibraryManager.library, {
 		union: 0,
 		lineIndex: 0,
 		inlineIndex: 0,
+		totalLength: 0,
 	},
 
 	valueTypes: {
@@ -35,6 +36,7 @@ mergeInto(LibraryManager.library, {
 		_valuePointerOffsets.union = union;
 		_valuePointerOffsets.lineIndex = lineIndex;
 		_valuePointerOffsets.inlineIndex = inlineIndex;
+		_valuePointerOffsets.totalLength = 24;
 	},
 
 	//getValue(ptr, type) and setValue(ptr, value, type)
@@ -56,20 +58,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	lib_getValue: function(valPtr){
-		let type = _valueTypes[getValue(valPtr + _valuePointerOffsets.type, 'i32')];
-		let value = getValue(valPtr + _valuePointerOffsets.union, 'double');
-		switch(type){
-			case 'VL_BOOL':
-				value = Boolean(value);
-				break;
-			case 'VL_NULL':
-				value = null;
-				break;
-			case 'VL_NUM':
-			default:
-				break;
-		}
-		return value;
+		return getValue(valPtr + _valuePointerOffsets.union, 'double');
 	},
 
 	em_addValue: function(value, role, inlineOffset, length){
@@ -136,6 +125,15 @@ mergeInto(LibraryManager.library, {
 
 	},
 
+	em_addColorStyle: function(keyPtr, length, valPtr){
+		let key = Module.UTF8ToString(keyPtr);
+		let rgba = [];
+		for(let i = 0; i<length*_valuePointerOffsets.totalLength; i += _valuePointerOffsets.totalLength){
+			rgba.push(_lib_getValueMeta(valPtr + i));
+		}
+		_currentShape['styles'][key] = rgba;
+	},
+
 	em_addStringStyle: function(keyPtr, valuePtr){
 		let key = Module.UTF8ToString(keyPtr);
 		let meta = _lib_getValueMeta(valuePtr);
@@ -159,16 +157,10 @@ mergeInto(LibraryManager.library, {
 	em_setCanvas: function(dimsPtr, originPtr){
 		Module._canvas = {
 			width: _lib_getValue(dimsPtr),
-			height: _lib_getValue(dimsPtr + 1),
+			height: _lib_getValue(dimsPtr + _valuePointerOffsets.totalLength),
 			originX: _lib_getValue(originPtr),
-			originY: _lib_getValue(originPtr + 1),
+			originY: _lib_getValue(originPtr + _valuePointerOffsets.totalLength),
 		}
-	},
-
-	lib_intArrayToPoint: function(intPtr) {
-		let x = getValue(intPtr, 'i32');
-		let y = getValue(intPtr + 1, 'i32');
-		return x + "," + y;
 	},
 
 	em_addJump: function(vecPtr){
@@ -176,8 +168,8 @@ mergeInto(LibraryManager.library, {
 		_currentShape.segments.push({
 			type: _segmentTypes.JUMP,
 			x: _lib_getValueMeta(vecPtr),
-			y: _lib_getValueMeta(vecPtr+1),
-			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+1)],
+			y: _lib_getValueMeta(vecPtr + _valuePointerOffsets.totalLength),
+			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+_valuePointerOffsets.totalLength)],
 		});
 	},
 
@@ -186,8 +178,8 @@ mergeInto(LibraryManager.library, {
 		_currentShape.segments.push({
 			type: _segmentTypes.VERTEX,
 			x: _lib_getValueMeta(vecPtr),
-			y: _lib_getValueMeta(vecPtr+1),
-			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+1)],
+			y: _lib_getValueMeta(vecPtr+_valuePointerOffsets.totalLength),
+			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+_valuePointerOffsets.totalLength)],
 		});ß
 	},
 
@@ -287,10 +279,15 @@ mergeInto(LibraryManager.library, {
 		'currentShape',
 		'segmentTypes',
 		'currentTurtle',
-		'lib_intArrayToPoint'
 	],
 
 	lib_getValueMeta__deps: [
 		'attrStatus'
-	]
+	],
+
+	em_addColorStyle__deps: [
+		'lib_getValue',
+		'currentShape'
+	] 
+
 });

@@ -58,25 +58,6 @@ void freeObject(Obj* obj){
 			ObjNative* nativeObj = (ObjNative*) obj;
 			FREE(ObjNative, nativeObj);
 			break;
-		case(OBJ_COLOR): ;
-			ObjColor* colorObj = (ObjColor*) obj;
-			Color* cl = colorObj->color;
-			switch(cl->colorType){
-				case CL_CMYK: ;
-					ColorCMYK* cmyk = (ColorCMYK*) cl;
-					FREE(ColorCMYK, cmyk);
-					break;
-				case CL_RGB: ;
-					ColorRGB* rgb = (ColorRGB*) cl;
-					FREE(ColorRGB, rgb);
-					break;
-				case CL_HSL: ;
-					ColorHSL* hsl = (ColorHSL*) cl;
-					FREE(ColorHSL, hsl);
-					break;
-			}
-			FREE(ObjColor, colorObj);
-			break;
 		case(OBJ_ARRAY): ;
 			ObjArray* arrayObj = (ObjArray*) obj;
 			freeValueArray(arrayObj->array);
@@ -119,32 +100,6 @@ void addSegment(ObjShape* shape, ObjShape* segment){
 	shape->segments[shape->numSegments] = segment;
 	++shape->numSegments;
 }
-
-ObjColor* allocateColor(CLType type){
-	ObjColor* colorObj = ALLOCATE_OBJ(ObjColor, OBJ_COLOR);
-	return colorObj;
-}
-
-ObjColor* makeRGB(Value r, Value g, Value b, Value a){
-	ObjColor* colorObj = allocateColor(CL_RGB);
-	ColorRGB* rgb = ALLOCATE(ColorRGB, 1);
-	rgb->color.colorType = CL_RGB;
-	rgb->r = r;
-	rgb->g = g;
-	rgb->b = b;
-	rgb->a = a;
-	colorObj->color = (Color*) rgb;
-	return colorObj;
-}
-
-/*
-ObjColor* makeHSL(uint16_t h, float s, float l){
-	
-}
-
-ObjColor* makeCMYK(float c, float m, float y, float k){
-
-}*/
 
 ObjString* allocateString(char* chars, int length){
 	ObjString* obj = ALLOCATE_OBJ(ObjString, OBJ_STRING);

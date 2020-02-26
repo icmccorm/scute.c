@@ -10,40 +10,7 @@ typedef enum {
 	CL_CMYK,
 } CLType;
 
-typedef struct {
-	CLType colorType;
-} Color;
-
-typedef struct {
-	Color color;
-	Value h;
-	Value s;
-	Value l;
-} ColorHSL;
-
-typedef struct {
-	Color color;
-	Value r;
-	Value g;
-	Value b;
-	Value a;
-} ColorRGB;
-
-typedef struct {
-	Color color;
-	Value c;
-	Value m;
-	Value y;
-	Value k;
-} ColorCMYK;
-
-char* allocateColorString(Color* cl);
-void addColorAttribute(const char* key, Color* cl);
-void printColor(OutType out, Color* cl);
-
-#ifdef EM_MAIN
-#define COLOR_ATTR(key, color) (addColorAttribute(key, color))
-#endif
-
-
+ObjArray* allocateColor(double r, double g, double b, double a);
+#define RGB(r, g, b) (OBJ_VAL(allocateColor(r, g, b, 255)))
+#define RGBA(r, g, b, a) (OBJ_VAL(allocateColor(r, g, b, a)))
 #endif

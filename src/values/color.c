@@ -4,29 +4,13 @@
 #include "value.h"
 #include "output.h"
 #include "svg.h"
+#include "obj.h"
 
-char* allocateColorString(Color* cl){
-	switch(cl->colorType){
-		case CL_RGB: ;
-			ColorRGB* rgb = (ColorRGB*) cl;
-			char* result = GROW_ARRAY(NULL, char, 0, 32);
-			int r = (int) AS_NUM(rgb->r);
-			int g = (int) AS_NUM(rgb->g);
-			int b = (int) AS_NUM(rgb->b);
-			float a = (float) AS_NUM(rgb->a);
-			sprintf(result, "rgba(%d, %d, %d, %f)", r, g, b, a);
-			return result;
-			break;
-		default:
-			break;
-	}
-	return NULL;
-}
 
-void printColor(OutType out, Color* cl){
-	char * colorString = allocateColorString(cl);
-	print(out, colorString);
-	FREE_ARRAY(char, colorString, 32);
+ObjArray* allocateColor(double r, double g, double b, double a){
+	ObjArray* arrayObj = allocateArray();
+	addValues(arrayObj->array, 4, r, g, b, a);
+	return arrayObj;
 }
 
 #ifdef EM_MAIN

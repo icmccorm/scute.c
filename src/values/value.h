@@ -69,6 +69,7 @@ Value popValueArray(ValueArray* array);
 Value getValueArray(ValueArray* array, int index);
 void setValueArray(ValueArray* array, int index, Value val);
 Value* getMaxValueByLocation(Value* a, Value* b);
+void addValues(ValueArray* array, int numValues, ...);
 
 Value vector(Value x, Value y);
 
