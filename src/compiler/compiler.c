@@ -19,7 +19,7 @@
 
 Parser parser;
 Compiler* compiler = NULL;
-CompilePackage* result;
+CompilePackage* result = NULL;
 
 #ifdef EM_MAIN
 	extern void em_configureValuePointerOffsets(int type, int un, int line, int in);
@@ -346,6 +346,38 @@ ParseRule rules[] = {
 	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
 	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_POLY,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_POLYL,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_PATH,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_MOVE,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_TURN,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_VERT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_JUMP,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ARC,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_PRINT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_T,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_EOF,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_AS,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_DEF,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_RET,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_REP,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_TO,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_FROM,
+	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
 };
 
 static void printStatement();
@@ -371,20 +403,27 @@ static ParseRule* getRule(TKType type){
 static void parsePrecedence(PCType precedence){
 	advance();
 	ParseRule* prefixRule = getRule(parser.previous.type);
-	
+
 	if(prefixRule->prefix == NULL){
 		errorAtCurrent("Expect expression.");
 		return;
 	}
-	bool canAssign = precedence <= PC_ASSIGN;
+
+	bool canAssign = (precedence <= PC_ASSIGN);
 	prefixRule->prefix(canAssign);
-	while(precedence <= getRule(parser.current.type)->precedence){
+
+	ParseRule* rule = getRule(parser.current.type);
+	while(precedence <= rule->precedence){
 		advance();
-		ParseRule* infixRule = getRule(parser.previous.type);
-		parser.lastOperator = parser.previous.type;
-		parser.lastOperatorPrecedence = infixRule->precedence;
-		infixRule->infix(canAssign);
+		ParseRule* infixRule = rule;
+		if(infixRule){
+			parser.lastOperator = parser.previous.type;
+			parser.lastOperatorPrecedence = infixRule->precedence;
+			infixRule->infix(canAssign);
+		}
+		rule = getRule(parser.current.type);
 	}
+	
 	if(!canAssign && match(TK_ASSIGN)){
 		error("Invalid assignment target.");
 		expression();
@@ -1326,6 +1365,10 @@ void initParser(Parser* parser, char* source){
 	parser->manipPrecedence = PC_PRIMARY;
 	parser->lastOperator = TK_NULL;
 	parser->lastOperatorPrecedence = PC_PRIMARY;
+
+	parser->currentPrecedence = PC_NONE;
+	parser->lastPrecedence = PC_NONE;
+	parser->lineHadValue = false;
 }
 
 
