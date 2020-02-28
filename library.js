@@ -29,6 +29,9 @@ mergeInto(LibraryManager.library, {
 		JUMP: 0,
 		TURTLE: 1,
 		VERTEX: 3,
+		CBEZIER: 4,
+		QBEZIER: 5,
+		ARC: 6,
 	},
 
 	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
@@ -214,6 +217,61 @@ mergeInto(LibraryManager.library, {
 		_currentTurtle.turn = _lib_getValueMeta(degreesPtr);
 	},
 
+	lib_getVector: function(vecPtr){
+		return [_lib_getValueMeta(vecPtr), _lib_getValueMeta(vecPtr + _valuePointerOffsets.totalLength)];
+	},
+
+	em_addQuadBezier: function(control, end){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.QBEZIER,
+			control: _lib_getVector(control),
+			end: _lib_getVector(end),
+		});
+	},
+
+	em_addCubicBezier: function(control1, control2, end){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.CBEZIER,
+			control1: _lib_getVector(control1),
+			control2: _lib_getVector(control2),
+			end: _lib_getVector(end),
+		});
+	},
+
+	em_addArc: function(center, degrees){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.ARC,
+			center: _lib_getVector(center),
+			degrees: _lib_getValueMeta(degrees),
+		});
+	},
+
+	lib_getVector__deps: [
+		'lib_getValueMeta',
+		'valuePointerOffsets',
+	],
+
+	em_addArc__deps: [
+		'currentShape',
+		'segmentTypes',
+		'lib_getValue',
+		'lib_getVector'
+	],
+	em_addCubicBezier__deps: [
+		'currentShape',
+		'segmentTypes',
+		'lib_getVector'
+	],
+	em_addQuadBezier__deps: [
+		'currentShape',
+		'segmentTypes',
+		'lib_getVector'
+	],
+	
 	em_newShape__deps: [
 		'currentShape'
 	],

@@ -46,9 +46,7 @@ typedef enum {
 	OP_LESS_EQUALS,
 	OP_GREATER_EQUALS,
 	OP_PRINT,
-	OP_PI,
-	OP_TAU,
-	OP_E,
+
 	OP_DRAW,
 	OP_POP,
 	OP_DEF_GLOBAL,
@@ -57,22 +55,21 @@ typedef enum {
 	OP_GET_LOCAL,
 	OP_DEF_SCOPE,
 	OP_GET_SCOPE,
-	OP_LOAD_INSTANCE,
+
+	OP_PUSH_INST,
+	OP_LOAD_INST,
+	OP_JMP_CNT,
+
 	OP_JMP_FALSE,
 	OP_LIMIT,
 	OP_T,
 	OP_SCOPE,
 	OP_DEREF,
-	OP_DIMS,
-	OP_POS,
 	OP_CALL,
 	OP_JMP,
-	OP_JMP_LT,
-	OP_JMP_GT,
-	OP_JMP_CNT,
+
 	OP_DEF_INST,
 	OP_BUILD_ARRAY,
-	OP_MERGE_INST,
 } OpCode;
 
 void initChunk(Chunk* chunk);

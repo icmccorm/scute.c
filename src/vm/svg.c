@@ -159,6 +159,58 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 					print(O_OUT, "Turn by %d deg to %d deg\n", degrees, angle);
 				#endif
 				break;
+			case TK_QBEZ: {
+				Value control = getValue(map, string("control"));
+				Value end = getValue(map, string("end"));
+
+				Value* controlArray = AS_ARRAY(control)->array->values;
+				Value* endArray = AS_ARRAY(end)->array->values;
+				#ifdef EM_MAIN
+					em_addQuadBezier(controlArray, endArray);
+				#else
+					print(O_OUT, "qBezier ");
+					printValue(O_OUT, control);
+					print(O_OUT, " ");
+					printValue(O_OUT, end);
+					print(O_OUT, "\n");
+				#endif
+			} break;
+			case TK_CBEZ: {
+				Value control1 = getValue(map, string("startControl"));
+				Value control2 = getValue(map, string("endControl"));
+				Value end = getValue(map, string("end"));
+
+				Value* control1Array = AS_ARRAY(control1)->array->values;
+				Value* control2Array = AS_ARRAY(control2)->array->values;
+				Value* endArray = AS_ARRAY(end)->array->values;
+				#ifdef EM_MAIN
+					em_addCubicBezier(control1Array, control2Array, endArray);
+				#else
+					print(O_OUT, "cBezier ");
+					printValue(O_OUT, control1);
+					print(O_OUT, " ");
+					printValue(O_OUT, control2);
+					print(O_OUT, " ");
+					printValue(O_OUT, end);
+					print(O_OUT, "\n");
+				#endif
+			} break;
+			case TK_ARC: {
+				Value center = getValue(map, string("center"));
+				Value* centerArray = AS_ARRAY(center)->array->values;
+
+				Value degrees = getValue(map, string("degrees"));
+
+				#ifdef EM_MAIN
+					em_addArc(centerArray, degrees);
+				#else
+					print(O_OUT, "arc ");
+					printValue(O_OUT, center);
+					print(O_OUT, " ");
+					printValue(O_OUT, degrees);
+					print(O_OUT, "\n");
+				#endif
+			} break;
 			default:
 				break;
 		}
@@ -169,35 +221,6 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 }
 
 
-void drawPath(ObjShape* shape, ValueLink* links){	
-	unsigned address = (unsigned) shape->instance.map;
-	#ifdef EM_MAIN
-		em_newShape(address, shape->shapeType);
-	#endif
-	int angle = 0;
-	int prevPoint[2];
-	prevPoint[0] = 0;
-	prevPoint[1] = 0;
-
-	for(int i = 0; i<shape->numSegments; ++i){
-		ObjShape* segment = shape->segments[i];
-		switch(segment->shapeType){
-			case TK_JUMP:
-				break;
-			case TK_MOVE:
-				break;
-			case TK_TURN:
-				break;
-			case TK_ARC:
-				break;
-			default:
-				break;
-		}
-	}
-	#ifdef EM_MAIN
-		em_paintShape();
-	#endif
-}	
 
 ObjShape* popShape(){
 	ObjShape* latestShape = vm.shapeStack[vm.shapeCount-1];
@@ -221,10 +244,9 @@ void renderFrame(CompilePackage* code){
 		switch(top->shapeType){
 			case TK_POLY:
 			case TK_POLYL:
+			case TK_PATH:
 				drawPoints(top, code->links);
 				break;
-			case TK_PATH:
-				drawPath(top, code->links);
 			default:
 				drawShape(top, code->links);	
 				break;

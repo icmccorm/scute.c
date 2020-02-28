@@ -126,7 +126,7 @@ Value jump(Value* params, int numParams){
 	ObjShape* jumpInstance = allocateShape(NULL, TK_JUMP);
 	add(jumpInstance->instance.map, string("position"), VECTOR(0, 0));
 
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType >= TK_POLY){
@@ -143,7 +143,7 @@ Value move(Value* params, int numParams){
 	ObjShape* moveInstance = allocateShape(NULL, TK_MOVE);
 	add(moveInstance->instance.map, string("distance"), NUM_VAL(0));
 
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType >= TK_POLY){
@@ -159,7 +159,7 @@ Value vertex(Value* params, int numParams) {
 	ObjShape* vertexInstance = allocateShape(NULL, TK_VERT);
 	add(vertexInstance->instance.map, string("position"), VECTOR(0, 0));
 
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType >= TK_POLY){
@@ -175,7 +175,7 @@ Value turn(Value* params, int numParams){
 	ObjShape* turnInstance = allocateShape(NULL, TK_TURN);
 	add(turnInstance->instance.map, string("degrees"), NUM_VAL(0));
 
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType >= TK_POLY){
@@ -192,7 +192,7 @@ Value arc(Value* params, int numParams){
 	add(arcInstance->instance.map, string("center"), VECTOR(0, 0));
 	add(arcInstance->instance.map, string("degrees"), NUM_VAL(0));
 
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType == TK_PATH){
@@ -246,6 +246,7 @@ Value polygon(Value* params, int numParams){
 Value path(Value* params, int numParams){
 	ObjShape* pathInstance = allocateShape(NULL, TK_PATH);
 	pushShape(pathInstance);
+
 	return OBJ_VAL((ObjInstance*) pathInstance);
 }
 
@@ -254,7 +255,7 @@ Value qBezier(Value* params, int numParams){
 	add(bezInstance->instance.map, string("control"), VECTOR(0, 0));
 	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
 
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType == TK_PATH){
@@ -269,11 +270,12 @@ Value qBezier(Value* params, int numParams){
 
 Value cBezier(Value* params, int numParams){
 	ObjShape* bezInstance = allocateShape(NULL, TK_CBEZ);
+
 	add(bezInstance->instance.map, string("startControl"), VECTOR(0, 0));
 	add(bezInstance->instance.map, string("endControl"), VECTOR(0, 0));
 	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
 	
-	ObjInstance* current = currentInstance();
+	ObjInstance* current = latestInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType == TK_PATH){

@@ -378,8 +378,8 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TO,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FROM,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
-	{ native,	NULL,	    PC_NONE },    // TK_CBEZ,
-	{ native,	NULL,	    PC_NONE },    // TK_QBEZ,
+	{ NULL,		NULL,	    PC_NONE },    // TK_CBEZ,
+	{ NULL,		NULL,	    PC_NONE },    // TK_QBEZ,
 
 
 };
@@ -841,9 +841,14 @@ static void withStatement(){
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
-		advance(); //clear indentation token
+
+		while(parser.current.type == TK_NEWLINE || parser.current.type == TK_INDENT){
+			advance();
+			if(parser.previous.type == TK_NEWLINE) 	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;;
+		}
 		switch(parser.current.type){
 			case TK_WITH:
+				advance();
 				withStatement();
 				break;
 			case TK_ID: ;
@@ -863,7 +868,7 @@ static void withStatement(){
 				endLine();
 				break;
 			default:	
-				errorAtCurrent("Expected an unqualified assignment or a nested with statement.");			
+				if(parser.current.type != TK_EOF) errorAtCurrent("Expected an unqualified assignment or a nested with statement.");			
 				break;
 		}
 	}
@@ -946,18 +951,6 @@ static void printStatement() {
 	expression();
 	consume(TK_R_PAREN, "Expected ')'.");
 	emitByte(OP_PRINT);
-	endLine();
-}
-
-static void dimsStatement() {
-	uint8_t numParams = emitParams();
-	emitBytes(OP_DIMS, numParams);
-	endLine();
-}
-
-static void posStatement() {
-	uint8_t numParams = emitParams();
-	emitBytes(OP_POS, numParams);
 	endLine();
 }
 
@@ -1159,7 +1152,7 @@ static void native(bool canAssign){
 
 static void scopeDeref(bool canAssign){
 	if(currentCompiler()->enclosed){
-		emitByte(OP_LOAD_INSTANCE);
+		emitByte(OP_LOAD_INST);
 		deref(canAssign);
 	}else{
 		errorAtCurrent("Cannot set a scope property outside of a scope");

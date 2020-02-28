@@ -75,8 +75,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return simpleInstruction("OP_EQUALS", offset);
 		case OP_PRINT:
 			return simpleInstruction("OP_PRINT", offset);
-		case OP_LOAD_INSTANCE:
-			return simpleInstruction("OP_LOAD_INSTANCE", offset);
+		case OP_LOAD_INST:
+			return simpleInstruction("OP_LOAD_INST", offset);
 		case OP_DEF_GLOBAL:
 			return embeddedValueInstruction("OP_DEF_GLOBAL", chunk, offset);
 		case OP_GET_GLOBAL:
@@ -101,10 +101,6 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return simpleInstruction("OP_POP", offset);
 		case OP_T:
 			return simpleInstruction("OP_T", offset);
-		case OP_DIMS:
-			return paramInstruction("OP_DIMS", chunk, offset);
-		case OP_POS:
-			return paramInstruction("OP_POS", chunk, offset);
 		case OP_CALL:
 			return paramInstruction("OP_CALL", chunk, offset);
 		case OP_DEREF:
@@ -113,8 +109,6 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			// add a 1 to account for the 1-byte pop mode flag
 			// TODO: add a more flexible option for including single byte flags
 			return 1 + tripleInstruction("OP_DEF_INST", chunk, offset);
-		case OP_MERGE_INST:
-			return simpleInstruction("OP_MERGE_INST", offset);
 		default:
 			print(O_DEBUG, "Unknown opcode %d\n", instruction);
 			return offset + 1;

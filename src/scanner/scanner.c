@@ -489,8 +489,9 @@ static TK identifier(){
         case TK_TURN:
         case TK_ARC:
         case TK_VERT:
+        case TK_QBEZ:
+        case TK_CBEZ:
             return makeDualToken(TK_SHAPE, type);
-        
         default:
             return makeToken(type);
     }

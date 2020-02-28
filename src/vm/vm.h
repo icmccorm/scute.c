@@ -24,24 +24,26 @@ typedef struct sStackFrame StackFrame;
 typedef struct {
 	Chunk* chunk;
 	uint8_t* ip;
+
 	Value stack[STACK_MAX];
-	StackFrame stackFrames[STACK_MAX];
-	int stackSize;
-	int stackFrameCount;
 	Value* stackTop;
 	Value* stackBottom;
+	int stackSize;
+	
+	StackFrame stackFrames[STACK_MAX];
+	int stackFrameCount;
+
+	ObjShape** shapeStack;
+	int shapeCount;
+	int shapeCapacity;
 
 	HashMap* globals;
 
 	Obj* runtimeObjects;
 	
-	int shapeCount;
-	int shapeCapacity;
-	ObjShape** shapeStack;
 	int frameIndex;
+
 	ValueLink* links;
-	
-	ObjInstance* currentScope;
 } VM;
 
 extern VM vm;
@@ -52,5 +54,6 @@ Value pop();
 InterpretResult interpretCompiled(CompilePackage* code, int index);
 void runCompiler(CompilePackage* package, char* source);
 ObjInstance* currentInstance();
+ObjInstance* latestInstance();
 
 #endif

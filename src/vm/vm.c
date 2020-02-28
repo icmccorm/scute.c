@@ -33,7 +33,6 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.runtimeObjects = NULL;
 	vm.stackSize = 0;
 	vm.stackFrameCount = 0;
-	vm.currentScope = NULL;
 
 	vm.shapeCapacity = 0;
 	vm.shapeCount = 0;
@@ -90,6 +89,17 @@ Value pop(){
 
 static Value peek(int distance){
 	return vm.stackTop[-1 - distance];
+}
+
+ObjInstance* latestInstance(){
+	Value peeked = peek(0);
+	if(IS_OBJ(peeked)){
+		Obj* peekedObj = AS_OBJ(peeked);
+		if(peeked.type == OBJ_INST){
+			return (ObjInstance*) peekedObj;
+		}
+	}
+	return currentInstance();
 }
 
 void runtimeError(char* format, ...){
@@ -375,7 +385,7 @@ static InterpretResult run() {
 				Value expr = pop();
 				add(vm.globals, setString, expr);
 			} break;
-			case OP_LOAD_INSTANCE: {
+			case OP_LOAD_INST: {
 				ObjInstance* currentInstance = currentStackFrame()->instanceObj;
 				Value closeVal = OBJ_VAL(currentInstance);
 				push(closeVal);

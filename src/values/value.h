@@ -20,7 +20,6 @@ typedef enum {
 	VL_BOOL,
 	VL_NUM,
 	VL_OBJ,
-	VL_CLR,
 } VLType;
 
 typedef struct {
