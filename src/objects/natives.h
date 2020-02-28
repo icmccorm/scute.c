@@ -28,5 +28,6 @@ Value ellipse(Value* params, int numParams);
 Value polygon(Value* params, int numParams);
 Value polyline(Value* params, int numParams);
 Value path(Value* params, int numParams);
-
+Value qBezier(Value* params, int numParams);
+Value cBezier(Value* params, int numParams);
 #endif

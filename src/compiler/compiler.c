@@ -378,6 +378,10 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TO,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FROM,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
+	{ native,	NULL,	    PC_NONE },    // TK_CBEZ,
+	{ native,	NULL,	    PC_NONE },    // TK_QBEZ,
+
+
 };
 
 static void printStatement();
@@ -1111,6 +1115,12 @@ static void native(bool canAssign){
 					break;
 				case TK_POLYL:
 					func = polyline;
+					break;
+				case TK_CBEZ:
+					func = cBezier;
+					break;
+				case TK_QBEZ:
+					func = qBezier;
 					break;
 			}
 		} break;

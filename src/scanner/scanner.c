@@ -367,6 +367,7 @@ static TKType findIdentifier(){
 				switch(scanner.start[1]){
 					case 'i': return checkKeyword(2, 4, "rcle", TK_CIRC);
 					case 'o': return checkKeyword(2, 1, "s", TK_COS);
+                    case 'B': return checkKeyword(2, 5, "ezier", TK_CBEZ);
 					default: return TK_ID;
 				}
 			}else{
@@ -467,6 +468,7 @@ static TKType findIdentifier(){
 			}
         case 'm': return checkKeyword(1, 3, "ove", TK_MOVE);
         case 'j': return checkKeyword(1, 3, "ump", TK_JUMP);
+        case 'q': return checkKeyword(1, 6, "Bezier", TK_QBEZ);
         default:
             return TK_ID;
     }

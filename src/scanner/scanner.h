@@ -90,6 +90,8 @@ typedef enum {
 	TK_TO,
     TK_FROM,
 	TK_WITH,
+    TK_CBEZ,
+    TK_QBEZ,
 } TKType;  
 
 typedef enum{

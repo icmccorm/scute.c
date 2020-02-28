@@ -248,3 +248,40 @@ Value path(Value* params, int numParams){
 	pushShape(pathInstance);
 	return OBJ_VAL((ObjInstance*) pathInstance);
 }
+
+Value qBezier(Value* params, int numParams){
+	ObjShape* bezInstance = allocateShape(NULL, TK_QBEZ);
+	add(bezInstance->instance.map, string("control"), VECTOR(0, 0));
+	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
+
+	ObjInstance* current = currentInstance();
+	if(current && current->type == INST_SHAPE){
+		ObjShape* shape = (ObjShape*) current;
+		if(shape->shapeType == TK_PATH){
+			addSegment(shape, bezInstance);
+			return OBJ_VAL((ObjInstance*) bezInstance);
+		}
+	}
+
+	runtimeError("Only paths can accept beziers.");
+	return OBJ_VAL((ObjInstance*) bezInstance);
+}
+
+Value cBezier(Value* params, int numParams){
+	ObjShape* bezInstance = allocateShape(NULL, TK_CBEZ);
+	add(bezInstance->instance.map, string("startControl"), VECTOR(0, 0));
+	add(bezInstance->instance.map, string("endControl"), VECTOR(0, 0));
+	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
+	
+	ObjInstance* current = currentInstance();
+	if(current && current->type == INST_SHAPE){
+		ObjShape* shape = (ObjShape*) current;
+		if(shape->shapeType == TK_PATH){
+			addSegment(shape, bezInstance);
+			return OBJ_VAL((ObjInstance*) bezInstance);
+		}
+	}
+
+	runtimeError("Only paths can accept beziers.");
+	return OBJ_VAL((ObjInstance*) bezInstance);
+}
