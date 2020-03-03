@@ -28,10 +28,10 @@ mergeInto(LibraryManager.library, {
 	segmentTypes: {
 		JUMP: 0,
 		TURTLE: 1,
-		VERTEX: 3,
-		CBEZIER: 4,
-		QBEZIER: 5,
-		ARC: 6,
+		VERTEX: 2,
+		CBEZIER: 3,
+		QBEZIER: 4,
+		ARC: 5,
 	},
 
 	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
@@ -49,7 +49,7 @@ mergeInto(LibraryManager.library, {
 			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
 			return {
 				value: _lib_getValue(valPtr),
-				lineIndex: lineIndex,
+				lineIndex: lineIndex, 
 				inlineIndex: inlineIndex,
 			}
 		}else{
@@ -172,7 +172,6 @@ mergeInto(LibraryManager.library, {
 			type: _segmentTypes.JUMP,
 			x: _lib_getValueMeta(vecPtr),
 			y: _lib_getValueMeta(vecPtr + _valuePointerOffsets.totalLength),
-			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+_valuePointerOffsets.totalLength)],
 		});
 	},
 
@@ -182,8 +181,7 @@ mergeInto(LibraryManager.library, {
 			type: _segmentTypes.VERTEX,
 			x: _lib_getValueMeta(vecPtr),
 			y: _lib_getValueMeta(vecPtr+_valuePointerOffsets.totalLength),
-			point: [_lib_getValue(vecPtr), _lib_getValue(vecPtr+_valuePointerOffsets.totalLength)],
-		});ß
+		});
 	},
 
 	em_addMove: function(x, y, distancePtr){
@@ -192,7 +190,8 @@ mergeInto(LibraryManager.library, {
 			_currentTurtle = {
 				move: null,
 				turn: null,
-				point: null,
+				x: null,
+				y: null,
 			}
 		}
 		_currentTurtle.move = _lib_getValueMeta(distancePtr);
@@ -200,7 +199,8 @@ mergeInto(LibraryManager.library, {
 			type: _segmentTypes.TURTLE,
 			move: _currentTurtle.move,
 			turn: _currentTurtle.turn,
-			point: [x, y],
+			x: x,
+			y: y,
 		});
 	},
 
@@ -211,7 +211,8 @@ mergeInto(LibraryManager.library, {
 			_currentTurtle = {
 				move: null,
 				turns: null,
-				point: null,
+				x: null,
+				y: null,
 			}
 		}
 		_currentTurtle.turn = _lib_getValueMeta(degreesPtr);

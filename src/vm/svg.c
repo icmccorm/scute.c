@@ -107,7 +107,7 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
-	//assignStyles(shape, link);
+		assignStyles(shape);
 	#endif
 
 	int angle = 0;

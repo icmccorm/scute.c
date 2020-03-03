@@ -380,8 +380,6 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
 	{ NULL,		NULL,	    PC_NONE },    // TK_CBEZ,
 	{ NULL,		NULL,	    PC_NONE },    // TK_QBEZ,
-
-
 };
 
 static void printStatement();
@@ -837,7 +835,7 @@ static void withStatement(){
 	expression();
 	endLine();
 
-	int currentScopeDepth = currentCompiler()->scopeDepth + 1;
+	int currentScopeDepth = ++currentCompiler()->scopeDepth;
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
@@ -868,11 +866,12 @@ static void withStatement(){
 				endLine();
 				break;
 			default:	
-				if(parser.current.type != TK_EOF) errorAtCurrent("Expected an unqualified assignment or a nested with statement.");			
+				statement();
 				break;
 		}
 	}
 	emitByte(OP_POP);
+	--currentCompiler()->scopeDepth;
 }
 
 static void frameStatement() {
