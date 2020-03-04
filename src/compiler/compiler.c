@@ -89,7 +89,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 }
 
 static void emitByte(uint8_t byte);
-static void emitConstant(Value v);
+static Value* emitConstant(Value v);
 static void emitLinkedConstant(Value v, TK* token);
 
 static void emitReturn(){
@@ -175,9 +175,8 @@ static void emitLinkedConstant(Value value, TK* token){
 	writeConstant(currentChunk(), value, parser.previous.line);
 }
 
-static void emitConstant(Value value){
-	
-	writeConstant(currentChunk(), value, parser.previous.line);
+static Value* emitConstant(Value value){
+	return writeConstant(currentChunk(), value, parser.previous.line);
 }
 
 static void errorAt(TK* token, char* message){
@@ -511,11 +510,26 @@ static void synchronize() {
 
 static void expression() {
 	parsePrecedence(PC_ASSIGN);
+	if(parser.manipTarget){
+		parser.manipTarget->lineIndex = parser.lineIndex;
+		parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
+		#ifdef EM_MAIN
+			em_addValue(AS_NUM(*parser.manipTarget), parser.lastOperator, parser.manipTargetCharIndex, parser.manipTargetLength);	
+		#endif
+		++parser.currentLineValueIndex;
+	}
+	parser.manipTarget = NULL;
 }
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
-	emitConstant(val);
+	Value* link = emitConstant(val);
+	if(parser.lastOperatorPrecedence <= parser.manipPrecedence){
+		parser.manipTarget = link;
+		parser.manipTargetCharIndex = parser.previous.start - parser.codeStart;
+		parser.manipTargetLength = parser.previous.length;
+		parser.manipPrecedence = parser.lastOperatorPrecedence;
+	}
 }
 
 static double tokenToNumber(TK token){
@@ -527,10 +541,6 @@ static double tokenToNumber(TK token){
 }
 
 static void literal(bool canAssign) {
-	if(parser.lastOperatorPrecedence <= parser.manipPrecedence){
-		parser.manipToken = parser.previous;
-		parser.manipPrecedence = parser.lastOperatorPrecedence;
-	}
 	switch(parser.previous.type){
 		case TK_FALSE:  emitByte(OP_FALSE); break;
 		case TK_TRUE:   emitByte(OP_TRUE); break;
@@ -538,9 +548,9 @@ static void literal(bool canAssign) {
 		case TK_INTEGER:
 		case TK_REAL:
 			number(canAssign);
-			break;
-		default:
 			return;
+		default:
+			break;
 	}
 }
 
@@ -565,7 +575,6 @@ static void indentedBlock() {
 		//clear indentations
 		advance();
 		statement();
-
 	}
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
@@ -854,13 +863,7 @@ static void withStatement(){
 				TK idToken = parser.previous;
 				consume(TK_ASSIGN, "Expected an '=' operator.");
 				expression();
-				
-				uint32_t linkIndex = addLink(result, parser.lineIndex, parser.currentLineValueIndex);
-				++parser.currentLineValueIndex;
-				#ifdef EM_MAIN
-					em_addValue(tokenToNumber(parser.manipToken), parser.lastOperator, parser.manipToken.inlineIndex, parser.manipToken.length);	
-				#endif
-				emitTriple(OP_DEF_INST, getStringObjectIndex(&idToken), linkIndex);
+				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 				emitByte(1);
 
 				endLine();
@@ -1166,15 +1169,7 @@ static void deref(bool canAssign){
 			
 			if(canAssign && match(TK_ASSIGN)){
 				expression();
-
-				uint32_t linkIndex = addLink(result, parser.lineIndex, parser.currentLineValueIndex);
-
-				++parser.currentLineValueIndex;
-				#ifdef EM_MAIN
-					em_addValue(tokenToNumber(parser.manipToken), parser.lastOperator, parser.manipToken.inlineIndex, parser.manipToken.length);	
-				#endif
-				
-				emitTriple(OP_DEF_INST, getStringObjectIndex(&idToken), linkIndex);
+				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 				emitByte(0);
 			}else{
 				emitBundle(OP_DEREF, getStringObjectIndex(&parser.previous));
@@ -1361,9 +1356,12 @@ void initParser(Parser* parser, char* source){
 	parser->hadError = false;
 	parser->panicMode = false;
 	parser->codeStart = source;
+
 	parser->lineIndex = 0;
 	parser->currentLineValueIndex = 0;
+
 	parser->lastNewline = source;
+
 	parser->manipPrecedence = PC_PRIMARY;
 	parser->lastOperator = TK_NULL;
 	parser->lastOperatorPrecedence = PC_PRIMARY;
@@ -1371,6 +1369,11 @@ void initParser(Parser* parser, char* source){
 	parser->currentPrecedence = PC_NONE;
 	parser->lastPrecedence = PC_NONE;
 	parser->lineHadValue = false;
+
+	parser->manipTarget = NULL;
+	parser->manipTargetCharIndex = -1;
+	parser->manipTargetLength = -1;
+	parser->assigningManipulable = false;
 }
 
 

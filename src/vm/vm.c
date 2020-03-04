@@ -170,6 +170,11 @@ static bool valuesEqual(Value a, Value b){
 
 static InterpretResult callFunction(ObjChunk* chunkObj);
 
+
+Value transferIndex(Value a, Value b){
+	return a.lineIndex > -1 ? a : (b.lineIndex > -1 ? b : b);
+}
+
 #define READ_BYTE() (*vm.ip++)
 static uint32_t readInteger() {
 	uint8_t numBytes = READ_BYTE();
@@ -208,6 +213,9 @@ static InterpretResult run() {
 		operandType typeB = AS_NUM(b); \
 		operandType typeA = AS_NUM(a); \
 		Value result = valueType(typeA op typeB); \
+		Value transfer = transferIndex(a, b); \
+		result.lineIndex = transfer.lineIndex; \
+		result.inlineIndex = transfer.inlineIndex; \
 		push(result); \
 	} while(false); \
 
@@ -235,14 +243,10 @@ static InterpretResult run() {
 				} break;
 			case OP_DEF_INST: {
 				ObjString* memberId = AS_STRING(READ_CONSTANT());
-				uint32_t linkIndex = readInteger();
 				bool pushBackInstance = (bool) READ_BYTE();
 
 				Value expression = pop();
 
-				ValueLink link = vm.links[linkIndex];
-				expression.lineIndex = link.lineIndex;
-				expression.inlineIndex = link.inlineIndex;
 
 				Value instanceVal = pop();
 				if(IS_INST(instanceVal)){

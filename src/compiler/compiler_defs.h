@@ -26,26 +26,35 @@ typedef struct {
     TK current;
     TK previous;
     TK lastID;
+
     TKType lastOperator;
     PCType lastOperatorPrecedence;
+
     bool hadError;
     bool panicMode;
+
     char* codeStart;
+    char* lastNewline; 
+
 	bool lineHadValue;
 	int lineIndex;
 	int currentLineValueIndex;
-    char* lastNewline; 
+
     PCType lastPrecedence;
     PCType currentPrecedence;
     PCType manipPrecedence;
-    TK manipToken;
+
+    Value* manipTarget;
+    int manipTargetCharIndex;
+    int manipTargetLength;
+
+    bool assigningManipulable;
+    bool hadArray;
 } Parser;
 
 typedef struct{
     TK id;
     int depth;
-    int lineIndex;
-    int inlineIndex;
 } Local;
 
 extern Parser parser;

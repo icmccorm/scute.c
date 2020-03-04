@@ -45,19 +45,12 @@ mergeInto(LibraryManager.library, {
 	//getValue(ptr, type) and setValue(ptr, value, type)
 	lib_getValueMeta: function (valPtr){
 		let lineIndex = getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32');
-		if(lineIndex > -1){
-			let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
-			return {
-				value: _lib_getValue(valPtr),
-				lineIndex: lineIndex, 
-				inlineIndex: inlineIndex,
-			}
-		}else{
-			return {
-				value: _lib_getValue(valPtr),
-			}
+		let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
+		return {
+			value: _lib_getValue(valPtr),
+			lineIndex: lineIndex, 
+			inlineIndex: inlineIndex,
 		}
-	
 	},
 
 	lib_getValue: function(valPtr){

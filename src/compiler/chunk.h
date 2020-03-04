@@ -82,7 +82,7 @@ void freeChunk(Chunk* chunk);
 
 int getLine(Chunk* chunk, uint32_t opIndex);
 
-void writeConstant(Chunk* chunk, Value value, uint32_t line);
+Value* writeConstant(Chunk* chunk, Value value, uint32_t line);
 void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, uint32_t line);
 uint64_t writeValue(Chunk* chunk, Value value, uint32_t line);
 int writeVariableData(Chunk* chunk, uint64_t value);
