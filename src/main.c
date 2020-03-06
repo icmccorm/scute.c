@@ -10,6 +10,7 @@
 #include "obj.h"
 #include "output.h"
 #include "package.h"
+#include "scanner.h"
 
 bool DEBUG_STACK = false;
 
@@ -81,7 +82,6 @@ static void runFile(const char* path){
 
 int main(int argc, const char* argv[]){
 	const char* sFlag = "-s";
-
 	switch(argc){
 		case 2: ;
 			runFile(argv[1]);

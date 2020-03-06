@@ -163,8 +163,7 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.JUMP,
-			x: _lib_getValueMeta(vecPtr),
-			y: _lib_getValueMeta(vecPtr + _valuePointerOffsets.totalLength),
+			point: _lib_getVector(vecPtr),
 		});
 	},
 
@@ -172,8 +171,7 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.VERTEX,
-			x: _lib_getValueMeta(vecPtr),
-			y: _lib_getValueMeta(vecPtr+_valuePointerOffsets.totalLength),
+			point: _lib_getVector(vecPtr),
 		});
 	},
 

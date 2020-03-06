@@ -492,6 +492,17 @@ static TK identifier(){
         case TK_QBEZ:
         case TK_CBEZ:
             return makeDualToken(TK_SHAPE, type);
+        case TK_SIN:
+        case TK_COS:
+        case TK_TAN:
+        case TK_ASIN:
+        case TK_ACOS:
+        case TK_ATAN:
+        case TK_HSIN:
+        case TK_HCOS:
+        case TK_RAD: 
+        case TK_SQRT: 
+            return makeDualToken(TK_NATIVE, type);
         default:
             return makeToken(type);
     }

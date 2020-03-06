@@ -320,20 +320,11 @@ ParseRule rules[] = {
 	{ variable, NULL,	    PC_NONE },    // TK_ID,
 	{ constant, NULL,	    PC_NONE },    // TK_ID,	
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
-	{ native,	NULL,		PC_NONE },    // TK_SIN,
-	{ native,	NULL,		PC_NONE },    // TK_COS,
-	{ native,	NULL,		PC_NONE },    // TK_TAN,
-	{ native,	NULL,		PC_NONE },    // TK_ASIN,
-	{ native,	NULL,		PC_NONE },    // TK_ACOS,
-	{ native,	NULL,		PC_NONE },    // TK_ATAN,
-	{ native,	NULL,		PC_NONE },    // TK_HSIN,
-	{ native,	NULL,		PC_NONE },    // TK_HCOS,
-	{ native,	NULL,		PC_NONE },    // TK_RAD,
-	{ native,	NULL,		PC_NONE },    // TK_SQRT,
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
 	{ NULL,	    NULL,	    PC_OR },    // TK_OR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
 	{ native,	NULL,		PC_NONE },    // TK_SHAPE,
+	{ native,	NULL,		PC_NONE },    // TK_NATIVE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
@@ -351,17 +342,6 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_RECT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_CIRC,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_POLY,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_POLYL,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_PATH,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ELLIP,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_MOVE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_TURN,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_VERT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_JUMP,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ARC,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_PRINT,
@@ -377,8 +357,7 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TO,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FROM,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
-	{ NULL,		NULL,	    PC_NONE },    // TK_CBEZ,
-	{ NULL,		NULL,	    PC_NONE },    // TK_QBEZ,
+
 };
 
 static void printStatement();
@@ -526,7 +505,7 @@ static void number(bool canAssign) {
 	Value* link = emitConstant(val);
 	if(parser.lastOperatorPrecedence <= parser.manipPrecedence){
 		parser.manipTarget = link;
-		parser.manipTargetCharIndex = parser.previous.start - parser.codeStart;
+		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
 		parser.manipTargetLength = parser.previous.length;
 		parser.manipPrecedence = parser.lastOperatorPrecedence;
 	}
@@ -1075,50 +1054,46 @@ static void native(bool canAssign){
 	emitBytes(OP_CALL, numParams);
 
 	void* func;
-	switch(nativeId.type){
-		case TK_SHAPE: {
-			switch(nativeId.subtype){
-				case TK_MOVE:
-					func = move;
-					break;
-				case TK_VERT:
-					func = vertex;
-					break;
-				case TK_ARC:
-					func = arc;
-					break;
-				case TK_JUMP:
-					func = jump;
-					break;
-				case TK_TURN:
-					func = turn;
-					break;
-				case TK_RECT:
-					func = rect;
-					break;
-				case TK_CIRC:
-					func = circle;
-					break;
-				case TK_ELLIP:
-					func = ellipse;
-					break;
-				case TK_PATH:
-					func = path;
-					break;
-				case TK_POLY:
-					func = polygon;
-					break;
-				case TK_POLYL:
-					func = polyline;
-					break;
-				case TK_CBEZ:
-					func = cBezier;
-					break;
-				case TK_QBEZ:
-					func = qBezier;
-					break;
-			}
-		} break;
+	switch(nativeId.subtype){
+		case TK_MOVE:
+			func = move;
+			break;
+		case TK_VERT:
+			func = vertex;
+			break;
+		case TK_ARC:
+			func = arc;
+			break;
+		case TK_JUMP:
+			func = jump;
+			break;
+		case TK_TURN:
+			func = turn;
+			break;
+		case TK_RECT:
+			func = rect;
+			break;
+		case TK_CIRC:
+			func = circle;
+			break;
+		case TK_ELLIP:
+			func = ellipse;
+			break;
+		case TK_PATH:
+			func = path;
+			break;
+		case TK_POLY:
+			func = polygon;
+			break;
+		case TK_POLYL:
+			func = polyline;
+			break;
+		case TK_CBEZ:
+			func = cBezier;
+			break;
+		case TK_QBEZ:
+			func = qBezier;
+			break;
 		case TK_SIN:
 			func = nativeSine;
 			break;
