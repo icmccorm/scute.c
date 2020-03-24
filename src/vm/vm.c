@@ -419,7 +419,11 @@ static InterpretResult run() {
 					runtimeError("Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
-				push(NUM_VAL(-AS_NUM(pop())));
+				Value popped = pop();
+				Value toPush = NUM_VAL(-AS_NUM(popped));
+				toPush.inlineIndex = popped.inlineIndex;
+				toPush.lineIndex = popped.lineIndex;
+				push(toPush);
 				break;	
 			case OP_ADD: ;
 				b = pop();
