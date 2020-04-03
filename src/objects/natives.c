@@ -208,7 +208,8 @@ Value arc(Value* params, int numParams){
 Value rect(Value* params, int numParams){
 	ObjShape* rectInstance = allocateShape(NULL, TK_RECT);
 	add(rectInstance->instance.map, string("position"), VECTOR(0, 0));
-	add(rectInstance->instance.map, string("dimensions"), NUM_VAL(0));
+	add(rectInstance->instance.map, string("size"), VECTOR(0, 0));
+	add(rectInstance->instance.map, string("rounding"), NUM_VAL(0));
 	pushShape(rectInstance);
 	return OBJ_VAL((ObjInstance*) rectInstance);
 }
@@ -227,6 +228,14 @@ Value ellipse(Value* params, int numParams){
 	add(ellipseInstance->instance.map, string("position"), VECTOR(0, 0));
 	pushShape(ellipseInstance);
 	return OBJ_VAL((ObjInstance*) ellipseInstance);
+}
+
+Value line(Value* params, int numParams){
+	ObjShape* lineInstance = allocateShape(NULL, TK_LINE);
+	add(lineInstance->instance.map, string("start"), VECTOR(0, 0));
+	add(lineInstance->instance.map, string("end"), VECTOR(0, 0));
+	pushShape(lineInstance);
+	return OBJ_VAL((ObjInstance*) lineInstance);
 }
 
 Value polyline(Value* params, int numParams){

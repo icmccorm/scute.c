@@ -49,7 +49,6 @@ void assignStyles(ObjShape* shape){
 void drawShape(ObjShape* shape, ValueLink* links){
 	HashMap* shapeMap = shape->instance.map;
 	TKType type = shape->shapeType;
-
 	#ifdef EM_MAIN
 		unsigned address = (unsigned) shapeMap;
 		em_newShape(address, type);
@@ -58,45 +57,56 @@ void drawShape(ObjShape* shape, ValueLink* links){
 
 		switch(type){
 			case TK_RECT: { 
-				ObjString* xStr = string("x");
-				ObjString* yStr = string("y");
-				ObjString* wStr = string("width");
-				ObjString* hStr = string("height");
+				Value posVal = getValue(shapeMap, string("position"));
+				Value sizeVal = getValue(shapeMap, string("size"));
+				Value roundingVal = getValue(shapeMap, string("rounding"));
 
-				Value xVal = getValue(shapeMap, xStr);
-				em_addAttribute("x", &xVal);
-
-				Value yVal = getValue(shapeMap, yStr);
-				em_addAttribute("y", &yVal);
-
-				Value wVal = getValue(shapeMap, wStr);
-				em_addAttribute("width", &wVal);
-
-				Value hVal = getValue(shapeMap, hStr);
-				em_addAttribute("height", &hVal);
+				ValueArray* sizeArray = AS_ARRAY(sizeVal)->array;
+				ValueArray* posArray = AS_ARRAY(posVal)->array;
+				
+				em_addVectorAttr("size", posArray->values);
+				em_addVectorAttr("position", posArray->values);
+				em_addAttribute("rounding", &roundingVal);
 			} break;
 
 			case TK_CIRC:{
-				ObjString* cxStr = string("cx");
-				ObjString* cyStr = string("cy");
-				ObjString* rStr = string("r");
+				Value posVal = getValue(shapeMap, string("position"));
+				Value radVal = getValue(shapeMap, string("radius"));
 
-				Value cxVal = getValue(shapeMap, cxStr);
-				em_addAttribute("cx", &cxVal);
+				ValueArray* posArray = AS_ARRAY(posVal)->array;
+				
+				em_addVectorAttr("position", posArray->values);
+				em_addAttribute("radius", &radVal);
+				} break;
 
-				Value cyVal = getValue(shapeMap, cyStr);
-				em_addAttribute("cy", &cyVal);
+			case TK_ELLIP: {
+				Value posVal = getValue(shapeMap, string("position"));
+				Value radVal = getValue(shapeMap, string("radius"));
 
-				Value rVal = getValue(shapeMap, rStr);
-				em_addAttribute("r", &rVal);
+				ValueArray* posArray = AS_ARRAY(posVal)->array;
+				ValueArray* radArray = AS_ARRAY(radVal)->array;
+
+				em_addVectorAttr("position", posArray->values);
+				em_addVectorAttr("radius", posArray->values);
+				} break;
+
+			case TK_LINE: {
+				Value startVal = getValue(shapeMap, string("start"));
+				Value endVal = getValue(shapeMap, string("end"));
+
+				ValueArray* startArray = AS_ARRAY(startVal)->array;
+				ValueArray* endArray = AS_ARRAY(endVal)->array;
+
+				em_addVectorAttr("start", startArray->values);
+				em_addVectorAttr("end", endArray->values);
 				} break;
 			default:
 				break;
 		}
 		em_paintShape();
-	#else
-		printMap(O_OUT, shapeMap, 0);
-	#endif
+		#else	
+			printMap(O_OUT, shapeMap, 0);
+		#endif
 }
 
 double toRadians(int degrees){

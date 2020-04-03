@@ -82,6 +82,7 @@ typedef enum {
     TK_ARC,
     TK_CBEZ,
     TK_QBEZ,
+    TK_LINE,
 
 	TK_SIN,
 	TK_COS,

@@ -357,7 +357,6 @@ ParseRule rules[] = {
 	{ NULL,	    NULL,	    PC_NONE },    // TK_TO,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FROM,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
-
 };
 
 static void printStatement();
@@ -1078,6 +1077,9 @@ static void native(bool canAssign){
 			break;
 		case TK_ELLIP:
 			func = ellipse;
+			break;
+		case TK_LINE:
+			func = line;
 			break;
 		case TK_PATH:
 			func = path;

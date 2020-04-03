@@ -30,4 +30,6 @@ Value polyline(Value* params, int numParams);
 Value path(Value* params, int numParams);
 Value qBezier(Value* params, int numParams);
 Value cBezier(Value* params, int numParams);
+Value line(Value* params, int numParams);
+
 #endif

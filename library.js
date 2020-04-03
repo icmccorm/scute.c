@@ -109,15 +109,12 @@ mergeInto(LibraryManager.library, {
 		_currentShape['attrs'][key] = meta;
 	},
 
+	em_addVectorAttr: function(keyPtr, vecPtr){
+		let key = Module.UTF8ToString(keyPtr);
+		_currentShape['attrs'][key] = _lib_getVector(vecPtr);
+	},
+
 	em_addLine: function(valPtr){
-
-	},
-
-	em_addHorizontalLine: function(valPtr){
-
-	},
-
-	em_addVerticalLine: function(valPtr){
 
 	},
 
@@ -242,6 +239,16 @@ mergeInto(LibraryManager.library, {
 	lib_getVector__deps: [
 		'lib_getValueMeta',
 		'valuePointerOffsets',
+	],
+
+	em_addVertex__deps: [
+		'currentShape',
+		'lib_getVector'
+	],
+
+	em_addVectorAttr__deps: [
+		'currentShape',
+		'lib_getVector'
 	],
 
 	em_addArc__deps: [

@@ -327,18 +327,22 @@ static TKType findIdentifier(){
             }
         return checkKeyword(1, 2, "or", TK_FOR);
         case 'i': return checkKeyword(1, 1, "f", TK_IF);
-        case 'l': return checkKeyword(1, 2, "et", TK_LET);
+        case 'l': 
+            if(scanner.current - scanner.start > 1){
+                switch(scanner.start[1]){
+                    case 'e': return checkKeyword(2, 1, "t", TK_LET);
+                    case 'i': return checkKeyword(2, 2, "ne", TK_LINE);
+                }
+            }
+            return TK_ID;
         case 'w': 
 			if(scanner.current - scanner.start > 1){
 				switch(scanner.start[1]){
 					case 'h': return checkKeyword(2, 3, "ile", TK_WHILE);
 					case 'i': return checkKeyword(2, 2, "th", TK_WITH);
-					default:
-						return TK_ID;
 				}
-			}else{
-				return TK_ID;
 			}
+			return TK_ID;
         case 'r': 
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -348,31 +352,23 @@ static TKType findIdentifier(){
                                 case 't': return checkKeyword(3, 3, "urn", TK_RET);
                                 case 'c': return checkKeyword(3, 1, "t", TK_RECT);
 								case 'p': return checkKeyword(3, 3, "eat", TK_REP);
-                                default:
-                                    return TK_ID;
+                            
                             }
-                        }else{
-                            return TK_ID;
                         }
-                    }
+                    } break;
 					case 'a': return checkKeyword(2, 5, "dians", TK_RAD);
-                    default:
-                        return TK_ID;
                 }
-            }else{
-                return TK_ID;
             }
+            return TK_ID;
         case 'c': 
 			if(scanner.current - scanner.start > 1){
 				switch(scanner.start[1]){
 					case 'i': return checkKeyword(2, 4, "rcle", TK_CIRC);
 					case 'o': return checkKeyword(2, 1, "s", TK_COS);
                     case 'B': return checkKeyword(2, 5, "ezier", TK_CBEZ);
-					default: return TK_ID;
 				}
-			}else{
-				return TK_ID;
 			}
+			return TK_ID;
 		case 's': 
 			if(scanner.current - scanner.start > 1){
 				switch(scanner.start[1]){
@@ -380,9 +376,8 @@ static TKType findIdentifier(){
 					case 'q': return checkKeyword(2, 2, "rt", TK_SQRT);
 					default: return TK_ID;
 				}
-			}else{
-				return TK_ID;
 			}
+			return TK_ID;
         case 't': 
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){
@@ -397,11 +392,9 @@ static TKType findIdentifier(){
 						}
 					} break;
                     case 'u': return checkKeyword(2, 2, "rn", TK_TURN);
-					default: return TK_ID;
                 }
-            }else{
-                return TK_T;
             }
+            return TK_T;
         case 'o': return checkKeyword(1, 1, "r", TK_OR);
         case 'p': 
             if(scanner.current - scanner.start > 1){
@@ -491,6 +484,7 @@ static TK identifier(){
         case TK_VERT:
         case TK_QBEZ:
         case TK_CBEZ:
+        case TK_LINE:
             return makeDualToken(TK_SHAPE, type);
         case TK_SIN:
         case TK_COS:
