@@ -152,12 +152,12 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 				break;
 			case TK_TURN: ;
 				Value degrees = getValue(map, string("degrees"));
-				angle += AS_NUM(degrees);
 				#ifdef EM_MAIN
-					em_addTurn(&degrees);				
+					em_addTurn(&degrees, angle);				
 				#else
 					print(O_OUT, "Turn by %d deg to %d deg\n", degrees, angle);
 				#endif
+				angle += AS_NUM(degrees);
 				break;
 			case TK_QBEZ: {
 				Value control = getValue(map, string("control"));

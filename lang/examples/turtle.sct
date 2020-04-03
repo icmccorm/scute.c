@@ -1,0 +1,16 @@
+
+with polyline()
+	with jump()
+		position = [250, 250]
+	with turn()
+		degrees = 0
+	with move()
+		distance = 50
+	with turn()
+		degrees = 0
+	with move()
+		distance = 50
+	with turn()
+		degrees = 0
+	with move()
+		distance = 50

@@ -59,7 +59,7 @@ mergeInto(LibraryManager.library, {
 
 	em_addValue: function(value, role, inlineOffset, length){
 		_values.push({
-			mouseDelta: 0,
+			delta: 0,
 			targetValue: value,
 			role: role,
 			inlineOffset: inlineOffset,
@@ -179,34 +179,31 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
+				type: _segmentTypes.TURTLE,
 				move: null,
 				turn: null,
-				x: null,
-				y: null,
+				horizontal: null,
+
 			}
 		}
 		_currentTurtle.move = _lib_getValueMeta(distancePtr);
-		_currentShape.segments.push({
-			type: _segmentTypes.TURTLE,
-			move: _currentTurtle.move,
-			turn: _currentTurtle.turn,
-			x: x,
-			y: y,
-		});
+		_currentShape.segments.push(_currentTurtle);
+		_currentTurtle = null;
 	},
 
 
-	em_addTurn: function(degreesPtr){
+	em_addTurn: function(degreesPtr, angle){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
+				type: _segmentTypes.TURTLE,
 				move: null,
-				turns: null,
-				x: null,
-				y: null,
+				turn: null,
+				horizontal: null,
 			}
 		}
 		_currentTurtle.turn = _lib_getValueMeta(degreesPtr);
+		_currentTurtle.horizontal = angle;
 	},
 
 	lib_getVector: function(vecPtr){

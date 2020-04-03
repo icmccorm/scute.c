@@ -68,7 +68,6 @@ static void runFile(const char* path){
 	
 	freeCompilationPackage(compiled);
 
-
 	int length = strlen(source) + 1;
 	FREE_ARRAY(char, source, length);
 
