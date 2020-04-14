@@ -1,16 +1,20 @@
-#ifndef scute_tests_h
-#define scute_tests_h
+#ifndef SCUTE_TESTS_H
+#define SCUTE_TESTS_H
 
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
+#include "common.h"
+#include "value.h"
+#include "string.h"
 
-typedef struct {
-	const char* description;
-} TestSuite;
+#define IS_TRUE(val, message) (val) ? pass(message) : fail(message))
+#define IS_FALSE(val, message) (!val) ? pass(message) : fail(message))
+#define EQUALS(val1, val2, message) (val1 == val2 ? pass(message) : fail(message))
+#define CHARS_EQUAL(array1, array2, message) (strcmp(array1, array2) == 0 ? pass(message) : fail(message))
 
-void assertTrue(const char* that, bool isTrue, const char* orElsePrint);
-
-void assertCharEquals(const char* that, char* stringOne, char* stringTwo, const char* orElsePrint);
-
+typedef bool (*TestFn)();
+typedef struct{
+	TestFn test;
+} Test;
+void fail(const char* message, va_list arglist);
+void pass(const char* message, va_list arglist);
+bool runSuite(const char* message, Test* suite);
 #endif
