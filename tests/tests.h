@@ -13,7 +13,6 @@
 typedef bool (*TestFn)();
 typedef struct{
 	TestFn test;
-	const char* funcName;
 } Test;
 
 extern Test scannerTestSuite[];

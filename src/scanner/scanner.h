@@ -141,6 +141,7 @@ typedef struct{
 
 void initScanner(char* source);
 TK scanTK();
+
 typedef struct {
     char* start;
     char* current;
