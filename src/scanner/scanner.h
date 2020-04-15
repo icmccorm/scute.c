@@ -141,5 +141,15 @@ typedef struct{
 
 void initScanner(char* source);
 TK scanTK();
+typedef struct {
+    char* start;
+    char* current;
+    char* origin;
+    int line;
+    char* lastScanned;
+	char* lastNewline;
+} Scanner;
+
+extern Scanner scanner;
 
 #endif

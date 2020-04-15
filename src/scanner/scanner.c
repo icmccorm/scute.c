@@ -5,15 +5,6 @@
 #include "scanner.h"
 #include "output.h"
 
-typedef struct {
-    char* start;
-    char* current;
-    char* origin;
-    int line;
-    char* lastScanned;
-	char* lastNewline;
-} Scanner;
-
 Scanner scanner;
 
 void initScanner(char* source){

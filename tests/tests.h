@@ -13,8 +13,16 @@
 typedef bool (*TestFn)();
 typedef struct{
 	TestFn test;
+	const char* funcName;
 } Test;
-void fail(const char* message, va_list arglist);
-void pass(const char* message, va_list arglist);
+
+extern Test scannerTestSuite[];
+extern Test chunkTestSuite[];
+extern Test compilerTestSuite[];
+extern Test valueTestSuite[];
+extern Test objectTestSuite[];
+
+bool fail(const char* message);
+bool pass(const char* message);
 bool runSuite(const char* message, Test* suite);
 #endif
