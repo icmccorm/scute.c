@@ -1,6 +1,10 @@
 #include "tests.h"
 #include "scanner.h"
 
+bool setup(){
+	return true;
+}
+
 bool ensureInit (){
 	char code[] = "hello world!";
 	initScanner(code);
@@ -12,8 +16,14 @@ bool ensureInit (){
 	return pass("Scanner is correctly initialized");
 }
 
+bool teardown(){
+	return true;
+}
+
 Test scannerTestSuite[] = {
-	{ensureInit, "initScanner()"},
-	{NULL, ""}
+	{setup},
+	{ensureInit},
+	{teardown},
+	{NULL} 
 };
 

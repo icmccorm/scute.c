@@ -33,14 +33,21 @@ bool fail(const char* message){
 bool runSuite(const char* title, Test* suite){
 	printf("\n--------<| %s |>--------\n", title);
 	bool passed = true;
-	int testIndex = 0;
-	while((*(suite + testIndex)).test != 0){
+	int testIndex = 1;
+
+	//run setup function
+	if(!(*(suite)).test()) return fail("Unable to setup testing environment.");
+	while((*(suite + testIndex + 1)).test != NULL){
 		Test currentTest = (*(suite + testIndex));
-		printf("%s - ", currentTest.funcName);
 		bool result = (*(suite + testIndex)).test();
 		if(!result && passed) passed = result; 
 		++testIndex;
 	}
+	if(!(*(suite + testIndex)).test()) return fail("Unable to teardown testing environment.\n");
 	printf("\n");
 	return passed;
+
 }
+
+
+
