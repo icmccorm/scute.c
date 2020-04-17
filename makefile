@@ -35,7 +35,7 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find $(SRC_DIR) -type d)
 INC_FLAGS := $(addprefix -I, $(INC_DIRS)) 
 
-all : ./$(EXEC_FILE) test emcc
+all : ./$(EXEC_FILE) test web node
 
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
 	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
@@ -48,17 +48,24 @@ $(BUILD)/%.c.o : %.c
 
 clean:
 	@$(RM) -r $(BUILD)
-	@$(RM) *.wasm $(EXEC_FILE).js $(EXEC_FILE) $(EXEC_TEST_FILE)
+	@$(RM) *.wasm *.map $(EXEC_FILE).js $(EXEC_FILE) $(EXEC_TEST_FILE) $(EXEC_FILE)-test.js
 	
 -include $(DEPS)
 
-EM_FLAGS = --js-library ./library.js --pre-js ./pre.js -O1
-EM_JS_FLAGS = $(EM_JS_EXPORTS) -s ASSERTIONS=3 -s WASM=1 -s MODULARIZE=1 -s STRICT=1 -s FILESYSTEM=0 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0 -s ENVIRONMENT='worker' -s EXPORT_NAME="'Scute'"
-EM_JS_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]' -s ALLOW_MEMORY_GROWTH=1
+EM_FLAGS = --js-library ./library.js --pre-js ./pre.js 
+EM_WEB_FLAGS = $(EM_EXPORTS) -s ASSERTIONS=3 -s WASM=1 -s STRICT=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0  -s EXPORT_NAME="'Scute'" -s FILESYSTEM=0 -s ENVIRONMENT='worker'
+EM_NODE_FLAGS = $(EM_EXPORTS) -O0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='node' -s EXPORT_NAME="'Scute'"
+EM_EXPORTS = -s EXPORTED_FUNCTIONS='["_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]' -s ALLOW_MEMORY_GROWTH=1
 EM_ENTRY = ./src/em_main.c
 
-emcc : $(SRC_FILES) $(EM_ENTRY)
-	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_JS_FLAGS) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
+web : $(SRC_FILES) $(EM_ENTRY)
+	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
+
+web-prod: $(SRC_FILES) $(EM_ENTRY)
+	@$(WASMC) $(EM_MAP) --closure 1 $(EM_FLAGS) -Os $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
+
+node: $(SRC_FILES) $(EM_ENTRY)
+	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_NODE_FLAGS) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE)-test.js 
 
 test :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
 	@$(CC) $(TEST_ENTRY) $(TEST_OBJS) $(OBJS) $(INC_FLAGS) $(INC_TEST_FLAGS) -o $(EXEC_TEST_FILE)

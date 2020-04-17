@@ -44,8 +44,8 @@ mergeInto(LibraryManager.library, {
 
 	//getValue(ptr, type) and setValue(ptr, value, type)
 	lib_getValueMeta: function (valPtr){
-		let lineIndex = getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32');
-		let inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
+		var lineIndex = getValue(valPtr + _valuePointerOffsets.lineIndex, 'i32');
+		var inlineIndex = getValue(valPtr + _valuePointerOffsets.inlineIndex, 'i32');
 		return {
 			value: _lib_getValue(valPtr),
 			lineIndex: lineIndex, 
@@ -84,13 +84,13 @@ mergeInto(LibraryManager.library, {
 	},
 
 	printOut: function(ptr) {
-		self.postMessage({type: 3, payload: Module.UTF8ToString(ptr)});
+		Module._printFunction({type: 3, payload: Module.UTF8ToString(ptr)});
 	},
 	printDebug: function(ptr){
-		self.postMessage({type: 4, payload: Module.UTF8ToString(ptr)});
+		Module._printFunction({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 	printError: function(ptr){
-		self.postMessage({type: 5, payload: Module.UTF8ToString(ptr)})
+		Module._printFunction({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 	
 	em_newShape: function(idPtr, tagPtr){
@@ -104,13 +104,13 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_addAttribute: function(keyPtr, valuePtr){
-		let key = Module.UTF8ToString(keyPtr);
-		let meta = _lib_getValueMeta(valuePtr);
+		var key = Module.UTF8ToString(keyPtr);
+		var meta = _lib_getValueMeta(valuePtr);
 		_currentShape['attrs'][key] = meta;
 	},
 
 	em_addVectorAttr: function(keyPtr, vecPtr){
-		let key = Module.UTF8ToString(keyPtr);
+		var key = Module.UTF8ToString(keyPtr);
 		_currentShape['attrs'][key] = _lib_getVector(vecPtr);
 	},
 
@@ -119,23 +119,23 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_addColorStyle: function(keyPtr, length, valPtr){
-		let key = Module.UTF8ToString(keyPtr);
-		let rgba = [];
-		for(let i = 0; i<length*_valuePointerOffsets.totalLength; i += _valuePointerOffsets.totalLength){
+		var key = Module.UTF8ToString(keyPtr);
+		var rgba = [];
+		for(var i = 0; i<length*_valuePointerOffsets.totalLength; i += _valuePointerOffsets.totalLength){
 			rgba.push(_lib_getValueMeta(valPtr + i));
 		}
 		_currentShape['styles'][key] = rgba;
 	},
 
 	em_addStringStyle: function(keyPtr, valuePtr){
-		let key = Module.UTF8ToString(keyPtr);
-		let meta = _lib_getValueMeta(valuePtr);
+		var key = Module.UTF8ToString(keyPtr);
+		var meta = _lib_getValueMeta(valuePtr);
 		_currentShape['styles'][key] = meta;
 	},
 
 	em_addStyle: function(keyPtr, valuePtr){
-		let key = Module.UTF8ToString(keyPtr);
-		let meta = _lib_getValueMeta(valuePtr);
+		var key = Module.UTF8ToString(keyPtr);
+		var meta = _lib_getValueMeta(valuePtr);
 		_currentShape['styles'][key] = meta;
 	},
 
