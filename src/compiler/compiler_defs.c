@@ -15,10 +15,10 @@ uint32_t addLocal(Compiler* compiler, TK idName){
 	return compiler->localCount-1;
 }
 
-uint32_t addDummyLocal(Compiler* compiler, uint32_t line){
+uint32_t addDummyLocal(Compiler* compiler){
 	TK nullToken;
 	nullToken.start = NULL;
-	nullToken.line = line;
+	nullToken.line = -1;
 	nullToken.length = -1;
 	nullToken.type = -1;
 

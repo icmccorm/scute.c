@@ -84,6 +84,6 @@ typedef struct{
 } ParseRule;
 
 uint32_t addLocal(Compiler* compiler, TK idName);
-uint32_t addDummyLocal(Compiler* compiler, uint32_t line);
+uint32_t addDummyLocal(Compiler* compiler);
 void freeCompiler(Compiler* compiler);
 #endif

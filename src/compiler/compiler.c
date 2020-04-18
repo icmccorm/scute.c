@@ -594,91 +594,51 @@ static int32_t latestLocal();
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
 static bool isInitialized(TK* id);
-
+	
 static void repeatStatement() {
-	bool variableDeclared = false;
-	uint32_t counterLocalIndex = 0;
-	int initialJumpIndex = 0;
-	if(parser.current.type == TK_ID){
+	uint32_t counterLocalIndex;
+	if(parser.current.type == TK_ID || parser.current.type == TK_INTEGER){
 		advance();
-		TK firstId = parser.previous;
-		
-		if(parser.current.type == TK_TO){
-			int localIndex = resolveLocal(&parser.previous);
 
-			if(localIndex == -1){
-				counterLocalIndex = addLocal(currentCompiler(), parser.previous);
-				emitConstant(NUM_VAL(0));
-				markInitialized();
-
-			}else{
-				counterLocalIndex = localIndex;
-			}
-			advance();
-
-			if(parser.current.type == TK_ID){
-				TK maxId = parser.current;
-	/*			if(!isInitialized(&maxId)){
-					errorAtCurrent("Upper bound identifier is NULL.");
-				}*/
-				expression();
-				int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
-				endLine();		
-				initialJumpIndex = currentChunk()->count-2;
-				emitBundle(OP_GET_LOCAL,counterLocalIndex);
-				namedVariable(&maxId, false);
-				
-			}else if (parser.current.type == TK_INTEGER){
-				expression();
-				int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
-				endLine();		
-				initialJumpIndex = currentChunk()->count-2;
-				emitBundle(OP_GET_LOCAL,counterLocalIndex);
-				emitBundle(OP_GET_LOCAL,maxRangeLocalIndex);
-			}else{
-				errorAtCurrent("Expected an integer or a defined identifier.");
-			}
+		TK counterToken = parser.previous;
+		if(parser.previous.type == TK_ID){
+			//if a local variable has been used, then its value is copied into a separate local.
+			namedVariable(&counterToken, true);
 		}else{
-			if(!isInitialized(&firstId)){
-				errorAt(&firstId, "Upper bound identifier is NULL.");
-			}
-			counterLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
-			emitConstant(NUM_VAL(0));
-			endLine();		
-			initialJumpIndex = currentChunk()->count-2;
-			emitBundle(OP_GET_LOCAL,counterLocalIndex);
-			namedVariable(&firstId, false);
+			emitConstant(NUM_VAL(tokenToNumber(counterToken)));
 		}
-
-	}else{
-		emitConstant(NUM_VAL(0));
-		counterLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
-		expression();
+		uint32_t counterLocalIndex = addDummyLocal(currentCompiler());
 		endLine();
-		int maxRangeLocalIndex = addDummyLocal(currentCompiler(), parser.previous.line);
-		initialJumpIndex = currentChunk()->count-2;
-		emitBundle(OP_GET_LOCAL,counterLocalIndex);
-		emitBundle(OP_GET_LOCAL, maxRangeLocalIndex);		
+
+		//Mark the jump position to the before the decrement and repeat body
+		uint32_t jumpIndex = currentChunk()->count-2;
+		
+		//decrement the counter by one
+		emitBundle(OP_GET_LOCAL, counterLocalIndex);
+		emitConstant(NUM_VAL(1));
+		emitByte(OP_SUBTRACT);
+
+		emitBundle(OP_DEF_LOCAL, counterLocalIndex);
+		emitByte(OP_POP);
+
+		//execute the body
+		enterScope();
+		indentedBlock();	
+		exitScope();
+
+		//jump back to the beginning if the counter has ended.
+		emitBundle(OP_GET_LOCAL,counterLocalIndex);	
+		emitConstant(NUM_VAL(1));
+		emitByte(OP_LESS);
+		//only jump back if the counter hasn't fallen below zero
+		jumpTo(OP_JMP_FALSE, jumpIndex);
+
+		//remove the counter local before moving on
+		emitByte(OP_POP);
+		--currentCompiler()->localCount;
+	}else{
+		errorAtCurrent("Expected an integer or identifier.");
 	}
-
-	emitByte(OP_LESS);
-	uint32_t jmpFalseLocation = emitJump(OP_JMP_FALSE);
-
-	enterScope();
-	indentedBlock();	
-	exitScope();
-
-	emitConstant(NUM_VAL(1));
-	emitBundle(OP_GET_LOCAL, counterLocalIndex);
-	emitByte(OP_ADD);
-
-	emitBundle(OP_DEF_LOCAL, counterLocalIndex);
-	emitByte(OP_POP);
-
-	jumpTo(OP_JMP, initialJumpIndex);
-	patchJump(jmpFalseLocation);
-	emitBytes(OP_POP, OP_POP);
-	currentCompiler()->localCount -= 2;
 }
 
 static void drawStatement() {

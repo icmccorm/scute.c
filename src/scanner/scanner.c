@@ -606,7 +606,6 @@ TK scanTK(){
                 case '=': 
                     ++scanner.current;
                     return makeToken(TK_DECR_ASSIGN);
-                
                 case '-': 
                     ++scanner.current;
                     return makeToken(TK_DECR);
@@ -614,7 +613,12 @@ TK scanTK(){
                     ++scanner.current;
                     return makeToken(TK_R_LIMIT);
                 default:
-                    return makeToken(TK_MINUS);
+                    if(isDigit(peek())) {
+                        --scanner.start;
+                        return number();
+                    }else{
+                        return makeToken(TK_MINUS);
+                    }
             }
         case '\'':
         case '"':
