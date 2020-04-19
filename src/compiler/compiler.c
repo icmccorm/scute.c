@@ -371,6 +371,7 @@ static void drawStatement();
 static void returnStatement();
 static void repeatStatement();
 static void withStatement();
+static void whileStatement();
 
 static ParseRule* getRule(TKType type){
 	ParseRule* rule = &rules[type];
@@ -420,6 +421,10 @@ static void statement() {
 
 	if(parser.current.type != TK_EOF){
 		switch(parser.current.type){
+			case TK_WHILE:
+				advance();
+				whileStatement();
+				break;
 			case TK_DEF:
 				advance();
 				defStatement();
@@ -453,6 +458,7 @@ static void statement() {
 					returnStatement();
 					currentChunkObject()->chunkType = CK_FUNC;
 				}
+				break;
 			case TK_REP:
 				advance();
 				repeatStatement();
@@ -570,19 +576,20 @@ static int emitJump(OpCode op) {
 	return currentChunk()->count - 2;
 }
 
-static void patchJump(int jumpIndex) {
-	int16_t backIndex = currentChunk()->count - jumpIndex - 2;
+static void patchJump(uint32_t jumpIndex) {
+	signed short backIndex = currentChunk()->count - (jumpIndex - 2);
 
-	currentChunk()->code[jumpIndex] = (backIndex >> 8) & 0xFF;
-	currentChunk()->code[jumpIndex + 1] = (backIndex) & 0xFF;
+	currentChunk()->code[jumpIndex] = ((backIndex >> 8) & 0xFF);
+	currentChunk()->code[jumpIndex+1] = (backIndex & 0xFF);
 }
 
-static void jumpTo(uint8_t opcode, int opIndex) {
+static void jumpTo(uint8_t opcode, uint32_t opIndex) {
 	Chunk* chunk = currentChunk();
 	emitByte(opcode);
-	int16_t offset = opIndex - chunk->count;
+	signed short offset = (opIndex - 2) - chunk->count;
 	emitByte((offset >> 8) & 0xFF);
-	emitByte(offset & 0xFF);
+	emitByte((offset) & 0xFF);
+
 }
 
 static void internGlobal(TK* id){
@@ -595,6 +602,24 @@ static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
 static bool isInitialized(TK* id);
 	
+static void whileStatement(){
+	uint32_t jumpIndex = currentChunk()->count;
+	consume(TK_L_PAREN, "Expected '('.");
+	expression();
+	consume(TK_R_PAREN, "Expected ')'.");
+
+	uint32_t endJumpIndex = emitJump(OP_JMP_FALSE);
+	//execute the body
+	endLine();
+
+	enterScope();
+	indentedBlock();	
+	exitScope();
+
+	jumpTo(OP_JMP, jumpIndex);
+	patchJump(endJumpIndex);
+}
+
 static void repeatStatement() {
 	uint32_t counterLocalIndex;
 	if(parser.current.type == TK_ID || parser.current.type == TK_INTEGER){
@@ -611,7 +636,7 @@ static void repeatStatement() {
 		endLine();
 
 		//Mark the jump position to the before the decrement and repeat body
-		uint32_t jumpIndex = currentChunk()->count-2;
+		uint32_t jumpIndex = currentChunk()->count;
 		
 		//decrement the counter by one
 		emitBundle(OP_GET_LOCAL, counterLocalIndex);

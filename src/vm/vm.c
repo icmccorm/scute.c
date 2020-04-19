@@ -195,10 +195,23 @@ static Obj* valueToObject(OBJType objType, Value val){
 	return NULL;
 }
 
+uint8_t readByte(){
+	uint8_t* test = vm.ip;
+	int index = vm.ip - currentChunk()->code;
+	++vm.ip;
+	return *(vm.ip - 1);
+}
+
+signed short readShort(){
+	signed short shortVal = (signed short)(*(vm.ip) << 8 | (*(vm.ip + 1)));
+	vm.ip += 2;
+	return shortVal;
+}
+
 static InterpretResult run() {
 
 #define READ_BYTE() (*vm.ip++)
-#define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+#define READ_SHORT() (readShort())
 #define READ_INT() (readInteger())
 #define READ_CONSTANT() (currentChunk()->constants->values[readInteger()])
 #define CONSTANT(index) (currentChunk()->constants->values[index])
@@ -232,7 +245,7 @@ static InterpretResult run() {
 				print(O_DEBUG, "\n");
 			}
 		#endif
-		switch(READ_BYTE()){
+		switch(readByte()){
 			case OP_BUILD_ARRAY: {
 				uint32_t numElements = READ_INT();
 				ObjArray* arrayObj = allocateArrayWithCapacity(numElements);
@@ -276,12 +289,12 @@ static InterpretResult run() {
 				}
 				} break;
 			case OP_JMP: {
-				int16_t offset = READ_SHORT();
-				vm.ip += offset;
+				signed short jumpDistance = READ_SHORT();
+				vm.ip += jumpDistance;
 				} break;
 			case OP_JMP_CNT: {
 				Value repeatVal = pop();
-				uint16_t offset = READ_SHORT();
+				signed short offset = READ_SHORT();
 				if(IS_NUM(repeatVal)){
 					int numRepeats = AS_NUM(repeatVal);
 					if(numRepeats > 0){
@@ -368,14 +381,14 @@ static InterpretResult run() {
 				}
 			} break;
 			case OP_JMP_FALSE: ;
-				int16_t offset = READ_SHORT();
+				signed short offset = READ_SHORT();
 				Value boolVal = pop();
 				if(isFalsey(boolVal)) vm.ip += offset;
 				break;
 			case OP_LIMIT: ;
 				uint32_t lowerBound = readInteger();
 				uint32_t upperBound = readInteger();
-				uint16_t limitOffset = READ_SHORT();
+				signed short limitOffset = READ_SHORT();
 				if(vm.frameIndex < lowerBound || vm.frameIndex > upperBound){
 					vm.ip += limitOffset;
 			} break;
@@ -386,7 +399,7 @@ static InterpretResult run() {
 			} break;
 			case OP_DEF_GLOBAL: {
 				ObjString* setString = AS_STRING(READ_CONSTANT());	
-				Value expr = pop();
+				Value expr = peek(0);
 				add(vm.globals, setString, expr);
 			} break;
 			case OP_LOAD_INST: {
