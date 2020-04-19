@@ -138,7 +138,7 @@ static uint32_t readEmbeddedInteger(Chunk* chunk, int numBytes, int offset){
 
 static int jumpInstruction(const char* name, Chunk* chunk, int offset){
 	print(O_DEBUG, "%-16s  ", name);
-	signed short testValue = (signed short)((chunk->code[offset + 1]) | (chunk->code[offset + 2] << 8));
+	signed short testValue = (signed short)((chunk->code[offset + 1]<<8) | (chunk->code[offset + 2]));
 	print(O_DEBUG, "%d\n",testValue);
 	return offset + 3;
 }

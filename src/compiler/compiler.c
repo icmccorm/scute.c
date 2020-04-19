@@ -304,8 +304,8 @@ ParseRule rules[] = {
 	{ NULL,     binary,     PC_ASSIGN },  // TK_INCR_ASSIGN,
 	{ NULL,     binary,     PC_ASSIGN },  // TK_DECR_ASSIGN,
 	{ unary,    NULL,       PC_UNARY },   // TK_BANG,
-	{ NULL,	    NULL,	    PC_UNARY },   // TK_INCR, 
-	{ NULL,	    NULL,	    PC_UNARY },   // TK_DECR,
+	{ unary,	NULL,	    PC_UNARY },   // TK_INCR, 
+	{ unary,	NULL,	    PC_UNARY },   // TK_DECR,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_COLON,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
 	{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
@@ -1163,6 +1163,15 @@ static void namedLocal(TK* id, bool canAssign, uint32_t index){
 		emitBundle(OP_DEF_LOCAL, index);
 	}else{
 		emitBundle(OP_GET_LOCAL, index);
+		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
+			advance();
+			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
+			emitBundle(OP_GET_LOCAL, index);
+			emitConstant(NUM_VAL(delta));
+			emitByte(OP_ADD);
+			emitBundle(OP_DEF_LOCAL, index);
+			emitByte(OP_POP);
+		}
 	}
 }
 
@@ -1173,6 +1182,15 @@ static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 		internGlobal(id);
 	}else{
 		emitBundle(OP_GET_GLOBAL, index);
+		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
+			advance();
+			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
+			emitBundle(OP_GET_GLOBAL, index);
+			emitConstant(NUM_VAL(delta));
+			emitByte(OP_ADD);
+			emitBundle(OP_DEF_GLOBAL, index);
+			emitByte(OP_POP);
+		}
 	}
 }
 
@@ -1297,13 +1315,38 @@ static void binary(bool canAssign){
 
 static void unary(bool canAssign){
 	TKType op = parser.previous.type;
-
-	parsePrecedence(PC_UNARY);
-
 	switch(op){
-		case TK_MINUS: emitByte(OP_NEGATE); break;
-		case TK_BANG: emitByte(OP_NOT); break;
-		default: return;
+		case TK_MINUS: parsePrecedence(PC_UNARY); emitByte(OP_NEGATE); break;
+		case TK_BANG: parsePrecedence(PC_UNARY); emitByte(OP_NOT); break;
+		case TK_DECR:
+		case TK_INCR:{
+			advance();
+			if(parser.previous.type != TK_ID){
+				errorAtCurrent("Expected an identifier.");
+			}else{
+				TK idToken = parser.previous;
+				int32_t varIndex = resolveLocal(&idToken);
+				uint8_t assignOp, getOp;
+
+				if(varIndex >= 0){
+					assignOp = OP_DEF_GLOBAL;
+					getOp = OP_GET_GLOBAL;
+					varIndex = (uint32_t) varIndex;
+				}else{
+					assignOp = OP_DEF_GLOBAL;
+					getOp = OP_GET_GLOBAL;
+					varIndex = getStringObjectIndex(&idToken);
+				}
+
+				int offset = (op == TK_DECR ? -1 : 1);
+				emitConstant(NUM_VAL(offset));
+				emitBundle(getOp, varIndex);
+				emitByte(OP_ADD);
+				emitBundle(assignOp, varIndex);
+			}
+		} break;
+		default:
+			break;
 	}
 }
 
