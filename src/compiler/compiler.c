@@ -633,6 +633,7 @@ static void repeatStatement() {
 			emitConstant(NUM_VAL(tokenToNumber(counterToken)));
 		}
 		uint32_t counterLocalIndex = addDummyLocal(currentCompiler());
+		
 		endLine();
 
 		//Mark the jump position to the before the decrement and repeat body

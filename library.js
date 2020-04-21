@@ -83,13 +83,13 @@ mergeInto(LibraryManager.library, {
 		_values = [];
 	},
 
-	printOut: function(ptr) {
+	em_printOut: function(ptr) {
 		Module._printFunction({type: 3, payload: Module.UTF8ToString(ptr)});
 	},
-	printDebug: function(ptr){
+	em_printDebug: function(ptr){
 		Module._printFunction({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
-	printError: function(ptr){
+	em_printError: function(ptr){
 		Module._printFunction({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 	
@@ -235,6 +235,18 @@ mergeInto(LibraryManager.library, {
 			degrees: _lib_getValueMeta(degrees),
 		});
 	},
+
+	em_printOut__deps: [
+
+	],
+
+	em_printDebug__deps: [
+
+	],
+
+	em_printError__deps: [
+
+	],
 
 	lib_getVector__deps: [
 		'lib_getValueMeta',

@@ -3,9 +3,9 @@
 #include "output.h"
 
 #ifdef EM_MAIN
-	extern void printOut(const char* c);
-	extern void printDebug(const char* c);
-	extern void printError(const char* c);
+	extern void em_printOut(const char* c);
+	extern void em_printDebug(const char* c);
+	extern void em_printError(const char* c);
 #endif
 
 void vprint(OutType type, const char* c, va_list arglist){
@@ -14,13 +14,13 @@ void vprint(OutType type, const char* c, va_list arglist){
 		vsprintf(line, c, arglist);
 		switch(type){
 			case O_DEBUG:
-				printDebug(line);
+				em_printDebug(line);
 				break;
 			case O_ERR:
-				printError(line);
+				em_printError(line);
 				break;
 			case O_OUT:
-				printOut(line);
+				em_printOut(line);
 				break;
 		}
 	#else
@@ -38,13 +38,13 @@ void print(OutType type, const char* c, ...){
 
 		switch(type){
 			case O_DEBUG:
-				printDebug(line);
+				em_printDebug(line);
 				break;
 			case O_ERR:
-				printError(line);
+				em_printError(line);
 				break;
 			case O_OUT:
-				printOut(line);
+				em_printOut(line);
 				break;
 		}
 	#else

@@ -31,7 +31,7 @@ uint32_t addDummyLocal(Compiler* compiler){
     target->depth = compiler->scopeDepth;
 	target->id = nullToken;
     ++compiler->localCount;	
-	return compiler->localCount-1;
+	return compiler->localCount;
 }
 
 void freeCompiler(Compiler* compiler){

@@ -64,7 +64,7 @@ void drawShape(ObjShape* shape, ValueLink* links){
 				ValueArray* sizeArray = AS_ARRAY(sizeVal)->array;
 				ValueArray* posArray = AS_ARRAY(posVal)->array;
 				
-				em_addVectorAttr("size", posArray->values);
+				em_addVectorAttr("size", sizeArray->values);
 				em_addVectorAttr("position", posArray->values);
 				em_addAttribute("rounding", &roundingVal);
 			} break;
@@ -100,6 +100,7 @@ void drawShape(ObjShape* shape, ValueLink* links){
 				em_addVectorAttr("start", startArray->values);
 				em_addVectorAttr("end", endArray->values);
 				} break;
+			
 			default:
 				break;
 		}
