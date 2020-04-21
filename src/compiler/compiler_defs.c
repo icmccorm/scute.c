@@ -28,10 +28,10 @@ uint32_t addDummyLocal(Compiler* compiler){
 		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->scopeCapacity);
     }
     Local* target = &(compiler->locals[compiler->localCount]);
-    target->depth = compiler->scopeDepth;
+    target->depth = compiler->scopeDepth + 1;
 	target->id = nullToken;
     ++compiler->localCount;	
-	return compiler->localCount;
+	return compiler->localCount-1;
 }
 
 void freeCompiler(Compiler* compiler){

@@ -563,7 +563,7 @@ static void indentedBlock() {
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
 			&& currentComp->locals[currentComp->localCount-1].depth 
-				> currentComp->scopeDepth){
+				== currentComp->scopeDepth){
 		emitByte(OP_POP);
 		--currentComp->localCount;
 	}
@@ -1260,12 +1260,15 @@ static void assignStatement(bool enforceGlobal){
 		parseAssignment();
 
 		markInitialized(/*idToken*/);
+		int localIndex = latestLocal();
 		emitBundle(OP_DEF_LOCAL, latestLocal());
 	}else{
 		parseAssignment();
 		uint32_t stringIndex = getStringObjectIndex(&idToken);
 		emitBundle(OP_DEF_GLOBAL, stringIndex);
-	}
+		emitByte(OP_POP);
+  	}
+
 	endLine();
 }
 
