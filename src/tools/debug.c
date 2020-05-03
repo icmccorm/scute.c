@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "common.h"
 #include "debug.h"
 #include "value.h"
 #include "chunk.h"
@@ -18,6 +19,7 @@ void printChunk(Chunk* chunk, const char* name) {
 	}
 	if(name != NULL) print(O_DEBUG, "======\n");
 }
+static uint32_t linkedStageInstruction(const char* name, Chunk* chunk, int offset);
 static int tripleInstruction(const char* name, Chunk* chunk, int offset);
 static int simpleInstruction(const char* name, int offset);
 static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset);
@@ -40,19 +42,19 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
 		case OP_DIVIDE:
-			return simpleInstruction("OP_DIVIDE", offset);
+			return linkedStageInstruction("OP_DIVIDE", chunk, offset);
 		case OP_RETURN:
-			return simpleInstruction("OP_RETURN", offset);
+			return linkedStageInstruction("OP_RETURN", chunk, offset);
+		case OP_ADD:
+			return linkedStageInstruction("OP_ADD", chunk, offset);
+		case OP_SUBTRACT:
+			return linkedStageInstruction("OP_SUBTRACT", chunk, offset);
+		case OP_MULTIPLY:
+			return linkedStageInstruction("OP_MULTIPLY", chunk, offset);
+		case OP_MODULO:
+			return linkedStageInstruction("OP_MODULO", chunk, offset);
 		case OP_NEGATE:
 			return simpleInstruction("OP_NEGATE", offset);
-		case OP_ADD:
-			return simpleInstruction("OP_ADD", offset);
-		case OP_SUBTRACT:
-			return simpleInstruction("OP_SUBTRACT", offset);
-		case OP_MULTIPLY:
-			return simpleInstruction("OP_MULTIPLY", offset);
-		case OP_MODULO:
-			return simpleInstruction("OP_MODULO", offset);
 		case OP_CONSTANT:
 			return embeddedValueInstruction("OP_CONSTANT", chunk, offset);
 		case OP_TRUE:
@@ -125,6 +127,16 @@ static int paramInstruction(const char* name, Chunk* chunk, int offset){
 	return offset + 2;
 }
 
+
+static uint32_t linkedStageInstruction(const char* name, Chunk* chunk, int offset){
+	print(O_DEBUG, "%s", name);
+	if(chunk->code[offset + 1]){
+		print(O_DEBUG, "*");
+	}
+	print(O_DEBUG, "\n");
+	return offset + 2;
+}
+
 static uint32_t readEmbeddedInteger(Chunk* chunk, int numBytes, int offset){
 	uint8_t bytes[numBytes];
 	uint32_t valIndex = 0;
@@ -160,7 +172,8 @@ static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset){
 
 	offset = offset + 1 + numBytes;
 	print(O_DEBUG, "%-16s %4d ", name, valIndex);
-	printValue(O_DEBUG, chunk->constants->values[valIndex]);
+	Value* val = &(chunk->constants->values[valIndex]);
+	if(val->lineIndex != -1) print(O_DEBUG, "*");;
 	print(O_DEBUG, "\n");
 	return offset + 1;
 }

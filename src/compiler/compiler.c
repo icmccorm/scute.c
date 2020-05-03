@@ -397,8 +397,6 @@ static void parsePrecedence(PCType precedence){
 		advance();
 		ParseRule* infixRule = rule;
 		if(infixRule){
-			parser.lastOperator = parser.previous.type;
-			parser.lastOperatorPrecedence = infixRule->precedence;
 			infixRule->infix(canAssign);
 		}
 		rule = getRule(parser.current.type);
@@ -494,27 +492,38 @@ static void synchronize() {
 
 static void expression() {
 	parsePrecedence(PC_ASSIGN);
-	if(parser.manipTarget){
-		parser.manipTarget->lineIndex = parser.lineIndex;
-		parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
-		#ifdef EM_MAIN
-			em_addValue(AS_NUM(*parser.manipTarget), parser.lastOperator, parser.manipTargetCharIndex, parser.manipTargetLength);	
-		#endif
-		++parser.currentLineValueIndex;
+	if(parser.traceValue){
+		parser.traceValue->lineIndex = parser.lineIndex;
+		parser.traceValue->inlineIndex = parser.currentLineValueIndex;
+		parser.traceValue->stages = GROW_ARRAY(parser.traceValue->stages, Intermediate, 0, parser.numIntermediates);
+		
 	}
-	parser.manipTarget = NULL;
+	#ifdef EM_MAIN
+		em_addValue(AS_NUM(*parser.manipTarget), parser.lastOperator, parser.traceValueCharIndex, parser.traceValueLength);	
+	#endif
+
+	++parser.currentLineValueIndex;
+	
+	print(O_OUT, "\n Line %d has %d stages \n", parser.lineIndex + 1, parser.numIntermediates);
+
+	parser.traceValue = NULL;
+	parser.numIntermediates = 0;
+	parser.traceValueCharIndex = -1;
+	parser.traceValueLength = -1;
+	parser.traceValuePrecedence = -1;
+
 }
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	Value* link = emitConstant(val);
-	if(parser.lastOperatorPrecedence <= parser.manipPrecedence){
-		parser.manipTarget = link;
-		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
-		parser.manipTargetLength = parser.previous.length;
-		parser.manipPrecedence = parser.lastOperatorPrecedence;
+	if(parser.traceValue == NULL){
+		parser.traceValue = link;
+		parser.traceValueCharIndex = parser.previous.start - parser.lastNewline;
+		parser.traceValueLength = parser.previous.length;
 	}
 }
+
 
 static double tokenToNumber(TK token){
 	if(token.type == TK_INTEGER || token.type == TK_REAL){
@@ -1109,6 +1118,9 @@ static void native(bool canAssign){
 		case TK_SQRT:
 			func = nativeSqrt;
 			break;
+		case TK_TRANS:
+			func = translate;
+			break;
 		default:
 			break;
 	}
@@ -1274,25 +1286,37 @@ static void assignStatement(bool enforceGlobal){
 
 static void binary(bool canAssign){
 	TKType op = parser.previous.type;
-
 	ParseRule* rule = getRule(op);
+
+	bool recordStage = false;
+	if(parser.traceValue){
+		if(parser.traceValuePrecedence == -1) parser.traceValuePrecedence = rule->precedence;
+		if(rule->precedence > parser.traceValuePrecedence){
+			++parser.numIntermediates;
+			recordStage = true;
+		} 
+	}
+
+	parser.lastOperator = parser.previous.type;
+	parser.lastOperatorPrecedence = rule->precedence;
+
 	parsePrecedence((PCType) (rule->precedence + 1));
 
 	switch(op){
 		case TK_PLUS: 
-			emitByte(OP_ADD); 
+			emitBytes(OP_ADD, (uint8_t) recordStage);
 			break;
 		case TK_MINUS: 
-			emitByte(OP_SUBTRACT); 
+			emitBytes(OP_SUBTRACT, (uint8_t) recordStage); 
 			break;
 		case TK_TIMES: 
-			emitByte(OP_MULTIPLY); 
+			emitBytes(OP_MULTIPLY, (uint8_t) recordStage); 
 			break;
 		case TK_DIVIDE: 
-			emitByte(OP_DIVIDE); 
+			emitBytes(OP_DIVIDE, (uint8_t) recordStage); 
 			break;
 		case TK_MODULO: 
-			emitByte(OP_MODULO); 
+			emitBytes(OP_MODULO, (uint8_t) recordStage); 
 			break;
 		case TK_LESS:
 			emitByte(OP_LESS);
@@ -1355,7 +1379,7 @@ static void unary(bool canAssign){
 }
 
 static void grouping(bool canAssign){
-	expression();
+	parsePrecedence(PC_ASSIGN);
 	consume(TK_R_PAREN, "Expect ')' after expression.");
 }
 
@@ -1379,9 +1403,10 @@ void initParser(Parser* parser, char* source){
 	parser->lastPrecedence = PC_NONE;
 	parser->lineHadValue = false;
 
-	parser->manipTarget = NULL;
-	parser->manipTargetCharIndex = -1;
-	parser->manipTargetLength = -1;
+	parser->traceValue = NULL;
+	parser->traceValueCharIndex = -1;
+	parser->traceValueLength = -1;
+	parser->traceValuePrecedence = -1;
 	parser->assigningManipulable = false;
 }
 

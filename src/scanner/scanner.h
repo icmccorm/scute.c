@@ -94,6 +94,8 @@ typedef enum {
 	TK_HCOS,
 	TK_RAD,
 	TK_SQRT,
+    TK_TRANS,
+    TK_NONE,
 } TKType;  
 
 typedef enum{

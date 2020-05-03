@@ -22,6 +22,12 @@ typedef enum{
 
 } PCType;
 
+struct sIntermediate{
+    double value;
+    PCType precedence;
+};
+
+
 typedef struct {
     TK current;
     TK previous;
@@ -29,6 +35,15 @@ typedef struct {
 
     TKType lastOperator;
     PCType lastOperatorPrecedence;
+    int numIntermediates;
+
+    Value* traceValue;
+    PCType traceValuePrecedence;
+    int traceValueCharIndex;
+    int traceValueLength;
+
+    bool assigningManipulable;
+    bool hadArray;
 
     bool hadError;
     bool panicMode;
@@ -41,16 +56,12 @@ typedef struct {
 	int currentLineValueIndex;
 
     PCType lastPrecedence;
+
     PCType currentPrecedence;
     PCType manipPrecedence;
 
-    Value* manipTarget;
-    int manipTargetCharIndex;
-    int manipTargetLength;
-
-    bool assigningManipulable;
-    bool hadArray;
 } Parser;
+
 
 typedef struct{
     TK id;

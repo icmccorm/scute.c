@@ -49,7 +49,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 
 void initGlobals(HashMap* map){
 	ObjString* canvasString = string("canvas");
-	add(map, canvasString, OBJ_VAL(allocateInstance(NULL)));
+	add(map, canvasString, OBJ_VAL(allocateInstance(NULL, INST_NONE, TK_NONE)));
 }
 
 void freeVM() {
@@ -126,7 +126,7 @@ static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numP
 		if(funcChunk->instanceType != TK_NULL){
 			newFrame->instanceObj = (ObjInstance*) allocateShape(super, funcChunk->instanceType);
 		}else{
-			newFrame->instanceObj = allocateInstance(super);
+			newFrame->instanceObj = allocateInstance(super, INST_NONE, TK_NONE);
 		}
 	}else{
 		newFrame->instanceObj = NULL;
@@ -438,7 +438,8 @@ static InterpretResult run() {
 				toPush.lineIndex = popped.lineIndex;
 				push(toPush);
 				break;	
-			case OP_ADD: ;
+			case OP_ADD: {
+				bool emit = (bool) READ_BYTE();
 				b = pop();
 				a = pop();
 				switch(b.type){
@@ -483,20 +484,28 @@ static InterpretResult run() {
 					default:
 						break;
 				}
-				break;
-			case OP_SUBTRACT:
+			} break;
+			case OP_SUBTRACT:{
+				bool emit = (bool) READ_BYTE();
+
 				BINARY_OP(-, NUM_VAL, double);
-				break;
-			case OP_DIVIDE:
+			}break;
+			case OP_DIVIDE:{
+				bool emit = (bool) READ_BYTE();
+
 				BINARY_OP(/, NUM_VAL, double);
-				break;
-			case OP_MULTIPLY:
+			}break;
+			case OP_MULTIPLY:{
+				bool emit = (bool) READ_BYTE();
+
 				BINARY_OP(*, NUM_VAL, double);
-				break;
-			case OP_MODULO:
+			} break;
+			case OP_MODULO:{
+				bool emit = (bool) READ_BYTE();
+
 				BINARY_OP(%, NUM_VAL, int);
-				break;
-			case OP_EQUALS: ;
+			} break;
+			case OP_EQUALS:
 				b = pop();
 				a = pop();
 				push(BOOL_VAL(valuesEqual(a, b)));
@@ -545,7 +554,7 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 		#endif
 		
 		result = run();
-		
+
 		#ifndef EM_MAIN
 			print(O_OUT, "-----\n\n[A] after runtime: %d\n", numBytesAllocated);
 		#endif

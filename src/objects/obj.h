@@ -10,7 +10,7 @@ extern size_t objectBytesAllocated;
 
 Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject(ObjString* funcName);
-ObjInstance* allocateInstance(ObjInstance* super);
+ObjInstance* allocateInstance(ObjInstance* super, InstanceType type, TKType subtype);
 ObjNative* allocateNative(void* func);
 ObjArray* allocateArray();
 ObjArray* allocateArrayWithCapacity(int capacity);
@@ -22,7 +22,8 @@ ObjString* string(char* start);
 
 void freeObject(Obj* obj);
 
-void addSegment(ObjShape* shape, ObjShape* segment);
+void addSegment(ObjShape* shape, ObjInstance* segment);
+void addTransform(ObjShape* shape, ObjInstance* transform);
 
 #define IS_STRING(value) (isObjectType(value, OBJ_STRING))
 #define IS_INST(value) (isObjectType(value, OBJ_INST))

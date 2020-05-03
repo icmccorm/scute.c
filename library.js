@@ -34,6 +34,14 @@ mergeInto(LibraryManager.library, {
 		ARC: 5,
 	},
 
+	transformTypes: {
+		TRANSLATE: 0,
+		ROTATE: 1,
+		SKEW: 2,
+		MATRIX: 3,
+		SCALE: 4,
+	},
+
 	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
 		_valuePointerOffsets.type = type;
 		_valuePointerOffsets.union = union;
@@ -100,6 +108,7 @@ mergeInto(LibraryManager.library, {
 			"attrs":{},
 			"styles":{},
 			"segments": [],
+			"transform": []
 		}
 	},
 
@@ -227,14 +236,29 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	em_addArc: function(center, degrees){
+	em_addArc: function(center, radius, degrees){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.ARC,
 			center: _lib_getVector(center),
-			degrees: _lib_getValueMeta(degrees),
+			radius: _lib_getVector(radius),
+			degrees: _lib_getVector(degrees),
 		});
 	},
+
+	em_addTranslate: function(vector){
+		if(!_currentShape.transform) _currentShape.transform = [];
+		_currentShape.transform.push({
+			type: _transformTypes.TRANSLATE,
+			vector: _lib_getVector(vector),
+		});
+	},
+
+	em_addTranslate__deps: [
+		"currentShape",
+		"lib_getVector",
+		"transformTypes"
+	],
 
 	em_printOut__deps: [
 

@@ -8,6 +8,10 @@
 #include "obj.h"
 #include "svg.h"
 
+#define IS_SHAPE(current) ((current && current->type == INST_SHAPE))
+#define PATH(current) (IS_SHAPE(current) && ((ObjShape*)current)->shapeType == TK_PATH)
+#define POLYPATH(current) (IS_SHAPE(current) && ((ObjShape*)current)->shapeType >= TK_POLY)
+
 Value nativeSine(Value* params, int numParams){
 	if(numParams > 0) {
 		Value operand = params[0];
@@ -123,86 +127,81 @@ Value nativeSqrt(Value* params, int numParams){
 }
 
 Value jump(Value* params, int numParams){
-	ObjShape* jumpInstance = allocateShape(NULL, TK_JUMP);
-	add(jumpInstance->instance.map, string("position"), VECTOR(0, 0));
+	ObjInstance* jumpInstance = allocateInstance(NULL, INST_SEG, TK_JUMP);
+	add(jumpInstance->map, string("position"), VECTOR(0, 0));
 
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+	if(POLYPATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
-			addSegment(shape, jumpInstance);
-			return OBJ_VAL((ObjInstance*) jumpInstance);
-		}
+		addSegment(shape, jumpInstance);
+		return OBJ_VAL(jumpInstance);
 	}
+	
 	runtimeError("Only polylines, polygons, and paths can accept move commands.");
-	return OBJ_VAL((ObjInstance*) jumpInstance);
+	return OBJ_VAL(jumpInstance);
 }
 
 Value move(Value* params, int numParams){
 
-	ObjShape* moveInstance = allocateShape(NULL, TK_MOVE);
-	add(moveInstance->instance.map, string("distance"), NUM_VAL(0));
+	ObjInstance* moveInstance = allocateInstance(NULL, INST_SEG, TK_MOVE);
+	add(moveInstance->map, string("distance"), NUM_VAL(0));
 
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+	if(POLYPATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
-			addSegment(shape, moveInstance);
-			return OBJ_VAL((ObjInstance*) moveInstance);
-		}
+		addSegment(shape, moveInstance);
+		return OBJ_VAL(moveInstance);
 	}
+	
 	runtimeError("Only polylines, polygons, and paths can accept move commands.");
-	return OBJ_VAL((ObjInstance*) moveInstance);
+	return OBJ_VAL(moveInstance);
 }
 
 Value vertex(Value* params, int numParams) {
-	ObjShape* vertexInstance = allocateShape(NULL, TK_VERT);
-	add(vertexInstance->instance.map, string("position"), VECTOR(0, 0));
+	ObjInstance* vertexInstance = allocateInstance(NULL, INST_SEG, TK_VERT);
+	add(vertexInstance->map, string("position"), VECTOR(0, 0));
 
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+	if(POLYPATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
-			addSegment(shape, vertexInstance);
-			return OBJ_VAL((ObjInstance*) vertexInstance);
-		}
+		addSegment(shape, vertexInstance);
+		return OBJ_VAL(vertexInstance);
 	}
+	
 	runtimeError("Only polylines, polygons, and paths can accept vertices.");
-	return OBJ_VAL((ObjInstance*) vertexInstance);
+	return OBJ_VAL(vertexInstance);
 }
 
 Value turn(Value* params, int numParams){
-	ObjShape* turnInstance = allocateShape(NULL, TK_TURN);
-	add(turnInstance->instance.map, string("degrees"), NUM_VAL(0));
-
+	ObjInstance* turnInstance = allocateInstance(NULL, INST_SEG, TK_TURN);
+	add(turnInstance->map, string("degrees"), NUM_VAL(0));
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+
+	if(POLYPATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
-			addSegment(shape, turnInstance);
-			return OBJ_VAL((ObjInstance*) turnInstance);
-		}
+		addSegment(shape, turnInstance);
+		return OBJ_VAL(turnInstance);
 	}
+	
 	runtimeError("Only polylines, polygons, and paths can accept turn commands.");
-	return OBJ_VAL((ObjInstance*) turnInstance);
+	return OBJ_VAL(turnInstance);
 }
 
 Value arc(Value* params, int numParams){
-	ObjShape* arcInstance = allocateShape(NULL, TK_ARC);
-	add(arcInstance->instance.map, string("center"), VECTOR(0, 0));
-	add(arcInstance->instance.map, string("degrees"), NUM_VAL(0));
+	ObjInstance* arcInstance = allocateInstance(NULL, INST_SEG, TK_ARC);
+	add(arcInstance->map, string("center"), VECTOR(0, 0));
+	add(arcInstance->map, string("radius"), VECTOR(0, 0));
+	add(arcInstance->map, string("degrees"), VECTOR(0, 0));
 
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+	if(PATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType == TK_PATH){
-			addSegment(shape, arcInstance);
-			return OBJ_VAL((ObjInstance*) arcInstance);
-		}
+		addSegment(shape, arcInstance);
+		return OBJ_VAL(arcInstance);
 	}
 
 	runtimeError("Only paths can accept arcs.");
-	return OBJ_VAL((ObjInstance*) arcInstance);
+	return OBJ_VAL(arcInstance);
 }
 
 Value rect(Value* params, int numParams){
@@ -260,39 +259,68 @@ Value path(Value* params, int numParams){
 }
 
 Value qBezier(Value* params, int numParams){
-	ObjShape* bezInstance = allocateShape(NULL, TK_QBEZ);
-	add(bezInstance->instance.map, string("control"), VECTOR(0, 0));
-	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
+	ObjInstance* bezInstance = allocateInstance(NULL, INST_SEG, TK_QBEZ);
+	add(bezInstance->map, string("control"), VECTOR(0, 0));
+	add(bezInstance->map, string("end"), VECTOR(0, 0));
 
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+		
+	if(POLYPATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType == TK_PATH){
-			addSegment(shape, bezInstance);
-			return OBJ_VAL((ObjInstance*) bezInstance);
-		}
+		addSegment(shape, bezInstance);
+		return OBJ_VAL((ObjInstance*) bezInstance);
 	}
 
 	runtimeError("Only paths can accept beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
 
-Value cBezier(Value* params, int numParams){
-	ObjShape* bezInstance = allocateShape(NULL, TK_CBEZ);
+Value translate(Value* params, int numParams){
+	ObjInstance* transInstance = allocateInstance(NULL, INST_TRANS, TK_CBEZ);
+	add(transInstance->map, string("vector"), VECTOR(0, 0));
 
-	add(bezInstance->instance.map, string("startControl"), VECTOR(0, 0));
-	add(bezInstance->instance.map, string("endControl"), VECTOR(0, 0));
-	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
+	ObjInstance* current = latestInstance();
+	if(IS_SHAPE(current)){
+		ObjShape* shape = (ObjShape*) current;
+		addTransform(shape, transInstance);
+		return OBJ_VAL((ObjInstance*) transInstance);
+	}
+	runtimeError("Only paths can accept beziers.");
+	return OBJ_VAL((ObjInstance*) transInstance);
+}
+
+Value rotate(Value* params, int numParams){
+	return NULL_VAL();
+}
+
+Value skew(Value* params, int numParams){
+	return NULL_VAL();
+
+}
+
+Value matrix(Value* params, int numParams){
+	return NULL_VAL();
+
+}
+
+Value scale(Value* params, int numParams){
+	return NULL_VAL();
+
+}
+
+Value cBezier(Value* params, int numParams){
+	ObjInstance* bezInstance = allocateInstance(NULL, INST_SEG, TK_CBEZ);
+	add(bezInstance->map, string("startControl"), VECTOR(0, 0));
+	add(bezInstance->map, string("endControl"), VECTOR(0, 0));
+	add(bezInstance->map, string("end"), VECTOR(0, 0));
 	
 	ObjInstance* current = latestInstance();
-	if(current && current->type == INST_SHAPE){
+	if(PATH(current)){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType == TK_PATH){
-			addSegment(shape, bezInstance);
-			return OBJ_VAL((ObjInstance*) bezInstance);
-		}
+		addSegment(shape, bezInstance);
+		return OBJ_VAL(bezInstance);
 	}
 
 	runtimeError("Only paths can accept beziers.");
-	return OBJ_VAL((ObjInstance*) bezInstance);
+	return OBJ_VAL(bezInstance);
 }

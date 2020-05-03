@@ -145,7 +145,7 @@ void printObject(OutType out, Value value){
 			if(inst->type == INST_SHAPE){
 				ObjShape* shape = (ObjShape*) inst;
 				for(int i = 0; i< shape->numSegments; ++i){
-					printMap(O_OUT, shape->segments[i]->instance.map, 1);
+					printMap(O_OUT, shape->segments[i]->map, 1);
 				}
 			}
 			break;

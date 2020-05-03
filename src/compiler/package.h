@@ -8,6 +8,8 @@
 typedef struct {
     int lineIndex;
     int inlineIndex;
+	Intermediate* stages;
+	int currStage;
 } ValueLink;
 
 typedef struct {
@@ -27,7 +29,7 @@ void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
 void freeObjects(Obj* list);
 void initCompilingChunk(CompilePackage* package);
-uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex);
+uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex, Intermediate* stages);
 
 #endif
 

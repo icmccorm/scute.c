@@ -39,14 +39,17 @@ void freeCompilationPackage(CompilePackage* code){
 	FREE(CompilePackage, code);
 }
 
-uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex){
+uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex, Intermediate* stages){
 	if(code->linkCount + 1 >= code->linkCapacity){
 		int oldCapacity = code->linkCapacity;
 		code->linkCapacity = GROW_CAPACITY(oldCapacity);
 		code->links = GROW_ARRAY(code->links, ValueLink,
 		oldCapacity, code->linkCapacity);
 	}
-	code->links[code->linkCount].lineIndex = lineIndex;
-	code->links[code->linkCount].inlineIndex = inlineIndex;
+	ValueLink* currentLink = &code->links[code->linkCount];
+
+	currentLink->lineIndex = lineIndex;
+	currentLink->inlineIndex = inlineIndex;
+	currentLink->stages = stages;
 	return code->linkCount++;
 }

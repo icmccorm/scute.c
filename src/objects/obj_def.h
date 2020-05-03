@@ -29,7 +29,8 @@ typedef enum {
 typedef enum {
 	INST_NONE,
 	INST_SHAPE,
-	INST_SEG
+	INST_SEG,
+	INST_TRANS,
 } InstanceType;
 
 //definition for Obj
@@ -55,6 +56,7 @@ struct sObjInstance{
 	Obj object;
 	HashMap* map;
 	InstanceType type;
+	TKType subtype;
 };
 
 struct sObjChunk{
@@ -76,14 +78,14 @@ struct sObjShape {
 	ObjInstance instance;
 	struct sObjShape* nextShape;
 	TKType shapeType;
-	struct sObjShape** segments;
+
+	struct sObjInstance** segments;
+	struct sObjInstance** transforms;
+	int numTransforms;
+	int transformCapacity;
+
 	int numSegments;
 	int segmentCapacity;
-};
-
-struct sObjShapeSegment {
-	ObjInstance instance;
-	TKType segmentType;
 };
 
 #endif

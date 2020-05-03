@@ -374,8 +374,15 @@ static TKType findIdentifier(){
                 switch(scanner.start[1]){
                     case 'a': return checkKeyword(2, 1, "n", TK_TAN);
                     case 'e': return checkKeyword(2, 2, "xt", TK_TEXT);
-                    case 'r': return checkKeyword(2, 2, "ue", TK_TRUE);
-					case 'o': {
+                    case 'r': {
+                        if(scanner.current - scanner.start > 2){
+                            switch(scanner.start[2]){
+                                case 'u': return checkKeyword(3, 1, "e", TK_TRUE);
+                                case 'a': return checkKeyword(3, 6, "nslate", TK_TRANS);
+                            }
+                        }
+                    } break;
+                    case 'o': {
 						if(scanner.current - scanner.start > 2){
 							return TK_ID;
 						}else{
@@ -476,6 +483,7 @@ static TK identifier(){
         case TK_QBEZ:
         case TK_CBEZ:
         case TK_LINE:
+        case TK_TRANS:
             return makeDualToken(TK_SHAPE, type);
         case TK_SIN:
         case TK_COS:

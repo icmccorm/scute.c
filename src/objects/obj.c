@@ -43,7 +43,8 @@ void freeObject(Obj* obj){
 			freeMap(close->map);
 			if(close->type == INST_SHAPE){
 				ObjShape* shape = (ObjShape*) close;
-				FREE_ARRAY(ObjShape*, shape->segments, shape->segmentCapacity);
+				FREE_ARRAY(ObjInstance*, shape->segments, shape->segmentCapacity);
+				FREE_ARRAY(ObjInstance*, shape->transforms, shape->transformCapacity);
 				FREE(ObjShape, shape);
 			}else{
 				FREE(ObjInstance, close);
@@ -77,8 +78,13 @@ ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
 	initMap(&inst->map);
 	shape->segmentCapacity = 0;
 	shape->numSegments = 0;
+
+	shape->transformCapacity = 0;
+	shape->numTransforms = 0;
+
 	shape->shapeType = shapeType;
 	shape->segments = NULL;
+	shape->transforms = NULL;
 
 	if(super != NULL){
 		HashEntry* current = super->map->first;
@@ -90,14 +96,25 @@ ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
 	return shape;
 }
 
-void addSegment(ObjShape* shape, ObjShape* segment){
+void addSegment(ObjShape* shape, ObjInstance* segment){
 	if(shape->numSegments + 1 >= shape->segmentCapacity){
 			int oldCapacity = shape->segmentCapacity;
 			shape->segmentCapacity = GROW_CAPACITY(oldCapacity);
-			shape->segments = GROW_ARRAY(shape->segments, ObjShape*,
+			shape->segments = GROW_ARRAY(shape->segments, ObjInstance*,
 			oldCapacity, shape->segmentCapacity);
 	}
 	shape->segments[shape->numSegments] = segment;
+	++shape->numSegments;
+}
+
+void addTransform(ObjShape* shape, ObjInstance* transform){
+	if(shape->numTransforms + 1 >= shape->transformCapacity){
+			int oldCapacity = shape->transformCapacity;
+			shape->transformCapacity = GROW_CAPACITY(oldCapacity);
+			shape->transforms = GROW_ARRAY(shape->transforms, ObjInstance*,
+			oldCapacity, shape->transformCapacity);
+	}
+	shape->transforms[shape->numTransforms] = transform;
 	++shape->numSegments;
 }
 
@@ -117,8 +134,9 @@ ObjNative* allocateNative(void* func){
 	return obj;
 }
 
-ObjInstance* allocateInstance(ObjInstance* super){
+ObjInstance* allocateInstance(ObjInstance* super, InstanceType type, TKType subtype){
 	ObjInstance* close = ALLOCATE_OBJ(ObjInstance, OBJ_INST);
+	close->subtype = subtype;
 	initMap(&close->map);
 	if(super != NULL){
 		HashEntry* current = super->map->first;
@@ -127,6 +145,7 @@ ObjInstance* allocateInstance(ObjInstance* super){
 			current = current->next;
 		}
 	}
+	close->type = type;
 	return close;
 }
 

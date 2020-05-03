@@ -5,6 +5,7 @@
 #include "output.h"
 #include "scanner.h"
 
+typedef struct sIntermediate Intermediate;
 typedef struct sChunk Chunk;
 typedef struct sObj Obj;
 typedef struct sObjString ObjString;
@@ -24,8 +25,13 @@ typedef enum {
 
 typedef struct {
 	VLType type;		//0
+
+	//TODO: Separate this information into a new struct, and link via in index
 	uint32_t lineIndex;
 	uint32_t inlineIndex;
+	Intermediate* stages;
+	uint8_t currStage;
+
 	union {				//8
 		bool boolean;
 		double number;
@@ -39,10 +45,10 @@ typedef struct {
 	Value * values;
 } ValueArray;	
 
-#define BOOL_VAL(value) ((Value){VL_BOOL, -1, -1, {.boolean = value}})
-#define NULL_VAL() ((Value){VL_NULL, -1, -1, {.number = 0}})
-#define NUM_VAL(value) ((Value){VL_NUM, -1, -1, {.number = value}})
-#define OBJ_VAL(value) ((Value){VL_OBJ, -1, -1, {.obj = (Obj*)(value)}})
+#define BOOL_VAL(value) ((Value){VL_BOOL, -1, -1, NULL, 0, {.boolean = value}})
+#define NULL_VAL() ((Value){VL_NULL, -1, -1, NULL, 0, {.number = 0}})
+#define NUM_VAL(value) ((Value){VL_NUM, -1, -1, NULL, 0, {.number = value}})
+#define OBJ_VAL(value) ((Value){VL_OBJ, -1, -1, NULL, 0, {.obj = (Obj*)(value)}})
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUM(value) ((value).as.number)

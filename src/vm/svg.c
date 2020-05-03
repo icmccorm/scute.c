@@ -53,8 +53,6 @@ void drawShape(ObjShape* shape, ValueLink* links){
 		unsigned address = (unsigned) shapeMap;
 		em_newShape(address, type);
 		
-		assignStyles(shape);
-
 		switch(type){
 			case TK_RECT: { 
 				Value posVal = getValue(shapeMap, string("position"));
@@ -114,11 +112,35 @@ double toRadians(int degrees){
 	return (PI/180) * degrees;
 }
 
+
+void processTransformations(ObjShape* shape){
+	for(int i = 0; i<shape->numTransforms; ++ i){
+
+		ObjInstance* transform = shape->transforms[i];
+		
+		switch(transform->subtype){
+			case TK_TRANS: {
+				Value vectorValue = getValue(transform->map, string("vector"));
+				ValueArray* vector = AS_ARRAY(vectorValue)->array;
+				#ifdef EM_MAIN
+					em_addTranslate(vector->values);
+				#endif
+				print(O_OUT, "transform: ");
+				printValue(O_OUT, vectorValue);
+				print(O_OUT, "\n");
+			}break;
+			default:
+				break;
+		}
+	}
+
+}
+
+
 void drawPoints(ObjShape* shape, ValueLink* link){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
-		assignStyles(shape);
 	#endif
 
 	int angle = 0;
@@ -127,10 +149,10 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 	points[1] = 1;
 
 	for(int i = 0; i<shape->numSegments; ++i){
-		ObjShape* segment = shape->segments[i];
-		HashMap* map = segment->instance.map;
+		ObjInstance* segment = shape->segments[i];
+		HashMap* map = segment->map;
 
-		switch(segment->shapeType){
+		switch(segment->subtype){
 			case TK_JUMP: {
 				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
 				points[0] = AS_NUM(getValueArray(vector->array, 0));
@@ -187,8 +209,8 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 				#endif
 			} break;
 			case TK_CBEZ: {
-				Value control1 = getValue(map, string("startControl"));
-				Value control2 = getValue(map, string("endControl"));
+				Value control1 = getValue(map, string("control1"));
+				Value control2 = getValue(map, string("control2"));
 				Value end = getValue(map, string("end"));
 
 				Value* control1Array = AS_ARRAY(control1)->array->values;
@@ -211,14 +233,20 @@ void drawPoints(ObjShape* shape, ValueLink* link){
 				Value* centerArray = AS_ARRAY(center)->array->values;
 
 				Value degrees = getValue(map, string("degrees"));
+				Value* degreesArray = AS_ARRAY(degrees)->array->values;
+
+				Value radius = getValue(map, string("radius"));
+				Value* radiusArray = AS_ARRAY(radius)->array->values;
 
 				#ifdef EM_MAIN
-					em_addArc(centerArray, degrees);
+					em_addArc(centerArray, radiusArray, degreesArray);
 				#else
 					print(O_OUT, "arc ");
 					printValue(O_OUT, center);
 					print(O_OUT, " ");
 					printValue(O_OUT, degrees);
+					print(O_OUT, " ");
+					printValue(O_OUT, radius);
 					print(O_OUT, "\n");
 				#endif
 			} break;
@@ -252,6 +280,10 @@ void pushShape(ObjShape* close){
 void renderFrame(CompilePackage* code){
 	while(vm.shapeCount > 0){
 		ObjShape* top = popShape();
+		#ifdef EM_MAIN
+			assignStyles(top);
+		#endif
+		processTransformations(top);
 		switch(top->shapeType){
 			case TK_POLY:
 			case TK_POLYL:
