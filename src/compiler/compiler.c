@@ -508,11 +508,12 @@ static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	Value* link = emitConstant(val);
-	if(parser.lastOperatorPrecedence <= parser.manipPrecedence){
+	if(parser.lastOperatorPrecedence <= parser.manipPrecedence && parser.parenDepth <= parser.manipTargetParenDepth){
 		parser.manipTarget = link;
 		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
 		parser.manipTargetLength = parser.previous.length;
 		parser.manipPrecedence = parser.lastOperatorPrecedence;
+		parser.manipTargetParenDepth = parser.parenDepth;
 	}
 }
 
@@ -1355,7 +1356,9 @@ static void unary(bool canAssign){
 }
 
 static void grouping(bool canAssign){
-	expression();
+	++parser.parenDepth;
+	parsePrecedence(PC_ASSIGN);
+	--parser.parenDepth;
 	consume(TK_R_PAREN, "Expect ')' after expression.");
 }
 
@@ -1383,6 +1386,7 @@ void initParser(Parser* parser, char* source){
 	parser->manipTargetCharIndex = -1;
 	parser->manipTargetLength = -1;
 	parser->assigningManipulable = false;
+	parser->parenDepth = 0;
 }
 
 

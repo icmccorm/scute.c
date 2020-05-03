@@ -29,6 +29,7 @@ typedef struct {
 
     TKType lastOperator;
     PCType lastOperatorPrecedence;
+    uint32_t parenDepth;
 
     bool hadError;
     bool panicMode;
@@ -47,6 +48,7 @@ typedef struct {
     Value* manipTarget;
     int manipTargetCharIndex;
     int manipTargetLength;
+    int manipTargetParenDepth;
 
     bool assigningManipulable;
     bool hadArray;

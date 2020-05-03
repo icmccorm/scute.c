@@ -158,9 +158,14 @@ static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numBytes = chunk->code[offset + 1];
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
 
+	Value* val = &(chunk->constants->values[valIndex]);
 	offset = offset + 1 + numBytes;
-	print(O_DEBUG, "%-16s %4d ", name, valIndex);
-	printValue(O_DEBUG, chunk->constants->values[valIndex]);
+	print(O_DEBUG, "%-16s", name, valIndex);
+	print(O_DEBUG, "%4d ", valIndex);
+	printValue(O_DEBUG, *val);
+	if(val->lineIndex != -1) {
+		print(O_DEBUG, "*", val->lineIndex);
+	}
 	print(O_DEBUG, "\n");
 	return offset + 1;
 }
