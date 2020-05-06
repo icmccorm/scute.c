@@ -46,7 +46,7 @@ void assignStyles(ObjShape* shape){
 }
 #endif
 
-void drawShape(ObjShape* shape, ValueLink* links){
+void drawShape(ObjShape* shape){
 	HashMap* shapeMap = shape->instance.map;
 	TKType type = shape->shapeType;
 	#ifdef EM_MAIN
@@ -114,7 +114,7 @@ double toRadians(int degrees){
 	return (PI/180) * degrees;
 }
 
-void drawPoints(ObjShape* shape, ValueLink* link){
+void drawPoints(ObjShape* shape){
 	unsigned address = (unsigned) shape->instance.map;
 	#ifdef EM_MAIN
 		em_newShape(address, shape->shapeType);
@@ -256,10 +256,10 @@ void renderFrame(CompilePackage* code){
 			case TK_POLY:
 			case TK_POLYL:
 			case TK_PATH:
-				drawPoints(top, code->links);
+				drawPoints(top);
 				break;
 			default:
-				drawShape(top, code->links);	
+				drawShape(top);	
 				break;
 		}
 	}

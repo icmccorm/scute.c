@@ -30,6 +30,9 @@ typedef struct {
     TKType lastOperator;
     PCType lastOperatorPrecedence;
     uint32_t parenDepth;
+    uint32_t operatorCount;
+    bool ascending;
+    uint32_t operatorCountAsc;
 
     bool hadError;
     bool panicMode;
@@ -37,7 +40,6 @@ typedef struct {
     char* codeStart;
     char* lastNewline; 
 
-	bool lineHadValue;
 	int lineIndex;
 	int currentLineValueIndex;
 
@@ -49,9 +51,6 @@ typedef struct {
     int manipTargetCharIndex;
     int manipTargetLength;
     int manipTargetParenDepth;
-
-    bool assigningManipulable;
-    bool hadArray;
 } Parser;
 
 typedef struct{

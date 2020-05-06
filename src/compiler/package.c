@@ -15,9 +15,6 @@ CompilePackage* initCompilationPackage(){
 	code->upperLimit = 0;
 	code->objects = NULL;
 	code->compiled = NULL;
-	code->links = NULL;
-	code->linkCapacity = 0;
-	code->linkCount = 0;
 	initMap(&code->strings);
 	initMap(&code->globals);
 	return code;
@@ -35,11 +32,11 @@ void freeCompilationPackage(CompilePackage* code){
 	freeMap(code->strings);
 	freeMap(code->globals);
 	freeObjects(code->objects);
-	FREE_ARRAY(ValueLink, code->links, code->linkCapacity);
 	FREE(CompilePackage, code);
 }
 
-uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex){
+/*
+uint32_t addLink(CompilePackage* code, uint32_t lineIndex, uint32_t inlineIndex, uint8_t numIntermediates){
 	if(code->linkCount + 1 >= code->linkCapacity){
 		int oldCapacity = code->linkCapacity;
 		code->linkCapacity = GROW_CAPACITY(oldCapacity);
@@ -48,5 +45,6 @@ uint32_t addLink(CompilePackage* code, int lineIndex, int inlineIndex){
 	}
 	code->links[code->linkCount].lineIndex = lineIndex;
 	code->links[code->linkCount].inlineIndex = inlineIndex;
+	code->links[code->linkCount].stages = GROW_ARRAY(code->links[code->linkCount].stages, Intermediate, 0, numIntermediates);
 	return code->linkCount++;
-}
+}*/

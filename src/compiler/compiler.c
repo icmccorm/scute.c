@@ -23,7 +23,8 @@ CompilePackage* result = NULL;
 
 #ifdef EM_MAIN
 	extern void em_configureValuePointerOffsets(int type, int un, int line, int in);
-	extern void em_addValue(double value, TKType role, int inlineOffset, int length);
+	extern void em_addValue(int inlineOffset, int length);
+	extern void em_addValueInsert(TKType role, int inlineOffset);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int newlineIndex);
 	
@@ -168,7 +169,7 @@ static void emitLinkedConstant(Value value, TK* token){
 		if(value.type == VL_OBJ && AS_OBJ(value)->type == OBJ_STRING){
 			em_addStringValue(AS_CSTRING(value), token->inlineIndex, token->length);
 		}else{
-			em_addValue(AS_NUM(value), parser.lastOperator, token->inlineIndex, token->length);
+			em_addValue(token->inlineIndex, token->length);
 		}
 	}
 	#endif
@@ -270,7 +271,7 @@ static uint32_t getObjectIndex(Obj* obj){
 	return writeValue(currentChunk(), OBJ_VAL(obj), parser.previous.line);
 }
 
-static void expression();
+static void expression(bool emitTrace);
 static void indentedBlock();
 
 static void and_(bool canAssign);
@@ -403,10 +404,14 @@ static void parsePrecedence(PCType precedence){
 		}
 		rule = getRule(parser.current.type);
 	}
+
+	if(rule->precedence == PC_NONE && parser.current.type != TK_R_PAREN){
+		parser.ascending = true;
+	}
 	
 	if(!canAssign && match(TK_ASSIGN)){
 		error("Invalid assignment target.");
-		expression();
+		expression(false);
 	}
 }
 
@@ -492,23 +497,28 @@ static void synchronize() {
 	if(parser.previous.type == TK_NEWLINE) parser.lastNewline = parser.previous.start;
 }
 
-static void expression() {
+
+static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
-	if(parser.manipTarget){
+	if(emitTrace && parser.manipTarget){
+		print(O_OUT, "Trace emitted.");
 		parser.manipTarget->lineIndex = parser.lineIndex;
 		parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
 		#ifdef EM_MAIN
-			em_addValue(AS_NUM(*parser.manipTarget), parser.lastOperator, parser.manipTargetCharIndex, parser.manipTargetLength);	
+			em_addValue(parser.manipTargetCharIndex, parser.manipTargetLength);	
 		#endif
 		++parser.currentLineValueIndex;
 	}
 	parser.manipTarget = NULL;
+	parser.manipPrecedence = -1;
+	parser.manipTargetParenDepth = -1;
 }
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	Value* link = emitConstant(val);
-	if(parser.lastOperatorPrecedence <= parser.manipPrecedence && parser.parenDepth <= parser.manipTargetParenDepth){
+	if((parser.lastOperatorPrecedence <= parser.manipPrecedence)){
+		parser.operatorCount = 0;
 		parser.manipTarget = link;
 		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
 		parser.manipTargetLength = parser.previous.length;
@@ -540,7 +550,7 @@ static void literal(bool canAssign) {
 }
 
 static void returnStatement() {
-	expression();
+	expression(true);
 	emitByte(OP_RETURN);
 }
 
@@ -606,7 +616,7 @@ static bool isInitialized(TK* id);
 static void whileStatement(){
 	uint32_t jumpIndex = currentChunk()->count;
 	consume(TK_L_PAREN, "Expected '('.");
-	expression();
+	expression(false);
 	consume(TK_R_PAREN, "Expected ')'.");
 
 	uint32_t endJumpIndex = emitJump(OP_JMP_FALSE);
@@ -685,7 +695,7 @@ static void drawStatement() {
 		emitBytes(OP_CALL, 0);
 
 	}else{
-		expression();
+		expression(false);
 	}
 	emitByte(OP_DRAW);
 }
@@ -806,7 +816,7 @@ static void defStatement() {
 }
 
 static void withStatement(){
-	expression();
+	expression(false);
 	endLine();
 
 	int currentScopeDepth = ++currentCompiler()->scopeDepth;
@@ -827,7 +837,7 @@ static void withStatement(){
 				advance();
 				TK idToken = parser.previous;
 				consume(TK_ASSIGN, "Expected an '=' operator.");
-				expression();
+				expression(true);
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 				emitByte(1);
 
@@ -882,7 +892,7 @@ static void stringLiteral(bool canAssign) {
 static void array(bool canAssign) {
 	uint32_t numParameters = 0;
 	while(parser.current.type != TK_R_BRACK){
-		expression();
+		expression(true);
 		++numParameters;
 		if(parser.current.type != TK_R_BRACK) consume(TK_COMMA, "Expected ','");
 	}
@@ -901,11 +911,11 @@ static uint8_t emitParams() {
 	uint8_t paramCount = 0;
 	consume(TK_L_PAREN, "Expected '('.");
 	if(parser.current.type != TK_R_PAREN){
-		expression();
+		expression(false);
 		if(!parser.panicMode) ++paramCount;
 		while(parser.current.type == TK_COMMA){
 			advance();
-			expression();
+			expression(false);
 			if(!parser.panicMode) ++paramCount;
 		}
 	}
@@ -915,21 +925,21 @@ static uint8_t emitParams() {
 
 static void printStatement() {
 	consume(TK_L_PAREN, "Expected '('.");
-	expression();
+	expression(false);
 	consume(TK_R_PAREN, "Expected ')'.");
 	emitByte(OP_PRINT);
 	endLine();
 }
 
 static void expressionStatement() {
-	expression();
+	expression(false);
 	emitByte(OP_POP);
 	endLine();
 }
 
 static void parseAssignment() {
 	if(match(TK_ASSIGN)){
-		expression();
+		expression(true);
 	}else{
 		emitByte(OP_NULL);
 	}
@@ -1132,7 +1142,7 @@ static void deref(bool canAssign){
 			TK idToken = parser.previous;
 			
 			if(canAssign && match(TK_ASSIGN)){
-				expression();
+				expression(false);
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 				emitByte(0);
 			}else{
@@ -1161,7 +1171,7 @@ static int32_t latestLocal(){
 }
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
-		expression();
+		expression(true);
 		emitBundle(OP_DEF_LOCAL, index);
 	}else{
 		emitBundle(OP_GET_LOCAL, index);
@@ -1179,7 +1189,7 @@ static void namedLocal(TK* id, bool canAssign, uint32_t index){
 
 static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
-		expression();
+		expression(true);
 		emitBundle(OP_DEF_GLOBAL, index);
 		internGlobal(id);
 	}else{
@@ -1278,7 +1288,8 @@ static void binary(bool canAssign){
 
 	ParseRule* rule = getRule(op);
 	parsePrecedence((PCType) (rule->precedence + 1));
-
+	++parser.operatorCount;
+	if(parser.ascending) ++parser.operatorCountAsc;
 	switch(op){
 		case TK_PLUS: 
 			emitByte(OP_ADD); 
@@ -1380,13 +1391,16 @@ void initParser(Parser* parser, char* source){
 
 	parser->currentPrecedence = PC_NONE;
 	parser->lastPrecedence = PC_NONE;
-	parser->lineHadValue = false;
 
 	parser->manipTarget = NULL;
 	parser->manipTargetCharIndex = -1;
 	parser->manipTargetLength = -1;
-	parser->assigningManipulable = false;
+	parser->manipTargetParenDepth = -1;
+	
 	parser->parenDepth = 0;
+	parser->ascending = false;
+	parser->operatorCountAsc = 0;
+	parser->operatorCount = 0;
 }
 
 

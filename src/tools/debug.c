@@ -164,7 +164,7 @@ static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset){
 	print(O_DEBUG, "%4d ", valIndex);
 	printValue(O_DEBUG, *val);
 	if(val->lineIndex != -1) {
-		print(O_DEBUG, "*", val->lineIndex);
+		print(O_DEBUG, "*(%d, %d)", val->lineIndex, val->inlineIndex);
 	}
 	print(O_DEBUG, "\n");
 	return offset + 1;

@@ -5,6 +5,7 @@
 #include "output.h"
 #include "scanner.h"
 
+typedef struct sIntermediate Intermediate;
 typedef struct sChunk Chunk;
 typedef struct sObj Obj;
 typedef struct sObjString ObjString;
@@ -24,8 +25,8 @@ typedef enum {
 
 typedef struct {
 	VLType type;		//0
-	uint32_t lineIndex;
-	uint32_t inlineIndex;
+	int32_t lineIndex;
+	int32_t inlineIndex;
 	union {				//8
 		bool boolean;
 		double number;

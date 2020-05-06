@@ -19,6 +19,12 @@ mergeInto(LibraryManager.library, {
 		4: "VL_CLR",
 	},
 
+	//OP_ADD 		0
+	//OP_SUBTRACT,	1
+	//OP_MULTIPLY,	2
+	//OP_DIVIDE,	3
+	//OP_MODULO,	4
+
 	attrStatus: {
 		CONST: 0,
 		COMP: 1,
@@ -57,13 +63,13 @@ mergeInto(LibraryManager.library, {
 		return getValue(valPtr + _valuePointerOffsets.union, 'double');
 	},
 
-	em_addValue: function(value, role, inlineOffset, length){
+	em_addValue: function(inlineOffset, length){
 		_values.push({
 			delta: 0,
-			targetValue: value,
-			role: role,
+			present: true,
 			inlineOffset: inlineOffset,
 			length: length,
+			stages:[],
 		})
 	},
 
@@ -81,6 +87,17 @@ mergeInto(LibraryManager.library, {
 			values: _values
 		});
 		_values = [];
+	},
+
+	em_addStage: function(valPtr, opPtr){
+		var role = getValue(opPtr, 'i8');
+		let valueMeta = _lib_getValueMeta(valPtr);
+		let line = Module._lines[valueMeta.lineIndex];
+		let value = line.values[valueMeta.inlineIndex];
+		value.stages.push({
+			value: valueMeta,
+			role: role,
+		});
 	},
 
 	em_printOut: function(ptr) {
@@ -313,8 +330,17 @@ mergeInto(LibraryManager.library, {
 		'lib_getValue'
 	],
 
+	em_addValueInsert__deps: [
+		'values',
+		'lib_getValue'
+	],
+
 	em_endLine__deps: [
 		'values',
+	],
+
+	em_addStage__deps: [
+		'lib_getValueMeta'
 	],
 
 	em_getValueMeta__deps: [

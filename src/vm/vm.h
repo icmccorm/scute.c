@@ -42,8 +42,6 @@ typedef struct {
 	Obj* runtimeObjects;
 	
 	int frameIndex;
-
-	ValueLink* links;
 } VM;
 
 extern VM vm;

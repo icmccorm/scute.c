@@ -15,6 +15,8 @@
 
 #ifdef EM_MAIN
 	extern void setMaxFrameIndex(int index);
+	extern void em_addStage(Value* value, uint8_t* op);
+
 #endif
 
 VM vm;
@@ -37,7 +39,6 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.shapeCapacity = 0;
 	vm.shapeCount = 0;
 	vm.shapeStack = NULL;
-	vm.links = package->links;
 	vm.ip = NULL;	
 
 	resetStack();
@@ -171,8 +172,16 @@ static bool valuesEqual(Value a, Value b){
 static InterpretResult callFunction(ObjChunk* chunkObj);
 
 
-Value transferIndex(Value a, Value b){
-	return a.lineIndex > -1 ? a : (b.lineIndex > -1 ? b : b);
+void transferIndex(Value* a, Value* b, Value* result){
+	Value* trace = a->lineIndex > -1 ? a : (b->lineIndex > -1 ? b : b);
+	result->lineIndex = trace->lineIndex;
+	result->inlineIndex = trace->inlineIndex;
+
+	#ifdef EM_MAIN
+		if(result->lineIndex >= 0) {
+			em_addStage(trace, (vm.ip-1));
+		}
+	#endif
 }
 
 #define READ_BYTE() (*vm.ip++)
@@ -226,9 +235,7 @@ static InterpretResult run() {
 		operandType typeB = AS_NUM(b); \
 		operandType typeA = AS_NUM(a); \
 		Value result = valueType(typeA op typeB); \
-		Value transfer = transferIndex(a, b); \
-		result.lineIndex = transfer.lineIndex; \
-		result.inlineIndex = transfer.inlineIndex; \
+		transferIndex(&a, &b, &result); \
 		push(result); \
 	} while(false); \
 
@@ -439,8 +446,8 @@ static InterpretResult run() {
 				push(toPush);
 				break;	
 			case OP_ADD: ;
-				b = pop();
-				a = pop();
+				BINARY_OP(-, NUM_VAL, double);
+				/*
 				switch(b.type){
 					case VL_NUM:
 						if(IS_NUM(a)){
@@ -482,7 +489,7 @@ static InterpretResult run() {
 						break;
 					default:
 						break;
-				}
+						}*/
 				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
