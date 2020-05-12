@@ -8,6 +8,9 @@
 #include "obj.h"
 #include "svg.h"
 
+
+#define SEGMENTABLE(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
+
 Value nativeSine(Value* params, int numParams){
 	if(numParams > 0) {
 		Value operand = params[0];

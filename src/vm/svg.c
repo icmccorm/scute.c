@@ -72,7 +72,6 @@ void drawShape(ObjShape* shape){
 			case TK_CIRC:{
 				Value posVal = getValue(shapeMap, string("position"));
 				Value radVal = getValue(shapeMap, string("radius"));
-
 				ValueArray* posArray = AS_ARRAY(posVal)->array;
 				
 				em_addVectorAttr("position", posArray->values);

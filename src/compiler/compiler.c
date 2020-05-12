@@ -501,7 +501,6 @@ static void synchronize() {
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace && parser.manipTarget){
-		print(O_OUT, "Trace emitted.");
 		parser.manipTarget->lineIndex = parser.lineIndex;
 		parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
 		#ifdef EM_MAIN
@@ -818,38 +817,15 @@ static void defStatement() {
 static void withStatement(){
 	expression(false);
 	endLine();
+	addDummyLocal(currentCompiler());	
 
-	int currentScopeDepth = ++currentCompiler()->scopeDepth;
-	while(parser.current.type != TK_EOF 
-			&& getIndentation() >= currentScopeDepth
-		){
+	enterScope();
+	indentedBlock();	
+	exitScope();
 
-		while(parser.current.type == TK_NEWLINE || parser.current.type == TK_INDENT){
-			advance();
-			if(parser.previous.type == TK_NEWLINE) 	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;;
-		}
-		switch(parser.current.type){
-			case TK_WITH:
-				advance();
-				withStatement();
-				break;
-			case TK_ID: ;
-				advance();
-				TK idToken = parser.previous;
-				consume(TK_ASSIGN, "Expected an '=' operator.");
-				expression(true);
-				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
-				emitByte(1);
-
-				endLine();
-				break;
-			default:	
-				statement();
-				break;
-		}
-	}
 	emitByte(OP_POP);
 	--currentCompiler()->scopeDepth;
+	--currentCompiler()->localCount;
 }
 
 static void frameStatement() {

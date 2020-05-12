@@ -60,7 +60,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	lib_getValue: function(valPtr){
-		return getValue(valPtr + _valuePointerOffsets.union, 'double');
+		return Math.floor(getValue(valPtr + _valuePointerOffsets.union, 'double') * 1000) / 1000;
 	},
 
 	em_addValue: function(inlineOffset, length){
@@ -69,7 +69,7 @@ mergeInto(LibraryManager.library, {
 			present: true,
 			inlineOffset: inlineOffset,
 			length: length,
-			stages:[],
+			stages: [],
 		})
 	},
 
@@ -91,11 +91,12 @@ mergeInto(LibraryManager.library, {
 
 	em_addStage: function(valPtr, opPtr){
 		var role = getValue(opPtr, 'i8');
-		let valueMeta = _lib_getValueMeta(valPtr);
-		let line = Module._lines[valueMeta.lineIndex];
-		let value = line.values[valueMeta.inlineIndex];
-		value.stages.push({
-			value: valueMeta,
+		var valueMeta = _lib_getValueMeta(valPtr);
+		var line = Module._lines[valueMeta.lineIndex];
+		var value = line.values[valueMeta.inlineIndex];
+		var stages = value["stages"];
+		stages.push({
+			value: valueMeta.value,
 			role: role,
 		});
 	},

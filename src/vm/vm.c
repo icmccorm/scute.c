@@ -89,15 +89,19 @@ Value pop(){
 }
 
 static Value peek(int distance){
-	return vm.stackTop[-1 - distance];
+	Value peeked = vm.stackTop[-1 - distance];
+	return peeked;
 }
 
 ObjInstance* latestInstance(){
-	Value peeked = peek(0);
-	if(IS_OBJ(peeked)){
-		Obj* peekedObj = AS_OBJ(peeked);
-		if(peeked.type == OBJ_INST){
-			return (ObjInstance*) peekedObj;
+	int stackDistance = vm.stackTop - vm.stackBottom;
+	for(int index = 0; index<stackDistance; ++index){
+		Value peeked = peek(index);
+		if(IS_OBJ(peeked)){
+			Obj* peekedObj = AS_OBJ(peeked);
+			if(peeked.type == OBJ_INST){
+				return (ObjInstance*) peekedObj;
+			}
 		}
 	}
 	return currentInstance();
@@ -266,9 +270,8 @@ static InterpretResult run() {
 				bool pushBackInstance = (bool) READ_BYTE();
 
 				Value expression = pop();
-
-
 				Value instanceVal = pop();
+
 				if(IS_INST(instanceVal)){
 					ObjInstance* inst = AS_INST(instanceVal);
 					add(inst->map, memberId, expression);
@@ -410,7 +413,7 @@ static InterpretResult run() {
 				add(vm.globals, setString, expr);
 			} break;
 			case OP_LOAD_INST: {
-				ObjInstance* currentInstance = currentStackFrame()->instanceObj;
+				ObjInstance* currentInstance = latestInstance();
 				Value closeVal = OBJ_VAL(currentInstance);
 				push(closeVal);
 			} break;	
@@ -446,7 +449,7 @@ static InterpretResult run() {
 				push(toPush);
 				break;	
 			case OP_ADD: ;
-				BINARY_OP(-, NUM_VAL, double);
+				BINARY_OP(+, NUM_VAL, double);
 				/*
 				switch(b.type){
 					case VL_NUM:

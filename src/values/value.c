@@ -114,7 +114,7 @@ void printValue(OutType out, Value value){
 			print(out, "NULL");
 			break;
 		case VL_NUM:
-			print(out, "%g", AS_NUM(value));
+			print(out, "%lf", AS_NUM(value));
 			break;
 		case VL_BOOL:
 			print(out,"%s", AS_BOOL(value) ? "true" : "false");
@@ -123,7 +123,7 @@ void printValue(OutType out, Value value){
 			printObject(out, value);
 			break;
 		default:
-			print(out, "%g", AS_NUM(value));
+			print(out, "%lf", AS_NUM(value));
 			break;
 	}
 }
