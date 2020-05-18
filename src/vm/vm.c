@@ -302,28 +302,6 @@ static InterpretResult run() {
 				signed short jumpDistance = READ_SHORT();
 				vm.ip += jumpDistance;
 				} break;
-			case OP_JMP_CNT: {
-				Value repeatVal = pop();
-				signed short offset = READ_SHORT();
-				if(IS_NUM(repeatVal)){
-					int numRepeats = AS_NUM(repeatVal);
-					if(numRepeats > 0){
-						push(NUM_VAL(numRepeats - 1));
-					}else{
-						vm.ip += offset;
-					}
-				}else{
-					switch(repeatVal.type){
-						case VL_NULL:
-							runtimeError("Repeat value is null.");
-							break;
-						default:
-							runtimeError("Repeat value is not a number.");
-							break;
-					}
-					return INTERPRET_RUNTIME_ERROR;
-				}
-			} break;
 			case OP_RETURN: ;
 				uint8_t* returnAddress = popStackFrame();
 				if(returnAddress){
