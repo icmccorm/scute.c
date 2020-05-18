@@ -16,7 +16,6 @@
 #ifdef EM_MAIN
 	extern void setMaxFrameIndex(int index);
 	extern void em_addStage(Value* value, uint8_t* op);
-
 #endif
 
 VM vm;
@@ -40,6 +39,8 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.shapeCount = 0;
 	vm.shapeStack = NULL;
 	vm.ip = NULL;	
+
+	vm.instanceCount = 0;
 
 	resetStack();
 	initMap(&vm.globals);
@@ -71,7 +72,7 @@ static StackFrame* currentStackFrame(){
 }	
 
 ObjInstance* currentInstance(){
-	return currentStackFrame()->instanceObj;
+	return (vm.instanceStack[vm.instanceCount-1]);
 }
 
 static Chunk* currentChunk(){
@@ -91,20 +92,6 @@ Value pop(){
 static Value peek(int distance){
 	Value peeked = vm.stackTop[-1 - distance];
 	return peeked;
-}
-
-ObjInstance* latestInstance(){
-	int stackDistance = vm.stackTop - vm.stackBottom;
-	for(int index = 0; index<stackDistance; ++index){
-		Value peeked = peek(index);
-		if(IS_OBJ(peeked)){
-			Obj* peekedObj = AS_OBJ(peeked);
-			if(peeked.type == OBJ_INST){
-				return (ObjInstance*) peekedObj;
-			}
-		}
-	}
-	return currentInstance();
 }
 
 void runtimeError(char* format, ...){
@@ -142,6 +129,11 @@ static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numP
 	vm.ip = funcChunk->chunk->code;
 }
 
+static void pushInstance(ObjInstance* instance){
+	vm.instanceStack[vm.instanceCount] = instance;
+	++vm.instanceCount;
+}
+
 static uint8_t* popStackFrame(){
 	StackFrame* frame = currentStackFrame();
 	if(frame->chunkObj->chunkType == CK_CONSTR){
@@ -150,6 +142,13 @@ static uint8_t* popStackFrame(){
 	--vm.stackFrameCount;
 	uint8_t* opLocation = vm.stackFrames[vm.stackFrameCount].returnTo;
 	return opLocation;
+}
+
+static void popInstance(bool pushback){
+	if(pushback){
+		push(OBJ_VAL(currentInstance()));
+	}
+	--vm.instanceCount;
 }
 
 static bool isFalsey(Value val){
@@ -257,6 +256,17 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(readByte()){
+			case OP_POP_INST:{
+				popInstance(false);
+			 }break;
+			case OP_PUSH_INST: {
+				Value isInstance = pop();
+				if(IS_INST(isInstance)){
+					pushInstance(AS_INST(isInstance));
+				}else{
+					runtimeError("Only instances can be dereferenced.");
+				}	
+			} break;
 			case OP_BUILD_ARRAY: {
 				uint32_t numElements = READ_INT();
 				ObjArray* arrayObj = allocateArrayWithCapacity(numElements);
@@ -391,8 +401,8 @@ static InterpretResult run() {
 				add(vm.globals, setString, expr);
 			} break;
 			case OP_LOAD_INST: {
-				ObjInstance* currentInstance = latestInstance();
-				Value closeVal = OBJ_VAL(currentInstance);
+				ObjInstance* inst = currentInstance();
+				Value closeVal = OBJ_VAL(inst);
 				push(closeVal);
 			} break;	
 			case OP_GET_LOCAL: {
@@ -428,49 +438,6 @@ static InterpretResult run() {
 				break;	
 			case OP_ADD: ;
 				BINARY_OP(+, NUM_VAL, double);
-				/*
-				switch(b.type){
-					case VL_NUM:
-						if(IS_NUM(a)){
-							push(NUM_VAL(AS_NUM(a) + AS_NUM(b)));
-						}else if(IS_STRING(a)){
-							int strLength = (int)((ceil(log10(AS_NUM(b)))+1)*sizeof(char));
-							char str[strLength];
-							sprintf(str, "%f", AS_NUM(b));
-							
-							int combinedLength = AS_STRING(a)->length + strLength;
-							char totalStr[combinedLength];
-							sprintf(totalStr, "%s%s", AS_CSTRING(a), str);
-
-							push(OBJ_VAL(tokenString(totalStr, combinedLength)));
-						}else{
-							runtimeError("Only number types and strings can be added.");
-						}
-						break;
-					case VL_OBJ:
-						if(IS_STRING(a)){
-							int combinedLength = AS_STRING(a)->length + AS_STRING(b)->length;
-							char concat[combinedLength];
-							sprintf(concat, "%s%s", AS_CSTRING(a), AS_CSTRING(b));
-
-							push(OBJ_VAL(tokenString(concat, combinedLength)));
-						}else if(IS_NUM(a)){
-							int strLength = (int)((ceil(log10(AS_NUM(a)))+1)*sizeof(char));
-							char str[strLength];
-							sprintf(str, "%f", AS_NUM(a));
-							
-							int combinedLength = AS_STRING(b)->length + strLength;
-							char totalStr[combinedLength];
-							sprintf(totalStr, "%s%s", str, AS_CSTRING(b));
-
-							push(OBJ_VAL(tokenString(totalStr, combinedLength)));
-						}else{
-							runtimeError("Only number types and strings can be added.");
-						}
-						break;
-					default:
-						break;
-						}*/
 				break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);

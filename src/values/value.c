@@ -140,6 +140,8 @@ void printObject(OutType out, Value value){
 			print(out, "------------\n");
 			break;
 		case OBJ_INST: ;
+			print(out, "shape");
+			/*
 			ObjInstance* inst = AS_INST(value);
 			printMap(O_OUT, inst->map, 0);
 			if(inst->type == INST_SHAPE){
@@ -147,7 +149,7 @@ void printObject(OutType out, Value value){
 				for(int i = 0; i< shape->numSegments; ++i){
 					printMap(O_OUT, shape->segments[i]->instance.map, 1);
 				}
-			}
+			}*/
 			break;
 		case OBJ_ARRAY: ;
 			printArray(O_OUT, AS_ARRAY(value)->array);

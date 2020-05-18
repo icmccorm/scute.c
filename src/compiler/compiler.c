@@ -123,11 +123,21 @@ static Compiler* exitCompilationScope(){
 }
 
 static void enterScope(){
-	currentCompiler()->scopeDepth++;
+	++currentCompiler()->scopeDepth;
+}
+
+static void enterEnclosedScope(){
+	++currentCompiler()->scopeDepth;
+	currentCompiler()->enclosed = true;
 }
 
 static void exitScope(){
 	currentCompiler()->scopeDepth--;
+}
+
+static void exitEnclosedScope(){
+	--currentCompiler()->scopeDepth;
+	currentCompiler()->enclosed = true;
 }
 
 CompilePackage* currentResult(){
@@ -607,6 +617,7 @@ static void internGlobal(TK* id){
 }
 
 static int32_t resolveLocal(TK*id);
+static int32_t resolveInstanceLocal();
 static int32_t latestLocal();
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
@@ -642,7 +653,7 @@ static void repeatStatement() {
 		}else{
 			emitConstant(NUM_VAL(tokenToNumber(counterToken)));
 		}
-		uint32_t counterLocalIndex = addDummyLocal(currentCompiler());
+		uint32_t counterLocalIndex = addCounterLocal(currentCompiler());
 		
 		endLine();
 
@@ -815,17 +826,13 @@ static void defStatement() {
 }
 
 static void withStatement(){
-	expression(false);
+ 	expression(false);
 	endLine();
-	addDummyLocal(currentCompiler());	
-
-	enterScope();
+	emitByte(OP_PUSH_INST);
+	enterEnclosedScope();
 	indentedBlock();	
-	exitScope();
-
-	emitByte(OP_POP);
-	--currentCompiler()->scopeDepth;
-	--currentCompiler()->localCount;
+	exitEnclosedScope();
+	emitByte(OP_POP_INST);
 }
 
 static void frameStatement() {
@@ -1107,7 +1114,7 @@ static void scopeDeref(bool canAssign){
 		emitByte(OP_LOAD_INST);
 		deref(canAssign);
 	}else{
-		errorAtCurrent("Cannot set a scope property outside of a scope");
+		errorAtCurrent("The current instance is null.");
 	}
 }
 
@@ -1118,7 +1125,7 @@ static void deref(bool canAssign){
 			TK idToken = parser.previous;
 			
 			if(canAssign && match(TK_ASSIGN)){
-				expression(false);
+				expression(true);
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 				emitByte(0);
 			}else{
@@ -1139,6 +1146,18 @@ static int32_t resolveLocal(TK*id){
 			return i;
 		}
 	}
+	return (int32_t) -1;
+}
+
+static int32_t resolveInstanceLocal(){
+	Compiler* comp = currentCompiler();
+	for(int i = comp->localCount-1; i>=0; --i){
+		Local* currentLocal = &comp->locals[i];
+		if(currentLocal->type == INST){
+			return i;
+		}
+	}
+	errorAtCurrent("Unable to dereference this scope.");
 	return (int32_t) -1;
 }
 

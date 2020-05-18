@@ -53,7 +53,15 @@ typedef struct {
     int manipTargetParenDepth;
 } Parser;
 
+
+typedef enum {
+    VAR,
+    CNT,
+    INST
+} LocalType;
+
 typedef struct{
+    LocalType type;
     TK id;
     int depth;
 } Local;
@@ -63,9 +71,12 @@ extern Parser parser;
  struct sCompiler{
     Local* locals;
     int localCount;
+
     int scopeDepth;
     int scopeCapacity;
+
     bool enclosed;
+
     CompilePackage* result;
     TKType instanceType;
     struct sCompiler* super;
@@ -85,6 +96,8 @@ typedef struct{
 } ParseRule;
 
 uint32_t addLocal(Compiler* compiler, TK idName);
-uint32_t addDummyLocal(Compiler* compiler);
+uint32_t addInstanceLocal(Compiler* compiler);
+uint32_t addCounterLocal(Compiler* compiler);
+
 void freeCompiler(Compiler* compiler);
 #endif

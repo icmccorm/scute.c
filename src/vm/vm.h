@@ -5,9 +5,11 @@
 #include "value.h"
 #include "package.h"
 
+#define PI 3.141593
+#define E 2.71828
+
 #define STACK_MAX 256
-#define PI ((double)3.141592653589793238462)
-#define E  ((double)2.718281828459045235360)
+#define INST_STACK_MAX 16
 
 void runtimeError(char* format, ...);
 
@@ -36,6 +38,9 @@ typedef struct {
 	ObjShape** shapeStack;
 	int shapeCount;
 	int shapeCapacity;
+
+	ObjInstance* instanceStack[INST_STACK_MAX];
+	int instanceCount;
 
 	HashMap* globals;
 

@@ -152,5 +152,4 @@ typedef struct {
 } Scanner;
 
 extern Scanner scanner;
-
 #endif

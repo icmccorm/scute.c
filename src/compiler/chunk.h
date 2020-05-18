@@ -60,8 +60,6 @@ typedef enum {
 	OP_POP_STACKFRAME,
 	OP_MERGE_MAPS,
 
-	OP_PUSH_INST,
-	OP_LOAD_INST,
 	OP_JMP_CNT,
 
 	OP_JMP_FALSE,
@@ -72,8 +70,12 @@ typedef enum {
 	OP_CALL,
 	OP_JMP,
 
-	OP_DEF_INST,
 	OP_BUILD_ARRAY,
+
+	OP_PUSH_INST,
+	OP_POP_INST,
+	OP_LOAD_INST,
+	OP_DEF_INST,
 } OpCode;
 
 void initChunk(Chunk* chunk);

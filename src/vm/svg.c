@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "svg.h"
 #include "hashmap.h"
 #include "obj.h"
@@ -8,10 +9,7 @@
 #include "vm.h"
 #include "scanner.h"
 #include "color.h"
-#include "math.h"
 #include "package.h"
-
-
 
 #ifdef EM_MAIN
 
@@ -110,7 +108,7 @@ void drawShape(ObjShape* shape){
 }
 
 double toRadians(int degrees){
-	return (PI/180) * degrees;
+	return (3.14/180) * degrees;
 }
 
 void drawPoints(ObjShape* shape){
@@ -155,7 +153,7 @@ void drawPoints(ObjShape* shape){
 				points[0] += (int) round(cos(toRadians(angle))*AS_NUM(distance));
 				points[1] += (int) round(sin(toRadians(angle))*AS_NUM(distance));
 				#ifdef EM_MAIN
-					em_addMove(points[0], points[1], &distance);				
+					em_addMove(&distance);				
 				#else
 					print(O_OUT, "Move %f: (%d, %d)\n", AS_NUM(distance), points[0], points[1]);
 				#endif
@@ -163,7 +161,7 @@ void drawPoints(ObjShape* shape){
 			case TK_TURN: ;
 				Value degrees = getValue(map, string("degrees"));
 				#ifdef EM_MAIN
-					em_addTurn(&degrees, angle);				
+					em_addTurn(&degrees);				
 				#else
 					print(O_OUT, "Turn by %d deg to %d deg\n", degrees, angle);
 				#endif

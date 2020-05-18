@@ -38,11 +38,11 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 all : ./$(EXEC_FILE) test web node
 
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
-	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
+	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS) -lm
 
 $(BUILD)/%.c.o : %.c 
 	@$(MKDIR) -p $(dir $@)
-	@$(CC) -g -D DEBUG $(INC_TEST_FLAGS) $(INC_FLAGS)  $(D_FLAGS) -c $< -o $@
+	@$(CC) -g -D DEBUG $(INC_TEST_FLAGS) $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
 .PHONY : clean
 
