@@ -74,5 +74,4 @@ void addValues(ValueArray* array, int numValues, ...);
 Value vector(Value x, Value y);
 
 #define VECTOR(x, y) (vector(NUM_VAL(x), NUM_VAL(y)))
-
 #endif

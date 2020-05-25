@@ -30,9 +30,6 @@ typedef struct {
     TKType lastOperator;
     PCType lastOperatorPrecedence;
     uint32_t parenDepth;
-    uint32_t operatorCount;
-    bool ascending;
-    uint32_t operatorCountAsc;
 
     bool hadError;
     bool panicMode;
@@ -43,11 +40,8 @@ typedef struct {
 	int lineIndex;
 	int currentLineValueIndex;
 
-    PCType lastPrecedence;
-    PCType currentPrecedence;
-    PCType manipPrecedence;
-
     Value* manipTarget;
+    PCType manipPrecedence;
     int manipTargetCharIndex;
     int manipTargetLength;
     int manipTargetParenDepth;

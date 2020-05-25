@@ -111,19 +111,7 @@ void runtimeError(char* format, ...){
 static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams){
 	StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
 	++vm.stackFrameCount;
-	
 	newFrame->chunkObj = funcChunk;
-
-	if(funcChunk->chunkType == CK_CONSTR){
-		if(funcChunk->instanceType != TK_NULL){
-			newFrame->instanceObj = (ObjInstance*) allocateShape(super, funcChunk->instanceType);
-		}else{
-			newFrame->instanceObj = allocateInstance(super);
-		}
-	}else{
-		newFrame->instanceObj = NULL;
-	}
-
 	newFrame->stackOffset = vm.stackTop - numParams;
 	newFrame->returnTo = vm.ip;
 	vm.ip = funcChunk->chunk->code;
@@ -136,9 +124,6 @@ static void pushInstance(ObjInstance* instance){
 
 static uint8_t* popStackFrame(){
 	StackFrame* frame = currentStackFrame();
-	if(frame->chunkObj->chunkType == CK_CONSTR){
-		push(OBJ_VAL(frame->instanceObj));
-	}
 	--vm.stackFrameCount;
 	uint8_t* opLocation = vm.stackFrames[vm.stackFrameCount].returnTo;
 	return opLocation;
@@ -179,12 +164,6 @@ void transferIndex(Value* a, Value* b, Value* result){
 	Value* trace = a->lineIndex > -1 ? a : (b->lineIndex > -1 ? b : b);
 	result->lineIndex = trace->lineIndex;
 	result->inlineIndex = trace->inlineIndex;
-
-	#ifdef EM_MAIN
-		if(result->lineIndex >= 0) {
-			em_addStage(trace, (vm.ip-1));
-		}
-	#endif
 }
 
 #define READ_BYTE() (*vm.ip++)

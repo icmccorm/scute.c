@@ -19,12 +19,6 @@ mergeInto(LibraryManager.library, {
 		4: "VL_CLR",
 	},
 
-	//OP_ADD 		0
-	//OP_SUBTRACT,	1
-	//OP_MULTIPLY,	2
-	//OP_DIVIDE,	3
-	//OP_MODULO,	4
-
 	attrStatus: {
 		CONST: 0,
 		COMP: 1,
@@ -40,11 +34,13 @@ mergeInto(LibraryManager.library, {
 		ARC: 5,
 	},
 
-	em_configureValuePointerOffsets: function (type, union, lineIndex, inlineIndex){
-		_valuePointerOffsets.type = type;
-		_valuePointerOffsets.union = union;
-		_valuePointerOffsets.lineIndex = lineIndex;
-		_valuePointerOffsets.inlineIndex = inlineIndex;
+
+
+	em_configureValuePointerOffsets: function (typePtr, unionPtr, lineIndexPtr, inlineIndexPtr){
+		_valuePointerOffsets.type = getValue(typePtr, 'i32');
+		_valuePointerOffsets.union = getValue(unionPtr, 'i32');
+		_valuePointerOffsets.lineIndex = getValue(lineIndexPtr, 'i32');
+		_valuePointerOffsets.inlineIndex = getValue(inlineIndexPtr, 'i32');
 		_valuePointerOffsets.totalLength = 24;
 	},
 
@@ -63,12 +59,30 @@ mergeInto(LibraryManager.library, {
 		return Math.floor(getValue(valPtr + _valuePointerOffsets.union, 'double') * 1000) / 1000;
 	},
 
-	em_addValue: function(inlineOffset, length){
+	em_addValue: function(inlineOffsetPtr, lengthPtr, opPtr, valPtr){
+		var inlineOffset = getValue(inlineOffsetPtr, 'i32');
+		var length = getValue(lengthPtr, 'i32');
+		var operator = getValue(opPtr, 'i32');
+
 		_values.push({
 			delta: 0,
+			origin: _lib_getValueMeta(valPtr),
+			op: operator,
 			inlineOffset: inlineOffset,
 			length: length,
-			stages: [],
+		})
+	},
+
+	em_addUnlinkedValue: function(inlineOffsetPtr){
+		var inlineOffset = getValue(inlineOffsetPtr, 'i32');
+		var length = 0;
+		var operator = 0;
+		_values.push({
+			delta: 0,
+			origin: null,
+			op: operator,
+			inlineOffset: inlineOffset,
+			length: length,
 		})
 	},
 
@@ -80,24 +94,13 @@ mergeInto(LibraryManager.library, {
 		})
 	},
 
-	em_endLine: function(newlineIndex){
+	em_endLine: function(newlineIndexPtr){
+		newlineIndex = getValue(newlineIndexPtr, 'i32');
 		Module._lines.push({
 			charIndex: newlineIndex,
 			values: _values
 		});
 		_values = [];
-	},
-
-	em_addStage: function(valPtr, opPtr){
-		var role = getValue(opPtr, 'i8');
-		var valueMeta = _lib_getValueMeta(valPtr);
-		var line = Module._lines[valueMeta.lineIndex];
-		var value = line.values[valueMeta.inlineIndex];
-		var stages = value["stages"];
-		stages.push({
-			value: valueMeta.value,
-			role: role,
-		});
 	},
 
 	em_printOut: function(ptr) {

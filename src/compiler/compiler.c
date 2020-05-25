@@ -22,12 +22,12 @@ Compiler* compiler = NULL;
 CompilePackage* result = NULL;
 
 #ifdef EM_MAIN
-	extern void em_configureValuePointerOffsets(int type, int un, int line, int in);
-	extern void em_addValue(int inlineOffset, int length);
-	extern void em_addValueInsert(TKType role, int inlineOffset);
+	extern void em_configureValuePointerOffsets(int* type, int* un, int* line, int* in);
+	extern void em_addValue(int* inlineOffset, int* length, int8_t* operator, Value* value);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
-	extern void em_endLine(int newlineIndex);
-	
+	extern void em_endLine(int* newlineIndex);
+	extern void em_addUnlinkedValue(int* insertionIndex);
+
 	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
 		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
@@ -37,7 +37,7 @@ CompilePackage* result = NULL;
 		int as = (int) ((void*)&(val.as) - base);
 		int lineIndex = (int) ((void*)&(val.lineIndex) - base);
 		int inlineIndex = (int) ((void*)&(val.inlineIndex) - base);
-		em_configureValuePointerOffsets(type, as, lineIndex, inlineIndex);
+		em_configureValuePointerOffsets(&type, &as, &lineIndex, &inlineIndex);
 	}
 	
 #endif
@@ -386,8 +386,6 @@ static void whileStatement();
 
 static ParseRule* getRule(TKType type){
 	ParseRule* rule = &rules[type];
-	parser.lastPrecedence = parser.currentPrecedence;
-	parser.currentPrecedence = rule->precedence;
 	return rule;
 }
 
@@ -415,10 +413,6 @@ static void parsePrecedence(PCType precedence){
 		rule = getRule(parser.current.type);
 	}
 
-	if(rule->precedence == PC_NONE && parser.current.type != TK_R_PAREN){
-		parser.ascending = true;
-	}
-	
 	if(!canAssign && match(TK_ASSIGN)){
 		error("Invalid assignment target.");
 		expression(false);
@@ -510,29 +504,38 @@ static void synchronize() {
 
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
-	if(emitTrace && parser.manipTarget){
-		parser.manipTarget->lineIndex = parser.lineIndex;
-		parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
-		#ifdef EM_MAIN
-			em_addValue(parser.manipTargetCharIndex, parser.manipTargetLength);	
-		#endif
-		++parser.currentLineValueIndex;
+	if(emitTrace){
+		if(parser.manipTarget){
+			print(O_OUT, "\n v =");
+			printValue(O_OUT, *parser.manipTarget);
+			print(O_OUT, "\n");
+			parser.manipTarget->lineIndex = parser.lineIndex;
+			parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
+			int operator = (int)(parser.lastOperator);
+
+			#ifdef EM_MAIN
+				em_addValue(parser.manipTargetCharIndex, parser.manipTargetLength, &operator, AS_NUM(*parser.manipTarget));	
+			#endif
+			++parser.currentLineValueIndex;
+		}else{
+			int insertionIndex = parser.current.start - parser.lastNewline;
+			#ifdef EM_MAIN
+				em_addUnlinkedValue(insertionIndex);
+			#endif
+		}
 	}
 	parser.manipTarget = NULL;
 	parser.manipPrecedence = -1;
-	parser.manipTargetParenDepth = -1;
 }
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	Value* link = emitConstant(val);
-	if((parser.lastOperatorPrecedence <= parser.manipPrecedence)){
-		parser.operatorCount = 0;
+	if((parser.lastOperatorPrecedence <= parser.manipPrecedence) && (parser.parenDepth == 0)){
 		parser.manipTarget = link;
 		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
 		parser.manipTargetLength = parser.previous.length;
 		parser.manipPrecedence = parser.lastOperatorPrecedence;
-		parser.manipTargetParenDepth = parser.parenDepth;
 	}
 }
 
@@ -609,7 +612,6 @@ static void jumpTo(uint8_t opcode, uint32_t opIndex) {
 	signed short offset = (opIndex - 2) - chunk->count;
 	emitByte((offset >> 8) & 0xFF);
 	emitByte((offset) & 0xFF);
-
 }
 
 static void internGlobal(TK* id){
@@ -1283,8 +1285,6 @@ static void binary(bool canAssign){
 
 	ParseRule* rule = getRule(op);
 	parsePrecedence((PCType) (rule->precedence + 1));
-	++parser.operatorCount;
-	if(parser.ascending) ++parser.operatorCountAsc;
 	switch(op){
 		case TK_PLUS: 
 			emitByte(OP_ADD); 
@@ -1384,18 +1384,12 @@ void initParser(Parser* parser, char* source){
 	parser->lastOperator = TK_NULL;
 	parser->lastOperatorPrecedence = PC_PRIMARY;
 
-	parser->currentPrecedence = PC_NONE;
-	parser->lastPrecedence = PC_NONE;
-
 	parser->manipTarget = NULL;
 	parser->manipTargetCharIndex = -1;
 	parser->manipTargetLength = -1;
 	parser->manipTargetParenDepth = -1;
 	
 	parser->parenDepth = 0;
-	parser->ascending = false;
-	parser->operatorCountAsc = 0;
-	parser->operatorCount = 0;
 }
 
 

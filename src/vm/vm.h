@@ -18,7 +18,6 @@ struct sStackFrame {
 	struct sStackFrame* nextLower;
 	uint8_t* returnTo;
 	ObjChunk* chunkObj;
-	ObjInstance* instanceObj;
 };
 
 typedef struct sStackFrame StackFrame;
@@ -57,6 +56,5 @@ Value pop();
 InterpretResult interpretCompiled(CompilePackage* code, int index);
 void runCompiler(CompilePackage* package, char* source);
 ObjInstance* currentInstance();
-ObjInstance* latestInstance();
 
 #endif
