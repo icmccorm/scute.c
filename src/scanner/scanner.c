@@ -316,7 +316,6 @@ static TKType findIdentifier(){
             }else{
                 return TK_ID;
             }
-        return checkKeyword(1, 2, "or", TK_FOR);
         case 'i': return checkKeyword(1, 1, "f", TK_IF);
         case 'l': 
             if(scanner.current - scanner.start > 1){

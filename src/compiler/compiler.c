@@ -23,7 +23,7 @@ CompilePackage* result = NULL;
 
 #ifdef EM_MAIN
 	extern void em_configureValuePointerOffsets(int* type, int* un, int* line, int* in);
-	extern void em_addValue(int* inlineOffset, int* length, int8_t* operator, Value* value);
+	extern void em_addValue(int* inlineOffset, int* length, int* operator, Value* value);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int* newlineIndex);
 	extern void em_addUnlinkedValue(int* insertionIndex);
@@ -126,18 +126,8 @@ static void enterScope(){
 	++currentCompiler()->scopeDepth;
 }
 
-static void enterEnclosedScope(){
-	++currentCompiler()->scopeDepth;
-	currentCompiler()->enclosed = true;
-}
-
 static void exitScope(){
 	currentCompiler()->scopeDepth--;
-}
-
-static void exitEnclosedScope(){
-	--currentCompiler()->scopeDepth;
-	currentCompiler()->enclosed = true;
 }
 
 CompilePackage* currentResult(){
@@ -177,9 +167,9 @@ static void emitLinkedConstant(Value value, TK* token){
 	#ifdef EM_MAIN
 	if(!IS_NULL(value)){
 		if(value.type == VL_OBJ && AS_OBJ(value)->type == OBJ_STRING){
-			em_addStringValue(AS_CSTRING(value), token->inlineIndex, token->length);
+			//em_addStringValue(AS_CSTRING(value), token->inlineIndex, token->length);
 		}else{
-			em_addValue(token->inlineIndex, token->length);
+			//em_addValue(token->inlineIndex, token->length);
 		}
 	}
 	#endif
@@ -255,7 +245,8 @@ static void endLine(){
 	if(parser.currentLineValueIndex != 0) {
 		++parser.lineIndex;
 		#ifdef EM_MAIN
-			em_endLine(parser.lastNewline - parser.codeStart);
+			int distanceFromStart = (int) (parser.lastNewline - parser.codeStart);
+			em_endLine(&distanceFromStart);
 		#endif
 		parser.currentLineValueIndex = 0;
 	}
@@ -329,7 +320,7 @@ ParseRule rules[] = {
 	{ literal,	NULL,	    PC_NONE },    // TK_NULL,
 	{ stringLiteral,	NULL,	    PC_NONE },    // TK_STRING,
 	{ variable, NULL,	    PC_NONE },    // TK_ID,
-	{ constant, NULL,	    PC_NONE },    // TK_ID,	
+	{ constant, NULL,	    PC_NONE },    // TK_CONST,	
 	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
 	{ NULL,	    and_,	    PC_AND },     // TK_AND,
 	{ NULL,	    NULL,	    PC_OR },    // TK_OR,
@@ -378,11 +369,12 @@ static void frameStatement();
 static void synchronize();
 static uint8_t emitParams();
 static void attr();
-static void drawStatement();
+//static void drawStatement();
 static void returnStatement();
 static void repeatStatement();
 static void withStatement();
 static void whileStatement();
+static void funcStatement();
 
 static ParseRule* getRule(TKType type){
 	ParseRule* rule = &rules[type];
@@ -438,10 +430,14 @@ static void statement() {
 				advance();
 				defStatement();
 				break;
-			case TK_DRAW:
+			case TK_FUNC:
+				advance();
+				funcStatement();
+				break;
+			/*case TK_DRAW:
 				advance();
 				drawStatement();
-				break;
+				break;*/
 			case TK_PRINT:
 				advance();
 				printStatement();
@@ -506,21 +502,17 @@ static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
 		if(parser.manipTarget){
-			print(O_OUT, "\n v =");
-			printValue(O_OUT, *parser.manipTarget);
-			print(O_OUT, "\n");
 			parser.manipTarget->lineIndex = parser.lineIndex;
 			parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
-			int operator = (int)(parser.lastOperator);
-
 			#ifdef EM_MAIN
-				em_addValue(parser.manipTargetCharIndex, parser.manipTargetLength, &operator, AS_NUM(*parser.manipTarget));	
+				int operator = (int)(parser.lastOperator);
+				em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, &operator, parser.manipTarget);	
 			#endif
 			++parser.currentLineValueIndex;
 		}else{
 			int insertionIndex = parser.current.start - parser.lastNewline;
 			#ifdef EM_MAIN
-				em_addUnlinkedValue(insertionIndex);
+				em_addUnlinkedValue(&insertionIndex);
 			#endif
 		}
 	}
@@ -567,8 +559,12 @@ static void returnStatement() {
 }
 
 static int getIndentation() {
-	if(parser.current.type == TK_INDENT){
-		return parser.current.length;
+	while(parser.current.type == TK_INDENT){
+		advance();
+		if(parser.current.type != TK_NEWLINE){
+			return parser.previous.length;
+		}
+		advance();
 	}
 	return 0;
 }
@@ -579,8 +575,6 @@ static void indentedBlock() {
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
-		//clear indentations
-		advance();
 		statement();
 	}
 	Compiler* currentComp = currentCompiler();
@@ -690,7 +684,8 @@ static void repeatStatement() {
 	}
 }
 
-static void drawStatement() {
+/**
+ *  static void drawStatement() {
 	Compiler* currentComp = currentCompiler();
 	if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
 		advance();
@@ -711,6 +706,7 @@ static void drawStatement() {
 	}
 	emitByte(OP_DRAW);
 }
+*/
 
 
 static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
@@ -751,6 +747,65 @@ static void asExpression() {
 	}
 }
 
+static uint8_t emitParameters(){
+	uint8_t paramCount = 0;
+	if(parser.current.type == TK_L_PAREN){
+		advance();
+		if(parser.current.type != TK_R_PAREN){
+			consume(TK_ID, "Expected an identifier.");
+			addLocal(currentCompiler(), parser.previous);
+			markInitialized();
+			++paramCount;
+			while(parser.current.type == TK_COMMA){
+				advance();
+				consume(TK_ID, "Expected an identifier.");
+				if(paramCount + 1 <= 256){
+					addLocal(currentCompiler(), parser.previous);
+					markInitialized();
+					++paramCount;
+				}else{
+					errorAtCurrent("Maximum parameter count (256) reached.");
+					return paramCount;
+				}
+			}
+		}
+		consume(TK_R_PAREN, "Expected ')'.");
+	}	
+	return paramCount;
+}
+
+static void funcStatement(){
+	Compiler* currentComp = currentCompiler();
+	consume(TK_ID, "Expected an identifier.");
+	if(!parser.hadError){
+		TK funcIDToken = parser.previous;
+		ObjString* funcName = getTokenStringObject(&funcIDToken);
+		
+		ObjChunk* newChunk = allocateChunkObject(funcName);
+		compiler = enterCompilationScope(newChunk);
+
+		uint8_t paramCount = emitParameters();
+		if(!parser.hadError){
+			newChunk->numParameters = paramCount;
+			endLine();
+
+			indentedBlock();
+			
+			compiler = exitCompilationScope();
+			
+			uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
+			emitBundle(OP_CONSTANT, scopeIndex);
+			if(currentCompiler()->scopeDepth > 0){	
+				emitBundle(OP_DEF_LOCAL, resolveLocal(&funcIDToken));
+			}else{
+				emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&funcIDToken));
+				internGlobal(&funcIDToken);
+			}
+			emitByte(OP_POP);
+		}	
+	}
+}
+
 static void defStatement() {
 	Compiler* currentComp = currentCompiler();
 	TKType instanceType = TK_NULL;
@@ -763,25 +818,7 @@ static void defStatement() {
 	ObjChunk* newChunk = allocateChunkObject(funcName);
 	compiler = enterCompilationScope(newChunk);
 
-	//TODO: fix parameter overflow
-	uint8_t paramCount = 0;
-	if(parser.current.type == TK_L_PAREN){
-		advance();
-		if(parser.current.type != TK_R_PAREN){
-			consume(TK_ID, "Expected an identifier.");
-			addLocal(currentCompiler(), parser.previous);
-			markInitialized();
-			++paramCount;
-			while(parser.current.type == TK_COMMA){
-				advance();
-				consume(TK_ID, "Expected an identifier.");
-				addLocal(currentCompiler(), parser.previous);
-				markInitialized();
-				++paramCount;
-			}
-		}
-		consume(TK_R_PAREN, "Expected ')'.");
-	}
+	uint8_t paramCount = emitParameters();
 	newChunk->numParameters = paramCount;
 
 	switch(parser.current.type){
@@ -820,7 +857,6 @@ static void defStatement() {
 	emitBundle(OP_CONSTANT, scopeIndex);
 	if(currentCompiler()->scopeDepth > 0){	
 		emitBundle(OP_DEF_LOCAL, resolveLocal(&idToken));
-
 	}else{
 		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
 		internGlobal(&idToken);
@@ -831,9 +867,11 @@ static void withStatement(){
  	expression(false);
 	endLine();
 	emitByte(OP_PUSH_INST);
-	enterEnclosedScope();
-	indentedBlock();	
-	exitEnclosedScope();
+
+	enterScope();
+	indentedBlock();
+	exitScope();	
+
 	emitByte(OP_POP_INST);
 }
 

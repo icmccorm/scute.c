@@ -11,7 +11,7 @@
 #define STACK_MAX 256
 #define INST_STACK_MAX 16
 
-void runtimeError(char* format, ...);
+InterpretResult runtimeError(char* format, ...);
 
 struct sStackFrame {
 	Value* stackOffset;

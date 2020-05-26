@@ -34,17 +34,3 @@ void freeCompilationPackage(CompilePackage* code){
 	freeObjects(code->objects);
 	FREE(CompilePackage, code);
 }
-
-/*
-uint32_t addLink(CompilePackage* code, uint32_t lineIndex, uint32_t inlineIndex, uint8_t numIntermediates){
-	if(code->linkCount + 1 >= code->linkCapacity){
-		int oldCapacity = code->linkCapacity;
-		code->linkCapacity = GROW_CAPACITY(oldCapacity);
-		code->links = GROW_ARRAY(code->links, ValueLink,
-		oldCapacity, code->linkCapacity);
-	}
-	code->links[code->linkCount].lineIndex = lineIndex;
-	code->links[code->linkCount].inlineIndex = inlineIndex;
-	code->links[code->linkCount].stages = GROW_ARRAY(code->links[code->linkCount].stages, Intermediate, 0, numIntermediates);
-	return code->linkCount++;
-}*/

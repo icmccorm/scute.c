@@ -24,7 +24,7 @@ static void resetStack(){
 	vm.stackTop = vm.stack;
 }
 
-static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams);
+static bool pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams);
 static uint8_t* popStackFrame();
 void initGlobals(HashMap* map);
 
@@ -94,7 +94,7 @@ static Value peek(int distance){
 	return peeked;
 }
 
-void runtimeError(char* format, ...){
+InterpretResult runtimeError(char* format, ...){
 	Chunk* currentChunk = currentStackFrame()->chunkObj->chunk;
 	size_t opIndex = vm.ip - currentChunk->code;
 	int line = getLine(currentChunk, opIndex);
@@ -106,15 +106,20 @@ void runtimeError(char* format, ...){
 	print(O_ERR, "\n");
 	va_end(args);
 	resetStack();
+	return INTERPRET_RUNTIME_ERROR;
 }
 
-static void pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams){
-	StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
-	++vm.stackFrameCount;
-	newFrame->chunkObj = funcChunk;
-	newFrame->stackOffset = vm.stackTop - numParams;
-	newFrame->returnTo = vm.ip;
-	vm.ip = funcChunk->chunk->code;
+static bool pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams){
+	if(vm.stackFrameCount < STACK_MAX - 1){
+		StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
+		++vm.stackFrameCount;
+		newFrame->chunkObj = funcChunk;
+		newFrame->stackOffset = vm.stackTop - numParams;
+		newFrame->returnTo = vm.ip;
+		vm.ip = funcChunk->chunk->code;
+		return true;
+	}
+	return false;
 }
 
 static void pushInstance(ObjInstance* instance){
@@ -209,8 +214,7 @@ static InterpretResult run() {
 #define BINARY_OP(op, valueType, operandType) \
 	do { \
 		if(!IS_NUM(peek(0)) || !IS_NUM(peek(1))){ \
-			runtimeError("Operands must be numbers"); \
-			return INTERPRET_RUNTIME_ERROR; \
+			return runtimeError("Operands must be numbers"); \
 		} \
 		Value b = pop(); \
 		Value a = pop(); \
@@ -243,7 +247,7 @@ static InterpretResult run() {
 				if(IS_INST(isInstance)){
 					pushInstance(AS_INST(isInstance));
 				}else{
-					runtimeError("Only instances can be dereferenced.");
+					return runtimeError("Only instances can be dereferenced.");
 				}	
 			} break;
 			case OP_BUILD_ARRAY: {
@@ -265,7 +269,7 @@ static InterpretResult run() {
 					ObjInstance* inst = AS_INST(instanceVal);
 					add(inst->map, memberId, expression);
 				}else{
-					runtimeError("Property does not exist.");
+					return runtimeError("Property does not exist.");
 				}
 				if(pushBackInstance){
 					push(instanceVal);
@@ -281,9 +285,9 @@ static InterpretResult run() {
 					push(getValue(inst->map, memberId));
 				}else{
 					if(IS_NULL(instanceVal)){
-						runtimeError("Cannot dereference NULL.");
+						return runtimeError("Cannot dereference NULL.");
 					}else{
-						runtimeError("Can only dereference objects.");
+						return runtimeError("Can only dereference objects.");
 					}
 				}
 				} break;
@@ -316,13 +320,15 @@ static InterpretResult run() {
 								super = AS_INST(pop());
 							}
 
-							pushStackFrame(chunkObj, NULL, numParams);
+							bool success = pushStackFrame(chunkObj, NULL, numParams);
+							if(!success) return runtimeError("Stack overflow.");
 
 							for(int i = numParams; i< chunkObj->numParameters; ++i){
 								push(NULL_VAL());
 							}
 
-							if(currentInstance()->type == INST_SHAPE){
+							ObjInstance* current = currentInstance();
+							if(current && currentInstance()->type == INST_SHAPE){
 								ObjShape* shape = (ObjShape*) currentInstance();
 								shape->shapeType = chunkObj->instanceType;
 							}

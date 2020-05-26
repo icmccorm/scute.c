@@ -56,7 +56,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	lib_getValue: function(valPtr){
-		return Math.floor(getValue(valPtr + _valuePointerOffsets.union, 'double') * 1000) / 1000;
+		return getValue(valPtr + _valuePointerOffsets.union, 'double');
 	},
 
 	em_addValue: function(inlineOffsetPtr, lengthPtr, opPtr, valPtr){
@@ -64,13 +64,15 @@ mergeInto(LibraryManager.library, {
 		var length = getValue(lengthPtr, 'i32');
 		var operator = getValue(opPtr, 'i32');
 
-		_values.push({
+		var newValue = {
 			delta: 0,
 			origin: _lib_getValueMeta(valPtr),
 			op: operator,
 			inlineOffset: inlineOffset,
 			length: length,
-		})
+		};
+		console.log(newValue);
+		_values.push(newValue);
 	},
 
 	em_addUnlinkedValue: function(inlineOffsetPtr){
@@ -95,7 +97,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_endLine: function(newlineIndexPtr){
-		newlineIndex = getValue(newlineIndexPtr, 'i32');
+		var newlineIndex = getValue(newlineIndexPtr, 'i32');
 		Module._lines.push({
 			charIndex: newlineIndex,
 			values: _values
