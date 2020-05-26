@@ -1209,15 +1209,16 @@ static void namedLocal(TK* id, bool canAssign, uint32_t index){
 		expression(true);
 		emitBundle(OP_DEF_LOCAL, index);
 	}else{
-		emitBundle(OP_GET_LOCAL, index);
 		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
 			advance();
 			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
-			emitBundle(OP_GET_LOCAL, index);
 			emitConstant(NUM_VAL(delta));
+			emitBundle(OP_GET_LOCAL, index);
 			emitByte(OP_ADD);
 			emitBundle(OP_DEF_LOCAL, index);
 			emitByte(OP_POP);
+		}else{
+			emitBundle(OP_GET_LOCAL, index);
 		}
 	}
 }
@@ -1228,15 +1229,16 @@ static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 		emitBundle(OP_DEF_GLOBAL, index);
 		internGlobal(id);
 	}else{
-		emitBundle(OP_GET_GLOBAL, index);
 		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
 			advance();
 			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
-			emitBundle(OP_GET_GLOBAL, index);
 			emitConstant(NUM_VAL(delta));
+			emitBundle(OP_GET_GLOBAL, index);
 			emitByte(OP_ADD);
 			emitBundle(OP_DEF_GLOBAL, index);
 			emitByte(OP_POP);
+		}else{
+			emitBundle(OP_GET_GLOBAL, index);
 		}
 	}
 }
@@ -1378,8 +1380,8 @@ static void unary(bool canAssign){
 				uint8_t assignOp, getOp;
 
 				if(varIndex >= 0){
-					assignOp = OP_DEF_GLOBAL;
-					getOp = OP_GET_GLOBAL;
+					assignOp = OP_DEF_LOCAL;
+					getOp = OP_GET_LOCAL;
 					varIndex = (uint32_t) varIndex;
 				}else{
 					assignOp = OP_DEF_GLOBAL;
