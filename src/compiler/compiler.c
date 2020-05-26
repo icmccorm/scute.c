@@ -85,7 +85,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	newComp->instanceType = TK_NULL;
 
 	newComp->compilingChunk = chunkObj;
-
+	newComp->returned = false;
 	return newComp;
 }
 
@@ -95,19 +95,18 @@ static void emitLinkedConstant(Value v, TK* token);
 
 static void emitReturn(){
 	ObjChunk* current = currentChunkObject();
-	switch(current->chunkType){
-		case CK_MAIN:
-			emitByte(OP_RETURN);
-			break;
-		case CK_CONSTR:
-			emitByte(OP_RETURN);
-			break;
-		case CK_UNDEF:
-			current->chunkType = CK_CONSTR;
-			emitByte(OP_RETURN);
-			break;
-		case CK_FUNC:
-			break;
+	if(!currentCompiler()->returned){
+		switch(current->chunkType){
+			case CK_CONSTR:
+				emitByte(OP_POP_INST);
+				break;
+			case CK_FUNC:
+				emitConstant(NULL_VAL());
+				break;
+			default:
+				break;
+		}
+		emitByte(OP_RETURN);
 	}
 }
 
@@ -412,14 +411,10 @@ static void parsePrecedence(PCType precedence){
 }
 
 static void statement() {
-	if(currentChunkObject()->chunkType == CK_FUNC){
-		errorAtCurrent("Unreacheable code.");
-	}
 	while(parser.current.type == TK_NEWLINE || parser.current.type == TK_INDENT){
 		advance();
 		if(parser.previous.type == TK_NEWLINE) 	parser.lastNewline = (parser.previous.start + parser.previous.length) - 1;;
 	}
-
 	if(parser.current.type != TK_EOF){
 		switch(parser.current.type){
 			case TK_WHILE:
@@ -461,7 +456,6 @@ static void statement() {
 					errorAtCurrent("Cannot return from a constructor.");
 				}else{
 					returnStatement();
-					currentChunkObject()->chunkType = CK_FUNC;
 				}
 				break;
 			case TK_REP:
@@ -556,6 +550,7 @@ static void literal(bool canAssign) {
 static void returnStatement() {
 	expression(true);
 	emitByte(OP_RETURN);
+	currentCompiler()->returned = true;
 }
 
 static int getIndentation() {
@@ -782,13 +777,13 @@ static void funcStatement(){
 		ObjString* funcName = getTokenStringObject(&funcIDToken);
 		
 		ObjChunk* newChunk = allocateChunkObject(funcName);
+		newChunk->chunkType = CK_FUNC;
 		compiler = enterCompilationScope(newChunk);
 
 		uint8_t paramCount = emitParameters();
 		if(!parser.hadError){
 			newChunk->numParameters = paramCount;
 			endLine();
-
 			indentedBlock();
 			
 			compiler = exitCompilationScope();
@@ -1431,7 +1426,6 @@ void initParser(Parser* parser, char* source){
 	
 	parser->parenDepth = 0;
 }
-
 
 bool compile(char* source, CompilePackage* package){
 	#ifdef EM_MAIN

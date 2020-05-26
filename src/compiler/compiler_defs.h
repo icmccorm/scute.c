@@ -76,6 +76,7 @@ extern Parser parser;
     struct sCompiler* super;
     ObjChunk* compilingChunk;
 	HashMap* classes;
+    bool returned;
 };
 
 typedef struct sCompiler Compiler;
