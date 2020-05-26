@@ -62,7 +62,6 @@ struct sObjChunk{
 	Chunk* chunk;
 	ObjString* funcName;
 	CKType chunkType;
-	TKType instanceType;
 	int numParameters;
 	ObjChunk* superChunk;
 };

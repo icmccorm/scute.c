@@ -109,6 +109,11 @@ InterpretResult runtimeError(char* format, ...){
 	return INTERPRET_RUNTIME_ERROR;
 }
 
+static void pushInstance(ObjInstance* instance){
+	vm.instanceStack[vm.instanceCount] = instance;
+	++vm.instanceCount;
+}
+
 static bool pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams){
 	if(vm.stackFrameCount < STACK_MAX - 1){
 		StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
@@ -122,10 +127,7 @@ static bool pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numP
 	return false;
 }
 
-static void pushInstance(ObjInstance* instance){
-	vm.instanceStack[vm.instanceCount] = instance;
-	++vm.instanceCount;
-}
+
 
 static uint8_t* popStackFrame(){
 	StackFrame* frame = currentStackFrame();
@@ -239,8 +241,12 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(readByte()){
+			case OP_INIT_INST:{
+				pushInstance(allocateInstance(NULL));
+			}break;
 			case OP_POP_INST:{
-				popInstance(false);
+				bool pushBack = (bool) READ_BYTE();
+				popInstance(pushBack);
 			 }break;
 			case OP_PUSH_INST: {
 				Value isInstance = pop();
@@ -314,12 +320,6 @@ static InterpretResult run() {
 						case OBJ_CHUNK: {
 							ObjChunk* chunkObj = (ObjChunk*) object;
 
-							Value peekVal = peek(0);
-							ObjInstance* super = NULL;
-							if(IS_INST(peekVal)) {
-								super = AS_INST(pop());
-							}
-
 							bool success = pushStackFrame(chunkObj, NULL, numParams);
 							if(!success) return runtimeError("Stack overflow.");
 
@@ -327,11 +327,6 @@ static InterpretResult run() {
 								push(NULL_VAL());
 							}
 
-							ObjInstance* current = currentInstance();
-							if(current && currentInstance()->type == INST_SHAPE){
-								ObjShape* shape = (ObjShape*) currentInstance();
-								shape->shapeType = chunkObj->instanceType;
-							}
 							} break;
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;

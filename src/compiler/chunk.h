@@ -72,6 +72,7 @@ typedef enum {
 
 	OP_BUILD_ARRAY,
 
+	OP_INIT_INST,
 	OP_PUSH_INST,
 	OP_POP_INST,
 	OP_LOAD_INST,

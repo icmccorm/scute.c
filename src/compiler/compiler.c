@@ -39,7 +39,6 @@ CompilePackage* result = NULL;
 		int inlineIndex = (int) ((void*)&(val.inlineIndex) - base);
 		em_configureValuePointerOffsets(&type, &as, &lineIndex, &inlineIndex);
 	}
-	
 #endif
 
 static Compiler* currentCompiler() {
@@ -80,7 +79,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	newComp->localCount = 0;
 	newComp->locals = NULL;
 
-	newComp->enclosed = true;
+	if(chunkObj->chunkType == CK_CONSTR) newComp->enclosed = true;
 	
 	newComp->instanceType = TK_NULL;
 
@@ -90,6 +89,8 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 }
 
 static void emitByte(uint8_t byte);
+static void emitBytes(uint8_t byte1, uint8_t byte2);
+
 static Value* emitConstant(Value v);
 static void emitLinkedConstant(Value v, TK* token);
 
@@ -98,7 +99,7 @@ static void emitReturn(){
 	if(!currentCompiler()->returned){
 		switch(current->chunkType){
 			case CK_CONSTR:
-				emitByte(OP_POP_INST);
+				emitBytes(OP_POP_INST, (uint8_t) true);
 				break;
 			case CK_FUNC:
 				emitConstant(NULL_VAL());
@@ -127,7 +128,19 @@ static void enterScope(){
 
 static void exitScope(){
 	currentCompiler()->scopeDepth--;
+	currentCompiler()->enclosed = false;
 }
+
+static void enterEnclosedScope(){
+	++currentCompiler()->scopeDepth;
+	currentCompiler()->enclosed = true;
+}
+
+static void exitEnclosedScope(){
+	currentCompiler()->scopeDepth--;
+	currentCompiler()->enclosed = false;
+}
+
 
 CompilePackage* currentResult(){
 	return result;
@@ -368,7 +381,6 @@ static void frameStatement();
 static void synchronize();
 static uint8_t emitParams();
 static void attr();
-//static void drawStatement();
 static void returnStatement();
 static void repeatStatement();
 static void withStatement();
@@ -429,10 +441,6 @@ static void statement() {
 				advance();
 				funcStatement();
 				break;
-			/*case TK_DRAW:
-				advance();
-				drawStatement();
-				break;*/
 			case TK_PRINT:
 				advance();
 				printStatement();
@@ -679,31 +687,6 @@ static void repeatStatement() {
 	}
 }
 
-/**
- *  static void drawStatement() {
-	Compiler* currentComp = currentCompiler();
-	if(parser.current.type == TK_SHAPE){	//draw ___ <= rect, circle, etc.
-		advance();
-		ObjChunk* chunkObj = allocateChunkObject(NULL);
-		chunkObj->chunkType = CK_UNDEF;
-		chunkObj->instanceType = parser.previous.subtype;
-
-		compiler = enterCompilationScope(chunkObj);
-		indentedBlock();
-		compiler = exitCompilationScope();
-
-		uint32_t scopeIndex = getObjectIndex((Obj*) chunkObj);
-		emitBundle(OP_CONSTANT, scopeIndex);
-		emitBytes(OP_CALL, 0);
-
-	}else{
-		expression(false);
-	}
-	emitByte(OP_DRAW);
-}
-*/
-
-
 static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 	if(currentChunk){
 		inherit(currentChunk->superChunk, numParams);
@@ -711,34 +694,6 @@ static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 		*numParams = *numParams - paramsConsumed;
 		emitConstant(OBJ_VAL(currentChunk));
 		emitBytes(OP_CALL, paramsConsumed);
-	}
-}
-
-static ObjChunk* fromExpression() {
-	consume(TK_ID, "Expected an identifier.");
-	TK superclassId = parser.previous;
-	ObjString* superclassStringObj = getTokenStringObject(&superclassId);
-	Value superChunkVal = getValue(currentCompiler()->classes, superclassStringObj);
-	ObjChunk* chunk = (ObjChunk*) AS_OBJ(superChunkVal);
-	if(!IS_NULL(superChunkVal)){
-		return AS_CHUNK(superChunkVal);
-	}else{
-		errorAtCurrent("Inherited object is not defined in this scope.");
-		return NULL;
-	}
-}
-
-static void asExpression() {
-	TK shapeToken = parser.current;
-	advance();
-	switch(shapeToken.type){
-		case TK_SHAPE:
-			currentChunkObject()->chunkType = CK_CONSTR;
-			currentChunkObject()->instanceType = shapeToken.subtype;
-			break;
-		default:
-			errorAt(&parser.current, "Expected a shape identifier.");
-			break;
 	}
 }
 
@@ -803,41 +758,28 @@ static void funcStatement(){
 
 static void defStatement() {
 	Compiler* currentComp = currentCompiler();
-	TKType instanceType = TK_NULL;
-	CKType chunkType = CK_UNDEF;
+	Chunk* superChunk = currentChunk();
 	consume(TK_ID, "Expected an identifier.");
 
 	TK idToken = parser.previous;
+	TKType instanceType = TK_NULL;
+
 	ObjString* funcName = getTokenStringObject(&idToken);
 
 	ObjChunk* newChunk = allocateChunkObject(funcName);
+	newChunk->chunkType = CK_CONSTR;
+
 	compiler = enterCompilationScope(newChunk);
 
 	uint8_t paramCount = emitParameters();
 	newChunk->numParameters = paramCount;
-
-	switch(parser.current.type){
-		case TK_AS:
-			advance();
-			asExpression();
-			if(parser.current.type == TK_FROM){
-				advance();
-				newChunk->superChunk = fromExpression();
-			}
-			break;
-		case TK_FROM:
-			advance();
-			newChunk->superChunk = fromExpression();
-			if(parser.current.type == TK_AS){
-				advance();
-				asExpression();
-			}
-			break;
-		case TK_NEWLINE:
-			break;
-		default:
-			errorAtCurrent("Unexpected token in function object definition.");
-			break;
+	
+	if(parser.current.type == TK_AS){
+		advance();
+		expression(false);
+		emitByte(OP_PUSH_INST);
+	}else{
+		emitByte(OP_INIT_INST);
 	}
 
 	endLine();
@@ -856,6 +798,7 @@ static void defStatement() {
 		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
 		internGlobal(&idToken);
 	}
+	emitByte(OP_POP);
 }
 
 static void withStatement(){
@@ -863,11 +806,11 @@ static void withStatement(){
 	endLine();
 	emitByte(OP_PUSH_INST);
 
-	enterScope();
+	enterEnclosedScope();
 	indentedBlock();
-	exitScope();	
+	exitEnclosedScope();	
 
-	emitByte(OP_POP_INST);
+	emitBytes(OP_POP_INST, (uint8_t) false);
 }
 
 static void frameStatement() {

@@ -139,7 +139,6 @@ ObjChunk* allocateChunkObject(ObjString* funcName){
 	chunkObj->numParameters = 0;
 	chunkObj->funcName = funcName;
 	chunkObj->chunkType = CK_UNDEF;
-	chunkObj->instanceType = TK_NULL;	
 	chunkObj->superChunk = NULL;
 	return chunkObj;
 }
