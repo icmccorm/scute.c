@@ -40,6 +40,7 @@ typedef struct {
 	int lineIndex;
 	int currentLineValueIndex;
 
+    Value* lastValueEmitted;
     Value* manipTarget;
     PCType manipPrecedence;
     int manipTargetCharIndex;

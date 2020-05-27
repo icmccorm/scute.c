@@ -503,7 +503,6 @@ static void synchronize() {
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
-
 		#ifdef EM_MAIN
 			if(parser.manipTarget){
 				parser.manipTarget->lineIndex = parser.lineIndex;
@@ -511,11 +510,12 @@ static void expression(bool emitTrace) {
 				int operator = (int)(parser.lastOperator);
 				em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, &operator, parser.manipTarget);	
 			}else{
-				Value zero = NUM_VAL(0);
-				zero.lineIndex = parser.lineIndex;
-				zero.inlineIndex = parser.
-				int insertionIndex = parser.current.start - parser.lastNewline;
-				em_addUnlinkedValue(&insertionIndex, parser.manipTarget);
+				if(parser.lastValueEmitted){
+					parser.lastValueEmitted->lineIndex = parser.lineIndex;
+					parser.lastValueEmitted->inlineIndex = parser.currentLineValueIndex;
+					int insertionIndex = parser.current.start - parser.lastNewline;
+					em_addUnlinkedValue(&insertionIndex, parser.lastValueEmitted);
+				}
 			}
 		#endif
 		++parser.currentLineValueIndex;
@@ -533,6 +533,7 @@ static void number(bool canAssign) {
 		parser.manipTargetLength = parser.previous.length;
 		parser.manipPrecedence = parser.lastOperatorPrecedence;
 	}
+	parser.lastValueEmitted = link;
 }
 
 static double tokenToNumber(TK token){
@@ -564,12 +565,8 @@ static void returnStatement() {
 }
 
 static int getIndentation() {
-	while(parser.current.type == TK_INDENT){
-		advance();
-		if(parser.current.type != TK_NEWLINE){
-			return parser.previous.length;
-		}
-		advance();
+	if(parser.current.type == TK_INDENT){
+		return parser.current.length;
 	}
 	return 0;
 }
@@ -580,6 +577,7 @@ static void indentedBlock() {
 	while(parser.current.type != TK_EOF 
 			&& getIndentation() >= currentScopeDepth
 		){
+		advance();
 		statement();
 	}
 	Compiler* currentComp = currentCompiler();

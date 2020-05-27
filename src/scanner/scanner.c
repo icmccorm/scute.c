@@ -640,15 +640,20 @@ TK scanTK(){
         case '\n':
             return makeNewline();
         case '\t':
-            /* \r is included to handle Windows' \r\n. */
             if(previous() == '\n' || previous() == '\r'){
                 while(*scanner.current == '\t'){
                     advance();
                 }
-                return makeToken(TK_INDENT);
+                if(*scanner.current == '\n'){
+                    advance();
+                    return scanTK();
+                }else{
+                    return makeToken(TK_INDENT);
+                }
             }else{
                 return scanTK();
             }
+            break;
         default:
             if(isDigit(c)) return number();
             if(isAlpha(c)) return identifier();

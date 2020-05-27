@@ -72,7 +72,7 @@ static StackFrame* currentStackFrame(){
 }	
 
 ObjInstance* currentInstance(){
-	return (vm.instanceStack[vm.instanceCount-1]);
+	return vm.instanceStack[vm.instanceCount-1];
 }
 
 static Chunk* currentChunk(){
