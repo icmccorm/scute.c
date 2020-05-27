@@ -66,7 +66,7 @@ mergeInto(LibraryManager.library, {
 
 		var newValue = {
 			delta: 0,
-			origin: _lib_getValueMeta(valPtr),
+			origin: _lib_getValue(valPtr),
 			op: operator,
 			inlineOffset: inlineOffset,
 			length: length,
@@ -75,13 +75,13 @@ mergeInto(LibraryManager.library, {
 		_values.push(newValue);
 	},
 
-	em_addUnlinkedValue: function(inlineOffsetPtr){
+	em_addUnlinkedValue: function(inlineOffsetPtr, valuePtr){
 		var inlineOffset = getValue(inlineOffsetPtr, 'i32');
 		var length = 0;
 		var operator = 0;
 		_values.push({
 			delta: 0,
-			origin: null,
+			origin: _lib_getValue(valuePtr),
 			op: operator,
 			inlineOffset: inlineOffset,
 			length: length,

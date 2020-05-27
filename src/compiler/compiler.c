@@ -513,7 +513,7 @@ static void expression(bool emitTrace) {
 				if(parser.lastValueEmitted){
 					parser.lastValueEmitted->lineIndex = parser.lineIndex;
 					parser.lastValueEmitted->inlineIndex = parser.currentLineValueIndex;
-					int insertionIndex = parser.current.start - parser.lastNewline;
+					int insertionIndex = parser.current.start + parser.current.length - parser.lastNewline;
 					em_addUnlinkedValue(&insertionIndex, parser.lastValueEmitted);
 				}
 			}
