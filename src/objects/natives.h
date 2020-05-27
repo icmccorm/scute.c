@@ -16,6 +16,7 @@ Value nativeSine(Value* params, int numParams);
 Value nativeDegrees(Value* params, int numParams);
 Value nativeRadians(Value* params, int numParams);
 Value nativeSqrt(Value* params, int numParams);
+Value nativeRandom(Value* params, int numParams);
 
 Value move(Value* params, int numParams);
 Value vertex(Value* params, int numParams);

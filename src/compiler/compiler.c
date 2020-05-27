@@ -26,7 +26,7 @@ CompilePackage* result = NULL;
 	extern void em_addValue(int* inlineOffset, int* length, int* operator, Value* value);
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int* newlineIndex);
-	extern void em_addUnlinkedValue(int* insertionIndex);
+	extern void em_addUnlinkedValue(int* insertionIndex, Value* value);
 
 	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
@@ -503,20 +503,22 @@ static void synchronize() {
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
-		if(parser.manipTarget){
-			parser.manipTarget->lineIndex = parser.lineIndex;
-			parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
-			#ifdef EM_MAIN
+
+		#ifdef EM_MAIN
+			if(parser.manipTarget){
+				parser.manipTarget->lineIndex = parser.lineIndex;
+				parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
 				int operator = (int)(parser.lastOperator);
 				em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, &operator, parser.manipTarget);	
-			#endif
-			++parser.currentLineValueIndex;
-		}else{
-			int insertionIndex = parser.current.start - parser.lastNewline;
-			#ifdef EM_MAIN
-				em_addUnlinkedValue(&insertionIndex);
-			#endif
-		}
+			}else{
+				Value zero = NUM_VAL(0);
+				zero.lineIndex = parser.lineIndex;
+				zero.inlineIndex = parser.
+				int insertionIndex = parser.current.start - parser.lastNewline;
+				em_addUnlinkedValue(&insertionIndex, parser.manipTarget);
+			}
+		#endif
+		++parser.currentLineValueIndex;
 	}
 	parser.manipTarget = NULL;
 	parser.manipPrecedence = -1;
@@ -1080,6 +1082,9 @@ static void native(bool canAssign){
 			break;
 		case TK_SQRT:
 			func = nativeSqrt;
+			break;
+		case TK_RAND:
+			func = nativeRandom;
 			break;
 		default:
 			break;

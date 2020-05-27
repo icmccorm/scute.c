@@ -1,6 +1,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <time.h>
 #include "value.h"
 #include "common.h"
 #include "vm.h"
@@ -8,8 +10,33 @@
 #include "obj.h"
 #include "svg.h"
 
-
 #define SEGMENTABLE(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
+
+Value nativeRandom(Value* params, int numParams){
+	switch(numParams){
+		case 1:{
+			if(IS_NUM(params[0])){
+				return NUM_VAL(floor(drand48()*AS_NUM(params[0])));
+			}else{
+				return NUM_VAL(drand48());
+			}
+		} break;
+		case 0:{
+			return NUM_VAL(drand48());
+		} break;
+		default:{
+			if(IS_NUM(params[0]) && IS_NUM(params[1])){
+				double highVal = AS_NUM(params[1]);
+				double lowVal = AS_NUM(params[0]);
+				double inRange = floor(drand48()*(highVal - lowVal) + lowVal);
+				return NUM_VAL(inRange);
+			}else{
+				return NUM_VAL(drand48());
+			}
+		} break;
+	}
+	return NULL_VAL();
+}
 
 Value nativeSine(Value* params, int numParams){
 	if(numParams > 0) {

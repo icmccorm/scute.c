@@ -346,7 +346,14 @@ static TKType findIdentifier(){
                             }
                         }
                     } break;
-					case 'a': return checkKeyword(2, 5, "dians", TK_RAD);
+					case 'a': {
+                        if(scanner.current - scanner.start > 2){
+                            switch(scanner.start[2]){
+                                case 'd': return checkKeyword(3, 4, "ians", TK_RAD);
+                                case 'n': return checkKeyword(3, 1, "d", TK_RAND);                                
+                            }
+                        }
+                    } break;
                 }
             }
             return TK_ID;
@@ -484,8 +491,9 @@ static TK identifier(){
         case TK_ATAN:
         case TK_HSIN:
         case TK_HCOS:
-        case TK_RAD: 
-        case TK_SQRT: 
+        case TK_RAD:
+        case TK_SQRT:
+        case TK_RAND: 
             return makeDualToken(TK_NATIVE, type);
         default:
             return makeToken(type);
