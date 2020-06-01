@@ -161,10 +161,26 @@ static bool valuesEqual(Value a, Value b){
 static InterpretResult callFunction(ObjChunk* chunkObj);
 
 
+
 void transferIndex(Value* a, Value* b, Value* result){
-	Value* trace = a->lineIndex > -1 ? a : (b->lineIndex > -1 ? b : b);
-	result->lineIndex = trace->lineIndex;
-	result->inlineIndex = trace->inlineIndex;
+	#define TRACED(value) (value->lineIndex > -1)
+
+	bool aTraced = TRACED(a);
+	bool bTraced = TRACED(b);
+
+	if(aTraced && bTraced){
+		result->lineIndex = b->lineIndex;
+		result->inlineIndex = b->inlineIndex;
+	}else{
+		if(aTraced){
+			result->lineIndex = a->lineIndex;
+			result->inlineIndex = a->inlineIndex;
+		}else{
+			result->lineIndex = b->lineIndex;
+			result->inlineIndex = b->inlineIndex;
+		}
+	}
+	#undef TRACED
 }
 
 #define READ_BYTE() (*vm.ip++)
