@@ -128,6 +128,9 @@ typedef enum{
     CS_GRAY,
     CS_GREY,
     CS_TRANSP,
+
+    CS_CENTER,
+    CS_LCORNER,
 } CSType;
 
 typedef struct{
