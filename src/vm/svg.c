@@ -228,8 +228,6 @@ void drawPoints(ObjShape* shape){
 	#endif
 }
 
-
-
 ObjShape* popShape(){
 	ObjShape* latestShape = vm.shapeStack[vm.shapeCount-1];
 	--vm.shapeCount;
@@ -246,7 +244,32 @@ void pushShape(ObjShape* close){
 	++vm.shapeCount;
 }
 
+void setCanvas(){
+	Value canvasMap = getValue(vm.globals, string("canvas"));
+	if(IS_INST(canvasMap)){
+		HashMap* innerMap = AS_INST(canvasMap)->map;
+		Value originVal = getValue(innerMap, string("origin"));
+		Value sizeVal = getValue(innerMap, string("size"));
+		if(IS_ARRAY(originVal) && IS_ARRAY(sizeVal)){
+			ObjArray* originVec = AS_ARRAY(originVal);
+			ObjArray* sizeVec = AS_ARRAY(sizeVal);
+			#ifdef EM_MAIN	
+				em_setCanvas(originVec->array->values, sizeVec->array->values);
+			#else
+				print(O_OUT, "Canvas Origin: ");
+				printValue(O_OUT, originVal);
+				print(O_OUT, "\n");
+				
+				print(O_OUT, "Canvas Size: ");
+				printValue(O_OUT, sizeVal);
+				print(O_OUT, "\n");
+			#endif
+		}
+	}
+}
+
 void renderFrame(CompilePackage* code){
+	setCanvas();
 	while(vm.shapeCount > 0){
 		ObjShape* top = popShape();
 		switch(top->shapeType){

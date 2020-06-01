@@ -45,7 +45,6 @@ typedef struct {
     PCType manipPrecedence;
     int manipTargetCharIndex;
     int manipTargetLength;
-    int manipTargetParenDepth;
 } Parser;
 
 

@@ -48,12 +48,6 @@ void initVM(CompilePackage* package, int frameIndex) {
   	mergeMaps(package->globals, vm.globals);
 	pushStackFrame(package->compiled, NULL, 0);
 }
-
-void initGlobals(HashMap* map){
-	ObjString* canvasString = string("canvas");
-	add(map, canvasString, OBJ_VAL(allocateInstance(NULL)));
-}
-
 void freeVM() {
 	freeMap(vm.globals);
 	FREE_ARRAY(ObjShape*, vm.shapeStack, vm.shapeCapacity);

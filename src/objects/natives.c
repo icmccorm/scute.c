@@ -326,3 +326,11 @@ Value cBezier(Value* params, int numParams){
 	runtimeError("Only paths can accept beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
+
+void initGlobals(HashMap* map){
+	ObjString* canvasString = string("canvas");
+	ObjInstance* canvasProperties = allocateInstance(NULL);
+	add(canvasProperties->map, string("origin"), VECTOR(0, 0));
+	add(canvasProperties->map, string("size"), VECTOR(250, 250));
+	add(map, canvasString, OBJ_VAL(canvasProperties));
+}

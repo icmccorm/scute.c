@@ -17,6 +17,7 @@ void assignDimensions(ObjShape* close, Value* values, uint8_t numValues);
 #ifdef EM_MAIN
 extern void em_addAttribute(const char* key, Value* val);
 extern void em_addVectorAttr(const char* keyPtr, Value* vecPtr);
+extern void em_setCanvas(Value* sizePtr, Value* originPtr);
 
 extern void em_addStyle(const char* key, Value* val);
 extern void em_addStringStyle(const char* key);
@@ -32,7 +33,6 @@ extern void em_addArc(Value* center, Value degrees);
 
 extern void em_newShape(double id, double type);
 extern void em_paintShape();
-extern void em_setCanvas(Value* width, Value* height, Value* originX, Value* originY);
 extern void em_addColorStyle(const char* key, int length, Value* values);
 #endif
 

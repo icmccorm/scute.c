@@ -63,16 +63,13 @@ mergeInto(LibraryManager.library, {
 		var inlineOffset = getValue(inlineOffsetPtr, 'i32');
 		var length = getValue(lengthPtr, 'i32');
 		var operator = getValue(opPtr, 'i32');
-
-		var newValue = {
+		_values.push({
 			delta: 0,
 			origin: _lib_getValue(valPtr),
 			op: operator,
 			inlineOffset: inlineOffset,
 			length: length,
-		};
-		console.log(newValue);
-		_values.push(newValue);
+		});
 	},
 
 	em_addUnlinkedValue: function(inlineOffsetPtr, valuePtr){
@@ -169,12 +166,10 @@ mergeInto(LibraryManager.library, {
 		Module._maxFrameIndex = num;
 	},
 
-	em_setCanvas: function(dimsPtr, originPtr){
+	em_setCanvas: function(originPtr, dimsPtr){
 		Module._canvas = {
-			width: _lib_getValue(dimsPtr),
-			height: _lib_getValue(dimsPtr + _valuePointerOffsets.totalLength),
-			originX: _lib_getValue(originPtr),
-			originY: _lib_getValue(originPtr + _valuePointerOffsets.totalLength),
+			size: _lib_getVector(dimsPtr),
+			origin: _lib_getVector(originPtr),
 		}
 	},
 

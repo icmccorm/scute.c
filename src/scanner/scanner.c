@@ -163,6 +163,7 @@ static CSType checkConst(int start, int length, char* rest, CSType type){
 static CSType findConstantIdentifier(){
 	int length = scanner.current - scanner.start;
 	switch(scanner.start[0]){
+        case 'c': return checkConst(1, 5, "enter", CS_CENTER);
 		case 'p': {
 			if(length > 1){
 				switch(scanner.start[1]){
@@ -237,7 +238,14 @@ static CSType findConstantIdentifier(){
 		case 'n': return checkConst(1, 3, "avy", CS_NAVY);
 		case 'a': return checkConst(1, 3, "qua", CS_AQUA);
 		case 's': return checkConst(1, 5, "ilver", CS_SILVER);
-		case 'l': return checkConst(1, 3, "ime", CS_LIME);
+		case 'l': 
+            if(length > 1){
+                switch(scanner.start[1]){
+                    case 'c': return checkConst(2, 5, "orner", CS_LCORNER);
+                    case 'i': return checkConst(2, 2, "me", CS_LIME);
+                }
+            }
+            return CS_ERROR;
 		case 'i': return checkConst(1, 5, "ndigo", CS_INDIGO);
 		case 'v': return checkConst(1, 5, "iolet", CS_VIOLET);
 		case 'w': return checkConst(1, 4, "hite", CS_WHITE);
@@ -621,7 +629,6 @@ TK scanTK(){
                     return makeToken(TK_R_LIMIT);
                 default:
                     if(isDigit(peek())) {
-                        --scanner.start;
                         return number();
                     }else{
                         return makeToken(TK_MINUS);

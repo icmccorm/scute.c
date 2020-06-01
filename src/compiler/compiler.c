@@ -503,24 +503,29 @@ static void synchronize() {
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
-		#ifdef EM_MAIN
 			if(parser.manipTarget){
 				parser.manipTarget->lineIndex = parser.lineIndex;
 				parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
 				int operator = (int)(parser.lastOperator);
-				em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, &operator, parser.manipTarget);	
+				#ifdef EM_MAIN
+					em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, &operator, parser.manipTarget);	
+				#endif
 			}else{
 				if(parser.lastValueEmitted){
 					parser.lastValueEmitted->lineIndex = parser.lineIndex;
 					parser.lastValueEmitted->inlineIndex = parser.currentLineValueIndex;
 					int insertionIndex = parser.current.start + parser.current.length - parser.lastNewline;
-					em_addUnlinkedValue(&insertionIndex, parser.lastValueEmitted);
+					#ifdef EM_MAIN
+						em_addUnlinkedValue(&insertionIndex, parser.lastValueEmitted);
+					#endif
 				}
 			}
-		#endif
 		++parser.currentLineValueIndex;
 	}
 	parser.manipTarget = NULL;
+	parser.lastValueEmitted = NULL;
+	parser.manipTargetLength = 0;
+	parser.manipTargetCharIndex = -1;
 	parser.manipPrecedence = -1;
 }
 static void number(bool canAssign) {
@@ -1367,8 +1372,7 @@ void initParser(Parser* parser, char* source){
 
 	parser->manipTarget = NULL;
 	parser->manipTargetCharIndex = -1;
-	parser->manipTargetLength = -1;
-	parser->manipTargetParenDepth = -1;
+	parser->manipTargetLength = 0;
 	
 	parser->parenDepth = 0;
 }
