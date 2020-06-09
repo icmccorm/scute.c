@@ -32,9 +32,16 @@ mergeInto(LibraryManager.library, {
 		CBEZIER: 3,
 		QBEZIER: 4,
 		ARC: 5,
+		MIRROR: 6,
 	},
 
-
+	opCodes: {
+		PLUS: 0,
+		MINUS: 1,
+		TIMES: 2,
+		DIVIDE: 3,
+		MODULO: 4,
+	},
 
 	em_configureValuePointerOffsets: function (typePtr, unionPtr, lineIndexPtr, inlineIndexPtr){
 		_valuePointerOffsets.type = getValue(typePtr, 'i32');
@@ -63,8 +70,10 @@ mergeInto(LibraryManager.library, {
 		var inlineOffset = getValue(inlineOffsetPtr, 'i32');
 		var length = getValue(lengthPtr, 'i32');
 		var operator = getValue(opPtr, 'i32');
+
 		_values.push({
 			delta: 0,
+			prevDelta: 0,
 			origin: _lib_getValue(valPtr),
 			op: operator,
 			inlineOffset: inlineOffset,
@@ -103,13 +112,13 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_printOut: function(ptr) {
-		Module._printFunction({type: 3, payload: Module.UTF8ToString(ptr)});
+		Module["_printFunction"]({type: 3, payload: Module.UTF8ToString(ptr)});
 	},
 	em_printDebug: function(ptr){
-		Module._printFunction({type: 4, payload: Module.UTF8ToString(ptr)});
+		Module["_printFunction"]({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 	em_printError: function(ptr){
-		Module._printFunction({type: 4, payload: Module.UTF8ToString(ptr)});
+		Module["_printFunction"]({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 	
 	em_newShape: function(idPtr, tagPtr){
@@ -159,7 +168,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_paintShape: function(){
-		Module._currentFrame.push(_currentShape);
+		Module["_currentFrame"].push(_currentShape);
 	},
 
 	setMaxFrameIndex: function(num){
@@ -167,7 +176,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_setCanvas: function(originPtr, dimsPtr){
-		Module._canvas = {
+		Module["_canvas"] = {
 			size: _lib_getVector(dimsPtr),
 			origin: _lib_getVector(originPtr),
 		}
@@ -229,6 +238,14 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
+	em_addMirror: function(mirror){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.MIRROR,
+			axis: getValue(mirror, 'i32')
+		});
+	},
+
 	em_addCubicBezier: function(control1, control2, end){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentShape.segments) _currentShape.segments = [];
@@ -240,12 +257,13 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	em_addArc: function(center, degrees){
+	em_addArc: function(center, degrees, radius){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.ARC,
 			center: _lib_getVector(center),
 			degrees: _lib_getValueMeta(degrees),
+			radius: _lib_getVector(radius)
 		});
 	},
 

@@ -207,10 +207,13 @@ void drawPoints(ObjShape* shape){
 				Value center = getValue(map, string("center"));
 				Value* centerArray = AS_ARRAY(center)->array->values;
 
+				Value rads = getValue(map, string("radius"));
+				Value* radsArray = AS_ARRAY(rads)->array->values;
+
 				Value degrees = getValue(map, string("degrees"));
 
 				#ifdef EM_MAIN
-					em_addArc(centerArray, degrees);
+					em_addArc(centerArray, degrees, radsArray);
 				#else
 					print(O_OUT, "arc ");
 					printValue(O_OUT, center);

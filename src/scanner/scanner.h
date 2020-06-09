@@ -75,6 +75,8 @@ typedef enum {
     TK_POLYL,
     TK_PATH,
     TK_ELLIP,
+    TK_LINE,
+    TK_UNGON,
     TK_MOVE,
     TK_TURN,
     TK_VERT,
@@ -82,7 +84,7 @@ typedef enum {
     TK_ARC,
     TK_CBEZ,
     TK_QBEZ,
-    TK_LINE,
+    TK_MIRR,
 
 	TK_SIN,
 	TK_COS,
@@ -131,6 +133,10 @@ typedef enum{
 
     CS_CENTER,
     CS_LCORNER,
+
+    CS_X,
+    CS_Y,
+    CS_XY
 } CSType;
 
 typedef struct{

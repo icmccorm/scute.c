@@ -383,6 +383,7 @@ static uint8_t emitParams();
 static void attr();
 static void returnStatement();
 static void repeatStatement();
+static void forStatement();
 static void withStatement();
 static void whileStatement();
 static void funcStatement();
@@ -469,6 +470,10 @@ static void statement() {
 			case TK_REP:
 				advance();
 				repeatStatement();
+				break;
+			case TK_FOR:
+				advance();
+				forStatement();
 				break;
 			case TK_WITH:
 				advance();
@@ -678,7 +683,7 @@ static void repeatStatement() {
 		exitScope();
 
 		//jump back to the beginning if the counter has ended.
-		emitBundle(OP_GET_LOCAL,counterLocalIndex);	
+		emitBundle(OP_GET_LOCAL, counterLocalIndex);	
 		emitConstant(NUM_VAL(1));
 		emitByte(OP_LESS);
 		//only jump back if the counter hasn't fallen below zero
@@ -691,6 +696,68 @@ static void repeatStatement() {
 		errorAtCurrent("Expected an integer or identifier.");
 	}
 }
+
+static void forStatement() {
+	if(parser.current.type == TK_ID || parser.current.type == TK_INTEGER){
+		advance();
+		TK counterLocalToken = parser.previous;
+		consume(TK_TO, "Expected 'to' or 'in' command.");
+		
+		if(parser.current.type == TK_ID || parser.current.type == TK_INTEGER){
+			advance();
+			TK counterToken = parser.previous;
+			if(parser.previous.type == TK_ID){
+				//if a local variable has been used, then its value is copied into a separate local.
+				namedVariable(&counterToken, true);
+			}else{
+				emitConstant(NUM_VAL(tokenToNumber(counterToken)));
+			}
+			uint32_t maxLocalIndex = addCounterLocal(currentCompiler());
+
+			emitConstant(NUM_VAL(-1));
+			uint32_t counterLocalIndex = addLocal(currentCompiler(), counterLocalToken);
+			markInitialized(counterLocalIndex);
+
+			endLine();
+
+			//Mark the jump position to the before the decrement and repeat body
+			uint32_t jumpIndex = currentChunk()->count;
+			
+			//decrement the counter by one
+			emitBundle(OP_GET_LOCAL, counterLocalIndex);
+			emitConstant(NUM_VAL(1));
+			emitByte(OP_ADD);
+
+			emitBundle(OP_DEF_LOCAL, counterLocalIndex);
+			emitByte(OP_POP);
+
+			//execute the body
+			enterScope();
+			indentedBlock();	
+			exitScope();
+
+			//jump back to the beginning if the counter has ended.
+		
+			emitBundle(OP_GET_LOCAL, counterLocalIndex);	
+			emitBundle(OP_GET_LOCAL, maxLocalIndex);	
+
+			emitByte(OP_LESS);
+			emitByte(OP_NOT);
+			//only jump back if the counter hasn't fallen below zero
+			jumpTo(OP_JMP_FALSE, jumpIndex);
+
+			//remove the counter local before moving on
+			emitByte(OP_POP);
+			--currentCompiler()->localCount;
+		}else{
+			errorAtCurrent("Expected an identifier or number.");
+		}
+	}else{
+		errorAtCurrent("Expected an identifier.");
+	}
+}
+
+
 
 static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 	if(currentChunk){
@@ -995,6 +1062,21 @@ static void constant(bool canAssign) {
 			break;
 		case CS_TRANSP:
 			emitConstant(RGBA(0, 0, 0, 0));
+			break;
+		case CS_X:
+			emitConstant(NUM_VAL((int) CS_X));
+			break;
+		case CS_Y:
+			emitConstant(NUM_VAL((int) CS_Y));
+			break;
+		case CS_XY:
+			emitConstant(NUM_VAL((int) CS_XY));
+			break;
+		case CS_CENTER:
+			emitConstant(VECTOR(0, 0));
+			break;
+		case CS_LCORNER:
+			emitConstant(VECTOR(0, 0));
 			break;
 		case CS_ERROR:
 			errorAtCurrent("Invalid constant.");

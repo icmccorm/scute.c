@@ -10,7 +10,8 @@
 #include "obj.h"
 #include "svg.h"
 
-#define SEGMENTABLE(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
+#define POLY(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
+#define PATH(shape) (shape->shapeType == TK_PATH)
 
 Value nativeRandom(Value* params, int numParams){
 	switch(numParams){
@@ -169,7 +170,6 @@ Value jump(Value* params, int numParams){
 }
 
 Value move(Value* params, int numParams){
-
 	ObjShape* moveInstance = allocateShape(NULL, TK_MOVE);
 	add(moveInstance->instance.map, string("distance"), NUM_VAL(0));
 
@@ -326,11 +326,43 @@ Value cBezier(Value* params, int numParams){
 	runtimeError("Only paths can accept beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
+Value mirror(Value* params, int numParams){
+	ObjShape* mirrorInstance = allocateShape(NULL, TK_MIRR);
+
+	ObjInstance* current = currentInstance();
+	if(current && current->type == INST_SHAPE){
+		ObjShape* shape = (ObjShape*) current;
+		if(shape->shapeType >= TK_POLY){
+			addSegment(shape, mirrorInstance);
+			return OBJ_VAL((ObjInstance*) mirrorInstance);
+		}
+	}
+	runtimeError("Only paths or poly-shapes can be mirrored.");
+	return OBJ_VAL((ObjInstance*) mirrorInstance);
+}
+
+Value nativeTranslate(Value* params, int numParams){
+	ObjShape* translate = allocateShape(NULL, TK_CBEZ);
+
+	add(translate->instance.map, string("diff"), VECTOR(0, 0));
+	
+	ObjInstance* current = currentInstance();
+	if(current && current->type == INST_SHAPE){
+		ObjShape* shape = (ObjShape*) current;
+		if(shape->shapeType == TK_PATH){
+			addSegment(shape, translate);
+			return OBJ_VAL((ObjInstance*) translate);
+		}
+	}
+
+	runtimeError("Only paths can accept beziers.");
+	return OBJ_VAL((ObjInstance*) translate);
+}
 
 void initGlobals(HashMap* map){
 	ObjString* canvasString = string("canvas");
 	ObjInstance* canvasProperties = allocateInstance(NULL);
 	add(canvasProperties->map, string("origin"), VECTOR(0, 0));
-	add(canvasProperties->map, string("size"), VECTOR(250, 250));
+	add(canvasProperties->map, string("size"), VECTOR(500, 500));
 	add(map, canvasString, OBJ_VAL(canvasProperties));
 }

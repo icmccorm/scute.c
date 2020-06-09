@@ -54,15 +54,15 @@ clean:
 
 EM_FLAGS = --js-library ./library.js --pre-js ./pre.js 
 EM_WEB_FLAGS = $(EM_EXPORTS) -s ASSERTIONS=3 -s WASM=1 -s STRICT=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0  -s EXPORT_NAME="'Scute'" -s FILESYSTEM=0 -s ENVIRONMENT='worker'
-EM_NODE_FLAGS = $(EM_EXPORTS) -O0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='node' -s EXPORT_NAME="'Scute'"
-EM_EXPORTS = -s EXPORTED_FUNCTIONS='["_malloc", "_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "intArrayFromString", "UTF8ToString"]' -s ALLOW_MEMORY_GROWTH=1
+EM_NODE_FLAGS = $(EM_EXPORTS) -O0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='node' -s ALLOW_MEMORY_GROWTH=1 -s EXPORT_NAME="'Scute'"
+EM_EXPORTS = -s EXPORTED_FUNCTIONS='["_free", "_malloc", "_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["intArrayFromString", "ccall", "UTF8ToString"]'
 EM_ENTRY = ./src/em_main.c
 
 web : $(SRC_FILES) $(EM_ENTRY)
 	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
 
 web-prod: $(SRC_FILES) $(EM_ENTRY)
-	@$(WASMC) $(EM_MAP) --closure 1 $(EM_FLAGS) -O3 $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
+	@$(WASMC) $(EM_MAP) $(EM_FLAGS) -O3 $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
 
 node: $(SRC_FILES) $(EM_ENTRY)
 	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_NODE_FLAGS) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE)-test.js 
