@@ -327,6 +327,25 @@ Value cBezier(Value* params, int numParams){
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
 
+Value mirror(Value* params, int numParams){
+	ObjShape* mirrInstance = allocateShape(NULL, TK_MIRR);
+
+	add(mirrInstance->instance.map, string("axis"), NUM_VAL(0));
+	add(mirrInstance->instance.map, string("origin"), VECTOR(0, 0));
+	
+	ObjInstance* current = currentInstance();
+	if(current && current->type == INST_SHAPE){
+		ObjShape* shape = (ObjShape*) current;
+		if(shape->shapeType == TK_PATH){
+			addSegment(shape, mirrInstance);
+			return OBJ_VAL((ObjInstance*) mirrInstance);
+		}
+	}
+
+	runtimeError("Only paths can accept beziers.");
+	return OBJ_VAL((ObjInstance*) mirrInstance);
+}
+
 void initGlobals(HashMap* map){
 	ObjString* canvasString = string("canvas");
 	ObjInstance* canvasProperties = allocateInstance(NULL);

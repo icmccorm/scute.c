@@ -83,6 +83,7 @@ typedef enum {
     TK_CBEZ,
     TK_QBEZ,
     TK_LINE,
+    TK_MIRR,
 
 	TK_SIN,
 	TK_COS,
@@ -95,6 +96,9 @@ typedef enum {
 	TK_RAD,
 	TK_SQRT,
     TK_RAND,
+    TK_ORIGIN,
+    TK_AXIS
+
 } TKType;  
 
 typedef enum{
@@ -131,6 +135,7 @@ typedef enum{
 
     CS_CENTER,
     CS_LCORNER,
+
 } CSType;
 
 typedef struct{

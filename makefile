@@ -2,7 +2,7 @@
 # https://spin.atomicobject.com/2016/08/26/makefile-c-projects/
 
 
-CC = clang
+CC = gcc
 WASMC = emcc
 
 D_FLAGS = -MMD -MP   

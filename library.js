@@ -32,6 +32,7 @@ mergeInto(LibraryManager.library, {
 		CBEZIER: 3,
 		QBEZIER: 4,
 		ARC: 5,
+		MIRROR: 6,
 	},
 
 
@@ -246,6 +247,15 @@ mergeInto(LibraryManager.library, {
 			type: _segmentTypes.ARC,
 			center: _lib_getVector(center),
 			degrees: _lib_getValueMeta(degrees),
+		});
+	},
+
+	em_addMirror: function(originPtr, axisPtr){
+		if(!_currentShape.segments) _currentShape.segments = [];
+		_currentShape.segments.push({
+			type: _segmentTypes.MIRROR,
+			origin: _lib_getVector(originPtr),
+			degrees: _lib_getValue(axisPtr),
 		});
 	},
 

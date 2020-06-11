@@ -1059,6 +1059,9 @@ static void native(bool canAssign){
 		case TK_QBEZ:
 			func = qBezier;
 			break;
+		case TK_MIRR:
+			func = mirror;
+			break;
 		case TK_SIN:
 			func = nativeSine;
 			break;

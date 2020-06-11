@@ -291,6 +291,8 @@ static TKType findIdentifier(){
                     case 'n': return checkKeyword(2, 1, "d", TK_AND);
                     case 'r': return checkKeyword(2, 1, "c", TK_ARC);
                 }
+            }else{
+                return TK_ID;
             }
         case 'd':
             if(scanner.current - scanner.start > 1){
@@ -464,7 +466,15 @@ static TKType findIdentifier(){
 			}else{
 				return TK_ID;
 			}
-        case 'm': return checkKeyword(1, 3, "ove", TK_MOVE);
+        case 'm':
+            if(scanner.current - scanner.start > 1){
+                switch(scanner.start[1]){
+                    case 'i': return checkKeyword(2, 4, "rror", TK_MIRR);
+                    case 'o': return checkKeyword(2, 2, "ve", TK_MOVE);
+                }
+            }else{
+                return TK_ID;
+            }
         case 'j': return checkKeyword(1, 3, "ump", TK_JUMP);
         case 'q': return checkKeyword(1, 6, "Bezier", TK_QBEZ);
         default:
@@ -490,6 +500,7 @@ static TK identifier(){
         case TK_QBEZ:
         case TK_CBEZ:
         case TK_LINE:
+        case TK_MIRR:
             return makeDualToken(TK_SHAPE, type);
         case TK_SIN:
         case TK_COS:

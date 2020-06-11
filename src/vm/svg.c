@@ -210,12 +210,28 @@ void drawPoints(ObjShape* shape){
 				Value degrees = getValue(map, string("degrees"));
 
 				#ifdef EM_MAIN
-					em_addArc(centerArray, degrees);
+					em_addArc(centerArray, &degrees);
 				#else
 					print(O_OUT, "arc ");
 					printValue(O_OUT, center);
 					print(O_OUT, " ");
 					printValue(O_OUT, degrees);
+					print(O_OUT, "\n");
+				#endif
+			} break;
+			case TK_MIRR: {
+				Value origin = getValue(map, string("origin"));
+				Value* originArray = AS_ARRAY(origin)->array->values;
+
+				Value axis = getValue(map, string("axis"));
+
+				#ifdef EM_MAIN
+					em_addMirror(originArray, &axis);
+				#else
+					print(O_OUT, "Mirror ");
+					printValue(O_OUT, origin);
+					print(O_OUT, " ");
+					printValue(O_OUT, axis);
 					print(O_OUT, "\n");
 				#endif
 			} break;
