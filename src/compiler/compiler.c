@@ -1132,6 +1132,9 @@ static void native(bool canAssign){
 		case TK_POLY:
 			func = polygon;
 			break;
+		case TK_UNGON:
+			func = ungon;
+			break;
 		case TK_POLYL:
 			func = polyline;
 			break;
@@ -1140,6 +1143,9 @@ static void native(bool canAssign){
 			break;
 		case TK_QBEZ:
 			func = qBezier;
+			break;
+		case TK_MIRR:
+			func = mirror;
 			break;
 		case TK_SIN:
 			func = nativeSine;

@@ -238,11 +238,12 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	em_addMirror: function(mirror){
+	em_addMirror: function(originPtr, axisPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.MIRROR,
-			axis: getValue(mirror, 'i32')
+			axis: getValue(axisPtr, 'i32'),
+			origin: _lib_getVector(originPtr)
 		});
 	},
 

@@ -72,11 +72,12 @@ typedef enum {
     TK_RECT,
     TK_CIRC,
     TK_POLY,
+    TK_UNGON,
     TK_POLYL,
     TK_PATH,
     TK_ELLIP,
     TK_LINE,
-    TK_UNGON,
+
     TK_MOVE,
     TK_TURN,
     TK_VERT,

@@ -165,7 +165,7 @@ Value jump(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) jumpInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept move commands.");
+	runtimeError("Only poly-type shapes and paths can accept move commands.");
 	return OBJ_VAL((ObjInstance*) jumpInstance);
 }
 
@@ -181,7 +181,7 @@ Value move(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) moveInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept move commands.");
+	runtimeError("Only poly-type shapes and paths can accept move commands.");
 	return OBJ_VAL((ObjInstance*) moveInstance);
 }
 
@@ -197,7 +197,7 @@ Value vertex(Value* params, int numParams) {
 			return OBJ_VAL((ObjInstance*) vertexInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept vertices.");
+	runtimeError("Only poly-type shapes and paths can accept vertices.");
 	return OBJ_VAL((ObjInstance*) vertexInstance);
 }
 
@@ -213,7 +213,7 @@ Value turn(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) turnInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept turn commands.");
+	runtimeError("Only poly-type shapes and paths can accept turn commands.");
 	return OBJ_VAL((ObjInstance*) turnInstance);
 }
 
@@ -289,6 +289,13 @@ Value path(Value* params, int numParams){
 	return OBJ_VAL((ObjInstance*) pathInstance);
 }
 
+Value ungon(Value* params, int numParams){
+	ObjShape* ungonInstance = allocateShape(NULL, TK_UNGON);
+	pushShape(ungonInstance);
+
+	return OBJ_VAL((ObjInstance*) ungonInstance);
+}
+
 Value qBezier(Value* params, int numParams){
 	ObjShape* bezInstance = allocateShape(NULL, TK_QBEZ);
 	add(bezInstance->instance.map, string("control"), VECTOR(0, 0));
@@ -303,7 +310,7 @@ Value qBezier(Value* params, int numParams){
 		}
 	}
 
-	runtimeError("Only paths can accept beziers.");
+	runtimeError("Only paths can accept Beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
 
@@ -323,11 +330,15 @@ Value cBezier(Value* params, int numParams){
 		}
 	}
 
-	runtimeError("Only paths can accept beziers.");
+	runtimeError("Only paths can accept Beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
+
 Value mirror(Value* params, int numParams){
 	ObjShape* mirrorInstance = allocateShape(NULL, TK_MIRR);
+	
+	add(mirrorInstance->instance.map, string("axis"), NUM_VAL(0));
+	add(mirrorInstance->instance.map, string("origin"), VECTOR(0, 0));
 
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
@@ -337,7 +348,8 @@ Value mirror(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) mirrorInstance);
 		}
 	}
-	runtimeError("Only paths or poly-shapes can be mirrored.");
+
+	runtimeError("Only poly-type shapes or paths can be mirrored.");
 	return OBJ_VAL((ObjInstance*) mirrorInstance);
 }
 

@@ -29,7 +29,8 @@ extern void em_addMove(Value* distPtr);
 extern void em_addVertex(Value* vecPtr);
 extern void em_addQuadBezier(Value* control, Value* end);
 extern void em_addCubicBezier(Value* control1, Value* control2, Value* end);
-extern void em_addArc(Value* center, Value degrees, Value* radius);
+extern void em_addArc(Value* center, Value* degrees, Value* radius);
+extern void em_addMirror(Value* origin, Value* degrees);
 
 extern void em_newShape(double id, double type);
 extern void em_paintShape();
