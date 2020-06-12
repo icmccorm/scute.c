@@ -34,7 +34,6 @@ void resolveColor(const char* key, Value val){
 void assignStyles(ObjShape* shape){
 	HashMap* shapeMap = shape->instance.map;
 	Value strokeWidth = getValue(shapeMap, string("strokeWidth"));
-	printValue(O_OUT, strokeWidth);
 	em_addStyle("strokeWidth", &strokeWidth);
 
 	Value fill = getValue(shapeMap, string("fill"));

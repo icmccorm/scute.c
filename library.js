@@ -242,7 +242,7 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
 			type: _segmentTypes.MIRROR,
-			axis: getValue(axisPtr, 'i32'),
+			axis: _lib_getValue(axisPtr),
 			origin: _lib_getVector(originPtr)
 		});
 	},
