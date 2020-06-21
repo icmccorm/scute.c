@@ -207,12 +207,15 @@ void drawPoints(ObjShape* shape){
 				Value center = getValue(map, string("center"));
 				Value* centerArray = AS_ARRAY(center)->array->values;
 
+				Value rads = getValue(map, string("radius"));
+				Value* radsArray = AS_ARRAY(rads)->array->values;
+
 				Value degrees = getValue(map, string("degrees"));
 
 				#ifdef EM_MAIN
 					em_addArc(centerArray, &degrees);
 				#else
-					print(O_OUT, "arc ");
+					print(O_OUT, "Arc ");
 					printValue(O_OUT, center);
 					print(O_OUT, " ");
 					printValue(O_OUT, degrees);
@@ -224,7 +227,6 @@ void drawPoints(ObjShape* shape){
 				Value* originArray = AS_ARRAY(origin)->array->values;
 
 				Value axis = getValue(map, string("axis"));
-
 				#ifdef EM_MAIN
 					em_addMirror(originArray, &axis);
 				#else
@@ -292,6 +294,7 @@ void renderFrame(CompilePackage* code){
 			case TK_POLY:
 			case TK_POLYL:
 			case TK_PATH:
+			case TK_UNGON:
 				drawPoints(top);
 				break;
 			default:

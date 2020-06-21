@@ -17,17 +17,21 @@ Value nativeDegrees(Value* params, int numParams);
 Value nativeRadians(Value* params, int numParams);
 Value nativeSqrt(Value* params, int numParams);
 Value nativeRandom(Value* params, int numParams);
-Value move(Value* params, int numParams);
-Value vertex(Value* params, int numParams);
-Value turn(Value* params, int numParams);
-Value arc(Value* params, int numParams);
-Value jump(Value* params, int numParams);
+
 Value rect(Value* params, int numParams);
 Value circle(Value* params, int numParams);
 Value ellipse(Value* params, int numParams);
 Value polygon(Value* params, int numParams);
+Value ungon(Value* params, int numParams);
 Value polyline(Value* params, int numParams);
 Value path(Value* params, int numParams);
+
+Value move(Value* params, int numParams);
+Value turn(Value* params, int numParams);
+Value jump(Value* params, int numParams);
+
+Value vertex(Value* params, int numParams);
+Value arc(Value* params, int numParams);
 Value qBezier(Value* params, int numParams);
 Value cBezier(Value* params, int numParams);
 Value line(Value* params, int numParams);

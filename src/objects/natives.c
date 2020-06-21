@@ -10,7 +10,8 @@
 #include "obj.h"
 #include "svg.h"
 
-#define SEGMENTABLE(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
+#define POLY(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
+#define PATH(shape) (shape->shapeType == TK_PATH)
 
 Value nativeRandom(Value* params, int numParams){
 	switch(numParams){
@@ -164,12 +165,11 @@ Value jump(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) jumpInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept move commands.");
+	runtimeError("Only poly-type shapes and paths can accept move commands.");
 	return OBJ_VAL((ObjInstance*) jumpInstance);
 }
 
 Value move(Value* params, int numParams){
-
 	ObjShape* moveInstance = allocateShape(NULL, TK_MOVE);
 	add(moveInstance->instance.map, string("distance"), NUM_VAL(0));
 
@@ -181,7 +181,7 @@ Value move(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) moveInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept move commands.");
+	runtimeError("Only poly-type shapes and paths can accept move commands.");
 	return OBJ_VAL((ObjInstance*) moveInstance);
 }
 
@@ -197,7 +197,7 @@ Value vertex(Value* params, int numParams) {
 			return OBJ_VAL((ObjInstance*) vertexInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept vertices.");
+	runtimeError("Only poly-type shapes and paths can accept vertices.");
 	return OBJ_VAL((ObjInstance*) vertexInstance);
 }
 
@@ -213,7 +213,7 @@ Value turn(Value* params, int numParams){
 			return OBJ_VAL((ObjInstance*) turnInstance);
 		}
 	}
-	runtimeError("Only polylines, polygons, and paths can accept turn commands.");
+	runtimeError("Only poly-type shapes and paths can accept turn commands.");
 	return OBJ_VAL((ObjInstance*) turnInstance);
 }
 
@@ -289,6 +289,13 @@ Value path(Value* params, int numParams){
 	return OBJ_VAL((ObjInstance*) pathInstance);
 }
 
+Value ungon(Value* params, int numParams){
+	ObjShape* ungonInstance = allocateShape(NULL, TK_UNGON);
+	pushShape(ungonInstance);
+
+	return OBJ_VAL((ObjInstance*) ungonInstance);
+}
+
 Value qBezier(Value* params, int numParams){
 	ObjShape* bezInstance = allocateShape(NULL, TK_QBEZ);
 	add(bezInstance->instance.map, string("control"), VECTOR(0, 0));
@@ -303,7 +310,7 @@ Value qBezier(Value* params, int numParams){
 		}
 	}
 
-	runtimeError("Only paths can accept beziers.");
+	runtimeError("Only paths can accept Beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
 
@@ -323,33 +330,51 @@ Value cBezier(Value* params, int numParams){
 		}
 	}
 
-	runtimeError("Only paths can accept beziers.");
+	runtimeError("Only paths can accept Beziers.");
 	return OBJ_VAL((ObjInstance*) bezInstance);
 }
 
 Value mirror(Value* params, int numParams){
-	ObjShape* mirrInstance = allocateShape(NULL, TK_MIRR);
+	ObjShape* mirrorInstance = allocateShape(NULL, TK_MIRR);
+	
+	add(mirrorInstance->instance.map, string("axis"), NUM_VAL(0));
+	add(mirrorInstance->instance.map, string("origin"), VECTOR(0, 0));
 
-	add(mirrInstance->instance.map, string("axis"), NUM_VAL(0));
-	add(mirrInstance->instance.map, string("origin"), VECTOR(0, 0));
+	ObjInstance* current = currentInstance();
+	if(current && current->type == INST_SHAPE){
+		ObjShape* shape = (ObjShape*) current;
+		if(shape->shapeType >= TK_POLY){
+			addSegment(shape, mirrorInstance);
+			return OBJ_VAL((ObjInstance*) mirrorInstance);
+		}
+	}
+
+	runtimeError("Only poly-type shapes or paths can be mirrored.");
+	return OBJ_VAL((ObjInstance*) mirrorInstance);
+}
+
+Value nativeTranslate(Value* params, int numParams){
+	ObjShape* translate = allocateShape(NULL, TK_CBEZ);
+
+	add(translate->instance.map, string("diff"), VECTOR(0, 0));
 	
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
 		if(shape->shapeType == TK_PATH){
-			addSegment(shape, mirrInstance);
-			return OBJ_VAL((ObjInstance*) mirrInstance);
+			addSegment(shape, translate);
+			return OBJ_VAL((ObjInstance*) translate);
 		}
 	}
 
 	runtimeError("Only paths can accept beziers.");
-	return OBJ_VAL((ObjInstance*) mirrInstance);
+	return OBJ_VAL((ObjInstance*) translate);
 }
 
 void initGlobals(HashMap* map){
 	ObjString* canvasString = string("canvas");
 	ObjInstance* canvasProperties = allocateInstance(NULL);
 	add(canvasProperties->map, string("origin"), VECTOR(0, 0));
-	add(canvasProperties->map, string("size"), VECTOR(250, 250));
+	add(canvasProperties->map, string("size"), VECTOR(500, 500));
 	add(map, canvasString, OBJ_VAL(canvasProperties));
 }

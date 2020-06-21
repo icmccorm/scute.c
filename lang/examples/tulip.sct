@@ -1,0 +1,43 @@
+with canvas
+	.origin = [30, 50]
+	.size = [50, 50]
+
+func leaf(x, y, f)
+	with path()
+		.fill = :lime
+		let start = [x, y]
+		with jump()
+			.position = start
+		with cBezier()
+			.startControl = [f*5.088, -12.779]
+			.endControl = [f*-19.079, -25.458]
+			.end = start
+			
+func stem()
+	with path()
+		with jump()
+			.position = [0,0]
+		with qBezier()
+			.control = [0.821, -31.943]
+			.end = [-14, -36.398]
+
+func bulb()
+	let closing = [-25.326, -38.650]
+	with path()
+		.fill = :magenta
+		with jump()
+			.position = closing
+		with qBezier()
+			.control = [-5.279, -31.024]
+			.end = [-18.890, -46.620]
+		with qBezier()
+			.control = [-18.180, -40.792]
+			.end = closing
+
+
+leaf(0,0,1)
+leaf(0,0,-1)
+stem()
+bulb()
+
+

@@ -1,0 +1,18 @@
+with path()
+	.strokeWidth = 15
+	.stroke = :orange
+	with jump()
+		.position = [438, 172]
+	with qBezier()
+		.control = [424, 299]
+		.end = [300, 300]
+
+with path()
+	.strokeWidth = 15
+	.stroke = :lime
+	with jump()
+		.position = [213, 135]
+	with cBezier()
+		.startControl = [334, 103]
+		.endControl = [214, 207]
+		.end = [344, 225]

@@ -145,11 +145,11 @@ static TK number(){
 }
 
 static TKType checkKeyword(int start, int length, char* rest, TKType type){
-    if(scanner.current - scanner.start == start + length &&
-        memcmp(scanner.start + start, rest, length) == 0){
+    if(scanner.current - scanner.start == start + length 
+        && memcmp(scanner.start + start, rest, length) == 0){
             return type;
     }
-    return TK_ID; 
+    return TK_ID;
 }
 
 static CSType checkConst(int start, int length, char* rest, CSType type){
@@ -203,7 +203,12 @@ static CSType findConstantIdentifier(){
 			}
 			return CS_ERROR;
 		}
-		case 'y': return checkConst(1, 5, "ellow", CS_YELLOW);
+		case 'y': 
+            if(length > 1){
+                return checkConst(1, 5, "ellow", CS_YELLOW);
+            }else{
+                return CS_Y;
+            }
 		case 'b': {
 			if(length > 1){
 				switch(scanner.start[1]){
@@ -271,6 +276,15 @@ static CSType findConstantIdentifier(){
 			}
 			return CS_ERROR;
 		}
+        case 'x':
+            switch(length){
+                case 1: return CS_X;
+                case 2: 
+                    if(scanner.start[1] == 'y'){
+                        return CS_XY;
+                    }
+                    return CS_ERROR;
+            }            
         default:
             return CS_ERROR;
     }
@@ -477,6 +491,7 @@ static TKType findIdentifier(){
             }
         case 'j': return checkKeyword(1, 3, "ump", TK_JUMP);
         case 'q': return checkKeyword(1, 6, "Bezier", TK_QBEZ);
+        case 'u': return checkKeyword(1, 4, "ngon", TK_UNGON);
         default:
             return TK_ID;
     }
@@ -490,6 +505,7 @@ static TK identifier(){
         case TK_CIRC:
         case TK_ELLIP:
         case TK_POLY:
+        case TK_UNGON:
         case TK_POLYL:
         case TK_PATH:
         case TK_MOVE:
