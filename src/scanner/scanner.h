@@ -85,7 +85,6 @@ typedef enum {
     TK_ARC,
     TK_CBEZ,
     TK_QBEZ,
-    TK_LINE,
     TK_MIRR,
 
 	TK_SIN,
@@ -139,12 +138,9 @@ typedef enum{
     CS_CENTER,
     CS_LCORNER,
 
-<<<<<<< HEAD
-=======
     CS_X,
     CS_Y,
     CS_XY
->>>>>>> for
 } CSType;
 
 typedef struct{
