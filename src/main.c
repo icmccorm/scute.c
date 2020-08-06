@@ -56,7 +56,7 @@ static InterpretResult runCode(char* source){
 	CompilePackage* compiled = initCompilationPackage();
 	
 	#ifndef EM_MAIN
-		print(O_OUT, "[A] after init: %d bytes\n", numBytesAllocated);
+		printMem("after init");
 	#endif
 
 	runCompiler(compiled, source);
@@ -68,7 +68,7 @@ static InterpretResult runCode(char* source){
 	FREE_ARRAY(char, source, length);
 
 	#ifndef EM_MAIN
-		print(O_OUT, "[A] after fcompile: %d bytes\n", numBytesAllocated);
+		printMem("after fcompile");
 	#endif
 
 	return result;
@@ -76,7 +76,7 @@ static InterpretResult runCode(char* source){
 
 static InterpretResult runFile(const char* path){
 	#ifndef EM_MAIN
-		print(O_OUT, "[A] before init: %d bytes\n", numBytesAllocated);
+		printMem("before init");
 	#endif
 	char* source = readFile(path);
 	return runCode(source);
@@ -84,7 +84,7 @@ static InterpretResult runFile(const char* path){
 
 static InterpretResult runInput(){
 	#ifndef EM_MAIN
-		print(O_OUT, "[A] before init: %d bytes\n", numBytesAllocated);
+		printMem("before init");
 	#endif
 
 	#define CHUNK (256)

@@ -66,9 +66,10 @@ typedef enum {
     TK_RET,
 	TK_REP,
 	TK_TO,
+    TK_IN,
     TK_FROM,
 	TK_WITH,
-
+    TK_BY,
     TK_RECT,
     TK_CIRC,
     TK_POLY,

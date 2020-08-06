@@ -1,14 +1,13 @@
-def star as polyline
-	with jump()
-		.position = [250, 250]
+with canvas
+	.size = [100, 100]
+	.origin = [50, 50]
+with polygon()
+	.stroke = :black
+	.fill = :yellow
+	.strokeWidth = 2
+	jump().position = [50, -10]	
 	repeat 5
-		with move()
-			.distance = 16
-		with turn()
-			.degrees = 144
-		with move()
-			.distance = 16
-		with turn()
-			.degrees = -72
-			
-draw star()
+		move().distance = 20
+		turn().degrees = 0
+		move().distance = 80
+		turn().degrees = 144

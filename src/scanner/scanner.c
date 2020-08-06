@@ -308,6 +308,7 @@ static TKType findIdentifier(){
             }else{
                 return TK_ID;
             }
+        case 'b': return checkKeyword(1, 1, "y", TK_BY);
         case 'd':
             if(scanner.current - scanner.start > 1){
                 switch(scanner.start[1]){

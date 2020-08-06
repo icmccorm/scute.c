@@ -153,7 +153,7 @@ void drawPoints(ObjShape* shape){
 				points[0] += (int) round(cos(toRadians(angle))*AS_NUM(distance));
 				points[1] += (int) round(sin(toRadians(angle))*AS_NUM(distance));
 				#ifdef EM_MAIN
-					em_addMove(&distance);				
+					em_addMove(&distance, &angle);				
 				#else
 					print(O_OUT, "Move %f: (%d, %d)\n", AS_NUM(distance), points[0], points[1]);
 				#endif

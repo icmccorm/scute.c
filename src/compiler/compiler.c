@@ -229,12 +229,13 @@ static TKType advance() {
 	}
 }
 
-static void consume(TKType type, char* message){
+static bool consume(TKType type, char* message){
 	if(parser.current.type == type){
 		advance();
-		return;
+		return true;
 	}
 	errorAtCurrent(message);
+	return false;
 }
 
 static bool check(TKType type){
@@ -282,6 +283,41 @@ static uint32_t getStringObjectIndex(TK* token){
 static uint32_t getObjectIndex(Obj* obj){
 	if(obj == NULL) return -1;
 	return writeValue(currentChunk(), OBJ_VAL(obj), parser.previous.line);
+}
+
+static int32_t resolveLocal(TK*id){
+	Compiler* comp = currentCompiler();
+	for(int i = comp->localCount-1; i>=0; --i){
+		Local* currentLocal = &comp->locals[i];
+		if(tokensEqual(*id, currentLocal->id)){
+			return i;
+		}
+	}
+	return (int32_t) -1;
+}
+
+static int32_t resolveInstanceLocal(){
+	Compiler* comp = currentCompiler();
+	for(int i = comp->localCount-1; i>=0; --i){
+		Local* currentLocal = &comp->locals[i];
+		if(currentLocal->type == INST){
+			return i;
+		}
+	}
+	errorAtCurrent("Unable to dereference this scope.");
+	return (int32_t) -1;
+}
+
+static int32_t latestLocal(){
+	return currentCompiler()->localCount-1;
+}
+
+static bool isGloballyDefined(TK* id){
+	return findKey(currentResult()->globals, id->start, id->length) != NULL;
+}
+
+static bool isInitialized(TK* id){
+	return isGloballyDefined(id) || (resolveLocal(id) >= 0);
 }
 
 static void expression(bool emitTrace);
@@ -607,8 +643,7 @@ static int emitJump(OpCode op) {
 }
 
 static void patchJump(uint32_t jumpIndex) {
-	signed short backIndex = currentChunk()->count - (jumpIndex - 2);
-
+	signed short backIndex = currentChunk()->count - jumpIndex - 2;
 	currentChunk()->code[jumpIndex] = ((backIndex >> 8) & 0xFF);
 	currentChunk()->code[jumpIndex+1] = (backIndex & 0xFF);
 }
@@ -625,12 +660,8 @@ static void internGlobal(TK* id){
 	add(currentResult()->globals, getTokenStringObject(id), NULL_VAL());
 }
 
-static int32_t resolveLocal(TK*id);
-static int32_t resolveInstanceLocal();
-static int32_t latestLocal();
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
-static bool isInitialized(TK* id);
 	
 static void whileStatement(){
 	uint32_t jumpIndex = currentChunk()->count;
@@ -672,7 +703,7 @@ static void repeatStatement() {
 		//decrement the counter by one
 		emitBundle(OP_GET_LOCAL, counterLocalIndex);
 		emitConstant(NUM_VAL(1));
-		emitByte(OP_SUBTRACT);
+		emitByte(OP_SUBTRACT); 
 
 		emitBundle(OP_DEF_LOCAL, counterLocalIndex);
 		emitByte(OP_POP);
@@ -698,66 +729,79 @@ static void repeatStatement() {
 }
 
 static void forStatement() {
-	if(parser.current.type == TK_ID || parser.current.type == TK_INTEGER){
-		advance();
-		TK counterLocalToken = parser.previous;
-		consume(TK_TO, "Expected 'to' or 'in' command.");
-		
-		if(parser.current.type == TK_ID || parser.current.type == TK_INTEGER){
-			advance();
-			TK counterToken = parser.previous;
-			if(parser.previous.type == TK_ID){
-				//if a local variable has been used, then its value is copied into a separate local.
-				namedVariable(&counterToken, true);
-			}else{
-				emitConstant(NUM_VAL(tokenToNumber(counterToken)));
-			}
-			uint32_t maxLocalIndex = addCounterLocal(currentCompiler());
+	if(consume(TK_ID, "Expected an identifier.")){
+		TK counterToken = parser.previous;
+		uint32_t varIndex = 0;
+		OpCode getCode = OP_GET_LOCAL;
+		OpCode defCode = OP_DEF_LOCAL;
+		bool wasDefinedInOuterScope = false;
 
-			emitConstant(NUM_VAL(-1));
-			uint32_t counterLocalIndex = addLocal(currentCompiler(), counterLocalToken);
-			markInitialized(counterLocalIndex);
-
-			endLine();
-
-			//Mark the jump position to the before the decrement and repeat body
-			uint32_t jumpIndex = currentChunk()->count;
+		if(parser.current.type == TK_ASSIGN){
 			
-			//decrement the counter by one
-			emitBundle(OP_GET_LOCAL, counterLocalIndex);
-			emitConstant(NUM_VAL(1));
-			emitByte(OP_ADD);
+			advance();
+			expression(false);
+			addLocal(currentCompiler(), counterToken);
+			varIndex = latestLocal();
+			emitBundle(OP_DEF_LOCAL, latestLocal());
 
-			emitBundle(OP_DEF_LOCAL, counterLocalIndex);
-			emitByte(OP_POP);
-
-			//execute the body
-			enterScope();
-			indentedBlock();	
-			exitScope();
-
-			//jump back to the beginning if the counter has ended.
-		
-			emitBundle(OP_GET_LOCAL, counterLocalIndex);	
-			emitBundle(OP_GET_LOCAL, maxLocalIndex);	
-
-			emitByte(OP_LESS);
-			emitByte(OP_NOT);
-			//only jump back if the counter hasn't fallen below zero
-			jumpTo(OP_JMP_FALSE, jumpIndex);
-
-			//remove the counter local before moving on
-			emitByte(OP_POP);
-			--currentCompiler()->localCount;
 		}else{
-			errorAtCurrent("Expected an identifier or number.");
+			bool wasDefinedInOuterScope = true;
+			if(isGloballyDefined(&counterToken)){
+				getCode = OP_GET_GLOBAL;
+				defCode = OP_DEF_GLOBAL;
+				varIndex = getStringObjectIndex(&counterToken);
+			}else if(resolveLocal(&counterToken) >= 0){
+				varIndex = resolveLocal(&counterToken);
+			}else{
+				errorAt(&counterToken, "Expected an initialized variable or an initialization expression.");
+				return;
+			}
 		}
+
+		if(parser.current.type == TK_TO){
+			advance();
+			if(consume(TK_INTEGER, "Expected an integer bound.")){
+				uint32_t boundValue = tokenToNumber(parser.previous);
+				uint32_t incrementValue = 1;
+				if(consume(TK_BY, "Expected 'by'.")){
+					if(consume(TK_INTEGER, "Expected an integer increment value.")){
+						incrementValue = tokenToNumber(parser.previous);
+						endLine();	
+
+						uint32_t jumpBackIndex = currentChunk()->count;
+
+						emitBundle(getCode, varIndex);
+						emitConstant(NUM_VAL(boundValue));
+						emitByte(OP_LESS);
+						uint32_t jumpIndex = emitJump(OP_JMP_FALSE);
+
+						//execute the body
+						enterScope();
+						indentedBlock();	
+						exitScope();
+
+						emitBundle(getCode, varIndex);
+						emitConstant(NUM_VAL(incrementValue));
+						emitByte(OP_ADD);
+						emitBundle(defCode, varIndex);
+						emitByte(OP_POP);
+
+						jumpTo(OP_JMP, jumpBackIndex);
+
+						patchJump(jumpIndex);
+						if(!wasDefinedInOuterScope) emitByte(OP_POP);
+					}	
+				}
+			}
+		}else if(parser.current.type == TK_IN){
+			advance();
+		}else{
+			errorAtCurrent("Expected 'to' or 'in'.");
+		}		
 	}else{
-		errorAtCurrent("Expected an identifier.");
+		errorAtCurrent("Expected an initialized variable or an initialization expression.");
 	}
 }
-
-
 
 static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 	if(currentChunk){
@@ -1212,32 +1256,6 @@ static void deref(bool canAssign){
 	}
 }
 
-static int32_t resolveLocal(TK*id){
-	Compiler* comp = currentCompiler();
-	for(int i = comp->localCount-1; i>=0; --i){
-		Local* currentLocal = &comp->locals[i];
-		if(tokensEqual(*id, currentLocal->id)){
-			return i;
-		}
-	}
-	return (int32_t) -1;
-}
-
-static int32_t resolveInstanceLocal(){
-	Compiler* comp = currentCompiler();
-	for(int i = comp->localCount-1; i>=0; --i){
-		Local* currentLocal = &comp->locals[i];
-		if(currentLocal->type == INST){
-			return i;
-		}
-	}
-	errorAtCurrent("Unable to dereference this scope.");
-	return (int32_t) -1;
-}
-
-static int32_t latestLocal(){
-	return currentCompiler()->localCount-1;
-}
 static void namedLocal(TK* id, bool canAssign, uint32_t index){
 	if(canAssign && match(TK_ASSIGN)){
 		expression(true);
@@ -1277,14 +1295,6 @@ static void namedGlobal(TK* id, bool canAssign, uint32_t index){
 	}
 }
 
-static bool isGloballyDefined(TK* id){
-	return findKey(currentResult()->globals, id->start, id->length) != NULL;
-}
-
-static bool isInitialized(TK* id){
-	return isGloballyDefined(id) || (resolveLocal(id) >= 0);
-}
-
 static void namedVariable(TK* id, bool canAssign){
 	int32_t index = resolveLocal(id);
 	if(index >= 0){
@@ -1293,8 +1303,6 @@ static void namedVariable(TK* id, bool canAssign){
 		namedGlobal(id, canAssign, getStringObjectIndex(id));
 	}	
 }
-
-static void functionCall(){}
 
 static void variable(bool canAssign){
 	if(parser.current.type == TK_L_PAREN){
@@ -1345,12 +1353,12 @@ static void assignStatement(bool enforceGlobal){
 		int localIndex = latestLocal();
 		emitBundle(OP_DEF_LOCAL, latestLocal());
 	}else{
+		internGlobal(&idToken);
 		parseAssignment();
 		uint32_t stringIndex = getStringObjectIndex(&idToken);
 		emitBundle(OP_DEF_GLOBAL, stringIndex);
 		emitByte(OP_POP);
   	}
-
 	endLine();
 }
 

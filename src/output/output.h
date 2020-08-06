@@ -14,4 +14,5 @@ void vprint(OutType type, const char* c, va_list args);
 void vprintln(OutType type, const char* c, ...);
 void println(OutType type, const char* c, ...);
 
+void printMem(const char* c);
 #endif

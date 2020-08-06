@@ -1,43 +1,37 @@
 with canvas
-	.origin = [30, 50]
-	.size = [50, 50]
+	.size = [60, 50]
+	.origin = [30, 60]
 
-func leaf(x, y, f)
-	with path()
-		.fill = :lime
-		let start = [x, y]
-		with jump()
-			.position = start
-		with cBezier()
-			.startControl = [f*5.088, -12.779]
-			.endControl = [f*-19.079, -25.458]
-			.end = start
-			
-func stem()
-	with path()
-		with jump()
-			.position = [0,0]
-		with qBezier()
-			.control = [0.821, -31.943]
-			.end = [-14, -36.398]
+def flower as path()
+	.stroke = :magenta
+	.fill = :pink
+	.strokeWidth = 1
 
-func bulb()
-	let closing = [-25.326, -38.650]
-	with path()
-		.fill = :magenta
-		with jump()
-			.position = closing
-		with qBezier()
-			.control = [-5.279, -31.024]
-			.end = [-18.890, -46.620]
-		with qBezier()
-			.control = [-18.180, -40.792]
-			.end = closing
+	jump().position = [-15, -50]
 
+	with cBezier()
+		.startControl = [-5, -4]
+		.endControl = [26, -42]
+		.end = [-9, -54]
+	with arc()
+		.center = [-34, -25]
+		.degrees = 40
+	with mirror()
+		.origin = [0, 0]
+		.axis = :x
 
-leaf(0,0,1)
-leaf(0,0,-1)
-stem()
-bulb()
+def leaves as path()
+	.stroke = :lime
+	.fill = :green
+	.strokeWidth = 1
+	jump().position = [27, -53]
+	with cBezier()
+		.startControl = [10, -58]
+		.endControl = [14, 2]
+		.end = [-1.5, -31]
+	with mirror()
+		.axis = :x
+		.origin = [0, 0]
 
-
+flower()
+leaves()

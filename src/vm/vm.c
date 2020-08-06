@@ -371,7 +371,7 @@ static InterpretResult run() {
 			case OP_JMP_FALSE: ;
 				signed short offset = READ_SHORT();
 				Value boolVal = pop();
-				if(isFalsey(boolVal)) vm.ip += offset;
+				if(isFalsey(boolVal)) vm.ip += (offset);
 				break;
 			case OP_LIMIT: ;
 				uint32_t lowerBound = readInteger();
@@ -486,20 +486,20 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 		
 		initVM(code, index);
 		#ifndef EM_MAIN
-			print(O_OUT, "[A] before runtime: %d\n\n-----\n", numBytesAllocated);
+			printMem("before runtime");
 		#endif
 		
 		result = run();
 		
 		#ifndef EM_MAIN
-			print(O_OUT, "-----\n\n[A] after runtime: %d\n", numBytesAllocated);
+			printMem("after runtime");
 		#endif
 		
 		renderFrame(code);
 		freeVM();
 
 		#ifndef EM_MAIN
-			print(O_OUT, "[A] after fruntime: %d\n", numBytesAllocated);
+			printMem("after fruntime");
 		#endif
 
 	}else{
@@ -527,7 +527,7 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 void runCompiler(CompilePackage* package, char* source){	
 	bool compiled = compile(source, package);
 	#ifndef EM_MAIN
-		print(O_OUT, "[A] after compile: %d\n", numBytesAllocated);
+		printMem("after compile");
 	#endif
 
 	if(!compiled) package->result = INTERPRET_COMPILE_ERROR;

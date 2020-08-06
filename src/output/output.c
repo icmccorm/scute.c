@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include "common.h"
 #include "output.h"
 
 #ifdef EM_MAIN
@@ -52,4 +53,9 @@ void print(OutType type, const char* c, ...){
 
 	#endif
 		va_end(arglist);
+}
+
+void printMem(const char* c) {
+	float inKB = numBytesAllocated / (float) 1024;
+	printf("[A] - %s: %.2f kb\n", c, inKB);
 }

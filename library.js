@@ -169,6 +169,12 @@ mergeInto(LibraryManager.library, {
 
 	em_paintShape: function(){
 		Module["_currentFrame"].push(_currentShape);
+		_currentTurtle = {
+			type: _segmentTypes.TURTLE,
+			move: null,
+			turn: null,
+			horizontal: 0,
+		};
 	},
 
 	setMaxFrameIndex: function(num){
@@ -198,18 +204,25 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	em_addMove: function(distancePtr){
+	em_addMove: function(distancePtr, horizontalPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
 				type: _segmentTypes.TURTLE,
 				move: null,
 				turn: null,
+				horizontal: 0,
 			}
 		}
 		_currentTurtle.move = _lib_getValueMeta(distancePtr);
+		_currentTurtle.horizontal = getValue(horizontalPtr, "i32");
 		_currentShape.segments.push(_currentTurtle);
-		_currentTurtle = null;
+		_currentTurtle = {
+				type: _segmentTypes.TURTLE,
+				move: null,
+				turn: null,
+				horizontal: 0,
+			};
 	},
 
 
@@ -220,6 +233,7 @@ mergeInto(LibraryManager.library, {
 				type: _segmentTypes.TURTLE,
 				move: null,
 				turn: null,
+				horizontal: 0,
 			}
 		}
 		_currentTurtle.turn = _lib_getValueMeta(degreesPtr);
@@ -264,7 +278,6 @@ mergeInto(LibraryManager.library, {
 			type: _segmentTypes.ARC,
 			center: _lib_getVector(center),
 			degrees: _lib_getValueMeta(degrees),
-			radius: _lib_getVector(radius)
 		});
 	},
 
@@ -273,7 +286,7 @@ mergeInto(LibraryManager.library, {
 		_currentShape.segments.push({
 			type: _segmentTypes.MIRROR,
 			origin: _lib_getVector(originPtr),
-			degrees: _lib_getValue(axisPtr),
+			axis: _lib_getValue(axisPtr),
 		});
 	},
 
