@@ -7,9 +7,7 @@
 
 extern bool DEBUG_STACK;
 
-#ifndef EM_MAIN
-	extern int numBytesAllocated;
-#endif
+extern int numBytesAllocated;
 
 typedef enum {
 	INTERPRET_OK,

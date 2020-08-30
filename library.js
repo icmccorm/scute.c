@@ -11,38 +11,6 @@ mergeInto(LibraryManager.library, {
 		totalLength: 0,
 	},
 
-	valueTypes: {
-		0: "VL_NULL",
-		1: "VL_BOOL",
-		2: "VL_NUM",
-		3: "VL_OBJ",
-		4: "VL_CLR",
-	},
-
-	attrStatus: {
-		CONST: 0,
-		COMP: 1,
-		OPEN: 2,
-	},
-
-	segmentTypes: {
-		JUMP: 0,
-		TURTLE: 1,
-		VERTEX: 2,
-		CBEZIER: 3,
-		QBEZIER: 4,
-		ARC: 5,
-		MIRROR: 6,
-	},
-
-	opCodes: {
-		PLUS: 0,
-		MINUS: 1,
-		TIMES: 2,
-		DIVIDE: 3,
-		MODULO: 4,
-	},
-
 	em_configureValuePointerOffsets: function (typePtr, unionPtr, lineIndexPtr, inlineIndexPtr){
 		_valuePointerOffsets.type = getValue(typePtr, 'i32');
 		_valuePointerOffsets.union = getValue(unionPtr, 'i32');
@@ -120,15 +88,47 @@ mergeInto(LibraryManager.library, {
 	em_printError: function(ptr){
 		Module["_printFunction"]({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
-	
-	em_newShape: function(idPtr, tagPtr){
+
+	em_newRect: function(idPtr){
+		_lib_newShape(idPtr, Shapes.RECT);
+	},
+
+	em_newCirc: function(idPtr){
+		_lib_newShape(idPtr, Shapes.CIRC);
+	},
+
+	em_newEllip: function(idPtr){
+		_lib_newShape(idPtr, Shapes.ELLIP);
+	},
+
+	em_newLine: function(idPtr){
+		_lib_newShape(idPtr, Shapes.LINE);
+	},
+
+	em_newPolygon: function(idPtr){
+		_lib_newShape(idPtr, Shapes.POLYG);
+	},
+
+	em_newPolyline: function(idPtr){
+		_lib_newShape(idPtr, Shapes.POLYL);
+	},
+
+	em_newPath: function(idPtr){
+		_lib_newShape(idPtr, Shapes.PATH);
+	},
+
+	em_newUngon: function(idPtr){
+		_lib_newShape(idPtr, Shapes.UNGON);
+	},
+
+	lib_newShape: function(idPtr, tag){
 		_currentShape = {
 			"id": idPtr,
-			"tag": tagPtr,
+			"tag": tag,
 			"attrs":{},
 			"styles":{},
 			"segments": [],
-		}
+		};
 	},
 
 	em_addAttribute: function(keyPtr, valuePtr){
@@ -170,7 +170,7 @@ mergeInto(LibraryManager.library, {
 	em_paintShape: function(){
 		Module["_currentFrame"].push(_currentShape);
 		_currentTurtle = {
-			type: _segmentTypes.TURTLE,
+			type: Segments.TURTLE,
 			move: null,
 			turn: null,
 			horizontal: 0,
@@ -191,7 +191,7 @@ mergeInto(LibraryManager.library, {
 	em_addJump: function(vecPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.JUMP,
+			type: Segments.JUMP,
 			point: _lib_getVector(vecPtr),
 		});
 	},
@@ -199,7 +199,7 @@ mergeInto(LibraryManager.library, {
 	em_addVertex: function(vecPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.VERTEX,
+			type: Segments.VERTEX,
 			point: _lib_getVector(vecPtr),
 		});
 	},
@@ -208,7 +208,7 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
-				type: _segmentTypes.TURTLE,
+				type: Segments.TURTLE,
 				move: null,
 				turn: null,
 				horizontal: 0,
@@ -218,7 +218,7 @@ mergeInto(LibraryManager.library, {
 		_currentTurtle.horizontal = getValue(horizontalPtr, "i32");
 		_currentShape.segments.push(_currentTurtle);
 		_currentTurtle = {
-				type: _segmentTypes.TURTLE,
+				type: Segments.TURTLE,
 				move: null,
 				turn: null,
 				horizontal: 0,
@@ -230,7 +230,7 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
-				type: _segmentTypes.TURTLE,
+				type: Segments.TURTLE,
 				move: null,
 				turn: null,
 				horizontal: 0,
@@ -246,17 +246,17 @@ mergeInto(LibraryManager.library, {
 	em_addQuadBezier: function(control, end){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.QBEZIER,
+			type: Segments.QBEZIER,
 			control: _lib_getVector(control),
 			end: _lib_getVector(end),
 		});
 	},
 
-	em_addMirror: function(originPtr, axisPtr){
+	em_addMirror: function(originPtr, x, y){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.MIRROR,
-			axis: _lib_getValue(axisPtr),
+			type: Segments.MIRROR,
+			axis: (x && y ? Axes.XY : (x ? Axes.X : Axes.Y)),
 			origin: _lib_getVector(originPtr)
 		});
 	},
@@ -265,7 +265,7 @@ mergeInto(LibraryManager.library, {
 		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.CBEZIER,
+			type: Segments.CBEZIER,
 			control1: _lib_getVector(control1),
 			control2: _lib_getVector(control2),
 			end: _lib_getVector(end),
@@ -275,7 +275,7 @@ mergeInto(LibraryManager.library, {
 	em_addArc: function(center, degrees, radius){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.ARC,
+			type: Segments.ARC,
 			center: _lib_getVector(center),
 			degrees: _lib_getValueMeta(degrees),
 		});
@@ -284,7 +284,7 @@ mergeInto(LibraryManager.library, {
 	em_addMirror: function(originPtr, axisPtr){
 		if(!_currentShape.segments) _currentShape.segments = [];
 		_currentShape.segments.push({
-			type: _segmentTypes.MIRROR,
+			type: Segments.MIRROR,
 			origin: _lib_getVector(originPtr),
 			axis: _lib_getValue(axisPtr),
 		});
@@ -300,6 +300,34 @@ mergeInto(LibraryManager.library, {
 
 	em_printError__deps: [
 
+	],
+
+	em_newCirc__deps: [
+		"lib_newShape",
+	],
+	
+	em_newRect__deps: [
+		"lib_newShape",
+	],
+
+	em_newEllip__deps: [
+		"lib_newShape",
+	],
+
+	em_newLine__deps: [
+		"lib_newShape",	 
+	],
+
+	em_newPolygon__deps: [
+		"lib_newShape",
+	],
+
+	em_newPolyline__deps: [
+		"lib_newShape",
+	],
+
+	em_newPath__deps: [
+		"lib_newShape",
 	],
 
 	lib_getVector__deps: [
@@ -319,22 +347,19 @@ mergeInto(LibraryManager.library, {
 
 	em_addArc__deps: [
 		'currentShape',
-		'segmentTypes',
 		'lib_getValue',
 		'lib_getVector'
 	],
 	em_addCubicBezier__deps: [
 		'currentShape',
-		'segmentTypes',
 		'lib_getVector'
 	],
 	em_addQuadBezier__deps: [
 		'currentShape',
-		'segmentTypes',
 		'lib_getVector'
 	],
 	
-	em_newShape__deps: [
+	lib_newShape__deps: [
 		'currentShape'
 	],
 	
@@ -388,30 +413,19 @@ mergeInto(LibraryManager.library, {
 		'valuePointerOffsets'
 	],
 
-	lib_getValue__deps: [
-		'valueTypes'
-	],
-
 	em_addJump__deps: [
 		'currentShape',
-		'segmentTypes'
 	],
 
 	em_addTurn__deps: [
 		'currentShape',
-		'segmentTypes',
 		'currentTurtle'
 
 	],
 
 	em_addMove__deps: [
 		'currentShape',
-		'segmentTypes',
 		'currentTurtle',
-	],
-
-	lib_getValueMeta__deps: [
-		'attrStatus'
 	],
 
 	em_addColorStyle__deps: [

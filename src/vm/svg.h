@@ -30,9 +30,16 @@ extern void em_addVertex(Value* vecPtr);
 extern void em_addQuadBezier(Value* control, Value* end);
 extern void em_addCubicBezier(Value* control1, Value* control2, Value* end);
 extern void em_addArc(Value* center, Value* degrees);
-extern void em_addMirror(Value* origin, Value* degrees);
+extern void em_addMirror(Value* origin, bool x, bool y);
+extern void em_newRect(double id);
+extern void em_newCirc(double id);
+extern void em_newEllip(double id);
+extern void em_newLine(double id);
+extern void em_newPolygon(double id);
+extern void em_newPolyline(double id);
+extern void em_newUngon(double id);
+extern void em_newPath(double id);
 
-extern void em_newShape(double id, double type);
 extern void em_paintShape();
 extern void em_addColorStyle(const char* key, int length, Value* values);
 #endif

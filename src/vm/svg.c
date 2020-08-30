@@ -44,17 +44,14 @@ void assignStyles(ObjShape* shape){
 }
 #endif
 
-void drawShape(ObjShape* shape){
+void drawShape(ObjShape* shape, unsigned address){
 	HashMap* shapeMap = shape->instance.map;
 	TKType type = shape->shapeType;
-	#ifdef EM_MAIN
-		unsigned address = (unsigned) shapeMap;
-		em_newShape(address, type);
-		
-		assignStyles(shape);
-
+	#ifdef EM_MAIN	
 		switch(type){
-			case TK_RECT: { 
+			case TK_RECT: {
+				em_newRect(address);
+
 				Value posVal = getValue(shapeMap, string("position"));
 				Value sizeVal = getValue(shapeMap, string("size"));
 				Value roundingVal = getValue(shapeMap, string("rounding"));
@@ -68,6 +65,8 @@ void drawShape(ObjShape* shape){
 			} break;
 
 			case TK_CIRC:{
+				em_newCirc(address);
+
 				Value posVal = getValue(shapeMap, string("position"));
 				Value radVal = getValue(shapeMap, string("radius"));
 				ValueArray* posArray = AS_ARRAY(posVal)->array;
@@ -77,6 +76,8 @@ void drawShape(ObjShape* shape){
 				} break;
 
 			case TK_ELLIP: {
+				em_newEllip(address);
+
 				Value posVal = getValue(shapeMap, string("position"));
 				Value radVal = getValue(shapeMap, string("radius"));
 
@@ -88,6 +89,8 @@ void drawShape(ObjShape* shape){
 				} break;
 
 			case TK_LINE: {
+				em_newLine(address);
+
 				Value startVal = getValue(shapeMap, string("start"));
 				Value endVal = getValue(shapeMap, string("end"));
 
@@ -101,6 +104,7 @@ void drawShape(ObjShape* shape){
 			default:
 				break;
 		}
+		assignStyles(shape);
 		em_paintShape();
 		#else	
 			printMap(O_OUT, shapeMap, 0);
@@ -112,12 +116,6 @@ double toRadians(int degrees){
 }
 
 void drawPoints(ObjShape* shape){
-	unsigned address = (unsigned) shape->instance.map;
-	#ifdef EM_MAIN
-		em_newShape(address, shape->shapeType);
-		assignStyles(shape);
-	#endif
-
 	int angle = 0;
 	int points[2];
 	points[0] = 0;
@@ -224,8 +222,11 @@ void drawPoints(ObjShape* shape){
 				Value* originArray = AS_ARRAY(origin)->array->values;
 
 				Value axis = getValue(map, string("axis"));
+				CSType axisType = (CSType) axis.as.number;
+
 				#ifdef EM_MAIN
-					em_addMirror(originArray, &axis);
+					em_addMirror(originArray, axisType == CS_X ||
+					 axisType == CS_XY, axisType == CS_Y || axisType == CS_XY);
 				#else
 					print(O_OUT, "Mirror ");
 					printValue(O_OUT, origin);
@@ -286,16 +287,39 @@ void setCanvas(){
 void renderFrame(CompilePackage* code){
 	setCanvas();
 	while(vm.shapeCount > 0){
-		ObjShape* top = popShape();
-		switch(top->shapeType){
-			case TK_POLY:
-			case TK_POLYL:
-			case TK_PATH:
-			case TK_UNGON:
-				drawPoints(top);
-				break;
+		ObjShape* shape = popShape();
+		unsigned address = (unsigned) shape->instance.map;
+		switch(shape->shapeType){
+			case TK_POLY: {
+				#ifdef EM_MAIN
+					em_newPolygon(address);
+					assignStyles(shape);
+				#endif
+				drawPoints(shape);
+			} break;
+			case TK_POLYL: {
+				#ifdef EM_MAIN
+					em_newPolyline(address);
+					assignStyles(shape);
+				#endif
+				drawPoints(shape);
+			} break;
+			case TK_PATH: {
+				#ifdef EM_MAIN
+					em_newPath(address);
+					assignStyles(shape);
+				#endif
+				drawPoints(shape);
+			} break;
+			case TK_UNGON: {
+				#ifdef EM_MAIN
+					em_newUngon(address);
+					assignStyles(shape);
+				#endif
+				drawPoints(shape);
+			} break;
 			default:
-				drawShape(top);	
+				drawShape(shape, address);	
 				break;
 		}
 	}
