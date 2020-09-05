@@ -490,12 +490,7 @@ static void statement() {
 				advance();
 				assignStatement(true);
 				break;
-			case TK_INTEGER:
-			case TK_T:
-				advance();
-				frameStatement();
-				break;
-			case TK_RET:
+			case TK_RETURN:
 				advance();
 				if(currentChunkObject()->chunkType == CK_CONSTR){
 					errorAtCurrent("Cannot return from a constructor.");
@@ -503,7 +498,7 @@ static void statement() {
 					returnStatement();
 				}
 				break;
-			case TK_REP:
+			case TK_REPEAT:
 				advance();
 				repeatStatement();
 				break;
@@ -928,10 +923,16 @@ static void withStatement(){
 
 	emitBytes(OP_POP_INST, (uint8_t) false);
 }
-
+/*
 static void frameStatement() {
+	double upperVal = -1;
+	double lowerVal = -1;
+
 	if(parser.previous.type == TK_T){
 		consume(TK_R_LIMIT, "Expected right limit.");
+	}else{
+		lowerVal = tokenToNumber(parser.previous);
+	
 	}
 
 	consume(TK_INTEGER, "Expected upper-bound");
@@ -952,7 +953,7 @@ static void frameStatement() {
 	exitScope();
 
 	patchJump(jumpIndex);
-}
+}*/
 
 static void and_(bool canAssign) {
 	int endJump = emitJump(OP_JMP_FALSE);
@@ -1071,7 +1072,7 @@ static void constant(bool canAssign) {
 		case CS_AQUA:
 			emitConstant(RGB(0, 255, 255));
 			break;
-		case CS_TURQ:
+		case CS_TURQUOISE:
 			emitConstant(RGB(64, 224, 208));
 			break;
 		case CS_SILVER:
@@ -1104,7 +1105,7 @@ static void constant(bool canAssign) {
 		case CS_GREY:
 			emitConstant(RGB(128, 128, 128));
 			break;
-		case CS_TRANSP:
+		case CS_TRANSPARENT:
 			emitConstant(RGBA(0, 0, 0, 0));
 			break;
 		case CS_X:
@@ -1146,7 +1147,7 @@ static void native(bool canAssign){
 		case TK_MOVE:
 			func = move;
 			break;
-		case TK_VERT:
+		case TK_VERTEX:
 			func = vertex;
 			break;
 		case TK_ARC:
@@ -1161,10 +1162,10 @@ static void native(bool canAssign){
 		case TK_RECT:
 			func = rect;
 			break;
-		case TK_CIRC:
+		case TK_CIRCLE:
 			func = circle;
 			break;
-		case TK_ELLIP:
+		case TK_ELLIPSE:
 			func = ellipse;
 			break;
 		case TK_LINE:
@@ -1173,22 +1174,22 @@ static void native(bool canAssign){
 		case TK_PATH:
 			func = path;
 			break;
-		case TK_POLY:
+		case TK_POLYGON:
 			func = polygon;
 			break;
 		case TK_UNGON:
 			func = ungon;
 			break;
-		case TK_POLYL:
+		case TK_POLYLINE:
 			func = polyline;
 			break;
-		case TK_CBEZ:
+		case TK_CBEZIER:
 			func = cBezier;
 			break;
-		case TK_QBEZ:
+		case TK_QBEZIER:
 			func = qBezier;
 			break;
-		case TK_MIRR:
+		case TK_MIRROR:
 			func = mirror;
 			break;
 		case TK_SIN:

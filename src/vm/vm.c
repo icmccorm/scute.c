@@ -373,12 +373,13 @@ static InterpretResult run() {
 				Value boolVal = pop();
 				if(isFalsey(boolVal)) vm.ip += (offset);
 				break;
-			case OP_LIMIT: ;
+			case OP_LIMIT: {
 				uint32_t lowerBound = readInteger();
 				uint32_t upperBound = readInteger();
 				signed short limitOffset = READ_SHORT();
 				if(vm.frameIndex < lowerBound || vm.frameIndex > upperBound){
 					vm.ip += limitOffset;
+				}
 			} break;
 			case OP_GET_GLOBAL: {
 				ObjString* getString = AS_STRING(READ_CONSTANT());	

@@ -4,6 +4,7 @@
 #include "common.h"
 #include "scanner.h"
 #include "output.h"
+#include "tokenizer.h"
 
 Scanner scanner;
 
@@ -160,364 +161,26 @@ static CSType checkConst(int start, int length, char* rest, CSType type){
 	return CS_ERROR;
 }
 
-static CSType findConstantIdentifier(){
-	int length = scanner.current - scanner.start;
-	switch(scanner.start[0]){
-        case 'c': return checkConst(1, 5, "enter", CS_CENTER);
-		case 'p': {
-			if(length > 1){
-				switch(scanner.start[1]){
-					case 'i': {
-						if(length > 2){
-							switch(scanner.start[2]){
-								case 'n': return checkConst(3, 1, "k", CS_PINK);
-							}
-							return CS_ERROR;
-						}
-						return CS_PI;
-					}
-					case 'u': return checkConst(2, 4, "rple", CS_PURPLE);
-				}
-			}
-			return CS_ERROR;
-		}	
-		case 't': {
-			if(length > 1){
-				switch(scanner.start[1]){
-					case 'a': return checkConst(2, 1, "u", CS_TAU);
-					case 'u': return checkConst(2, 7, "rquoise", CS_TURQ);
-					case 'e': return checkConst(2, 2, "al", CS_TEAL);
-                    case 'r': return checkConst(2, 9, "ansparent", CS_TRANSP);
-				}
-			}
-			return CS_ERROR;			
-		}
-		case 'e': return CS_E;
-		case 'r': return checkConst(1, 2, "ed", CS_RED);
-		case 'o': {
-			if(length > 1){
-				switch(scanner.start[1]){
-					case 'r': return checkConst(2, 4, "ange", CS_ORANGE);
-					case 'l': return checkConst(2, 3, "ive", CS_OLIVE);
-				}
-			}
-			return CS_ERROR;
-		}
-		case 'y': 
-            if(length > 1){
-                return checkConst(1, 5, "ellow", CS_YELLOW);
-            }else{
-                return CS_Y;
-            }
-		case 'b': {
-			if(length > 1){
-				switch(scanner.start[1]){
-					case 'l': {
-						if(length > 2){
-							switch(scanner.start[2]){
-								case 'a': return checkConst(3, 2, "ck", CS_BLACK);
-								case 'u': return checkConst(3, 1, "e", CS_BLUE);
-							}
-						}
-					}
-					case 'r': return checkConst(2, 3, "own", CS_BROWN);
-				}
-			}
-			return CS_ERROR;
-		}
-		case 'm': {
-			if(length > 1){
-				switch(scanner.start[1]){
-					case 'a': {
-						if(length > 2){
-							switch(scanner.start[2]){
-								case 'g': return checkConst(3, 4, "enta", CS_MAGENTA);
-								case 'r': return checkConst(3, 3, "oon", CS_MAROON);
-							}
-						}
-					}
-				}
-			}
-			return CS_ERROR;
-		}
-		case 'n': return checkConst(1, 3, "avy", CS_NAVY);
-		case 'a': return checkConst(1, 3, "qua", CS_AQUA);
-		case 's': return checkConst(1, 5, "ilver", CS_SILVER);
-		case 'l': 
-            if(length > 1){
-                switch(scanner.start[1]){
-                    case 'c': return checkConst(2, 5, "orner", CS_LCORNER);
-                    case 'i': return checkConst(2, 2, "me", CS_LIME);
-                }
-            }
-            return CS_ERROR;
-		case 'i': return checkConst(1, 5, "ndigo", CS_INDIGO);
-		case 'v': return checkConst(1, 5, "iolet", CS_VIOLET);
-		case 'w': return checkConst(1, 4, "hite", CS_WHITE);
-		case 'g': {
-			if(length > 1){
-				switch(scanner.start[1]){
-					case 'r': {
-						if(length > 2){
-							switch(scanner.start[2]){
-								case 'e': {
-									if(length > 3){
-										switch(scanner.start[3]){
-											case 'e': return checkConst(4, 1, "n", CS_GREEN);
-											case 'y': return CS_GREY;
-										}
-									}
-								}
-								case 'a': return checkConst(3, 1, "y", CS_GRAY);
-							}
-						}
-					}
-				}
-			}
-			return CS_ERROR;
-		}
-        case 'x':
-            switch(length){
-                case 1: return CS_X;
-                case 2: 
-                    if(scanner.start[1] == 'y'){
-                        return CS_XY;
-                    }
-                    return CS_ERROR;
-            }            
-        default:
-            return CS_ERROR;
-    }
-}
-
-static TKType findIdentifier(){
-    switch(scanner.start[0]){
-        case 'a':
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-					case 's': 
-						if(scanner.current - scanner.start > 2){
-							return checkKeyword(2, 2, "in", TK_HSIN);
-						}else{
-							return TK_AS;
-						}
-					case 'c': return checkKeyword(2, 2, "os", TK_HCOS);
-                    case 'n': return checkKeyword(2, 1, "d", TK_AND);
-                    case 'r': return checkKeyword(2, 1, "c", TK_ARC);
-                }
-            }else{
-                return TK_ID;
-            }
-        case 'b': return checkKeyword(1, 1, "y", TK_BY);
-        case 'd':
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'o': return TK_DO;
-                    case 'r': return checkKeyword(2, 2, "aw", TK_DRAW);
-                    case 'e': 
-						if(scanner.current - scanner.start > 2){
-							switch(scanner.start[2]){
-								case 'f': return TK_DEF;
-                                default:
-                                    return TK_ID;
-							}
-						}else{
-							return TK_ID;
-						}
-                }
-            }else{
-                return TK_ID;
-            }
-        case 'f': 
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'o': return checkKeyword(2, 1, "r", TK_FOR);
-                    case 'a': return checkKeyword(2, 3, "lse", TK_FALSE);
-                    case 'u': return checkKeyword(2, 2, "nc", TK_FUNC);
-                    case 'r': return checkKeyword(2, 2, "om", TK_FROM);
-					default:
-						return TK_ID;
-                }
-            }else{
-                return TK_ID;
-            }
-        case 'i': return checkKeyword(1, 1, "f", TK_IF);
-        case 'l': 
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'e': return checkKeyword(2, 1, "t", TK_LET);
-                    case 'i': return checkKeyword(2, 2, "ne", TK_LINE);
-                }
-            }
-            return TK_ID;
-        case 'w': 
-			if(scanner.current - scanner.start > 1){
-				switch(scanner.start[1]){
-					case 'h': return checkKeyword(2, 3, "ile", TK_WHILE);
-					case 'i': return checkKeyword(2, 2, "th", TK_WITH);
-				}
-			}
-			return TK_ID;
-        case 'r': 
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'e': {
-                        if(scanner.current - scanner.start > 2){
-                            switch(scanner.start[2]){
-                                case 't': return checkKeyword(3, 3, "urn", TK_RET);
-                                case 'c': return checkKeyword(3, 1, "t", TK_RECT);
-								case 'p': return checkKeyword(3, 3, "eat", TK_REP);
-                            
-                            }
-                        }
-                    } break;
-					case 'a': {
-                        if(scanner.current - scanner.start > 2){
-                            switch(scanner.start[2]){
-                                case 'd': return checkKeyword(3, 4, "ians", TK_RAD);
-                                case 'n': return checkKeyword(3, 1, "d", TK_RAND);                                
-                            }
-                        }
-                    } break;
-                }
-            }
-            return TK_ID;
-        case 'c': 
-			if(scanner.current - scanner.start > 1){
-				switch(scanner.start[1]){
-					case 'i': return checkKeyword(2, 4, "rcle", TK_CIRC);
-					case 'o': return checkKeyword(2, 1, "s", TK_COS);
-                    case 'B': return checkKeyword(2, 5, "ezier", TK_CBEZ);
-				}
-			}
-			return TK_ID;
-		case 's': 
-			if(scanner.current - scanner.start > 1){
-				switch(scanner.start[1]){
-					case 'i': return checkKeyword(2, 1, "n", TK_SIN);
-					case 'q': return checkKeyword(2, 2, "rt", TK_SQRT);
-					default: return TK_ID;
-				}
-			}
-			return TK_ID;
-        case 't': 
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'a': return checkKeyword(2, 1, "n", TK_TAN);
-                    case 'e': return checkKeyword(2, 2, "xt", TK_TEXT);
-                    case 'r': return checkKeyword(2, 2, "ue", TK_TRUE);
-					case 'o': {
-						if(scanner.current - scanner.start > 2){
-							return TK_ID;
-						}else{
-							return TK_TO;
-						}
-					} break;
-                    case 'u': return checkKeyword(2, 2, "rn", TK_TURN);
-                }
-            }
-            return TK_T;
-        case 'o': return checkKeyword(1, 1, "r", TK_OR);
-        case 'p': 
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
-                    case 'a': return checkKeyword(2, 2, "th", TK_PATH);
-                    case 'o': {
-                        if(scanner.current - scanner.start > 2){
-                            switch(scanner.start[2]){
-                                case 'l': {
-                                    if(scanner.current - scanner.start > 3){
-                                        switch(scanner.start[3]){
-                                            case 'y':
-                                                if(scanner.current - scanner.start > 4){
-                                                    switch(scanner.start[4]){
-                                                        case 'l': return checkKeyword(5, 3, "ine", TK_POLYL);
-                                                        case 'g': return checkKeyword(5, 2, "on", TK_POLY);
-                                                    }
-                                                }
-                                                break;
-                                        }
-                                    }
-                                } break;
-                            }       
-                        }
-                    } break;
-                }
-            }
-            return TK_ID;
-        case 'e':
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'l':
-                        if(scanner.current - scanner.start > 2){
-                            switch(scanner.start[2]){
-                                case 'l': return checkKeyword(3, 4, "ipse", TK_ELLIP);
-                                case 's': return checkKeyword(3, 1, "e", TK_ELSE);
-                            }
-                        }
-                    break;
-                }
-            }
-            return TK_ID;
-        case 'n': return checkKeyword(1, 3, "ull", TK_NULL);
-        case 'v': {
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'e': return checkKeyword(2, 4, "rtex", TK_VERT);
-                    case 'a': return checkKeyword(2, 1, "r", TK_VAR);
-                }
-            }
-            return TK_ID;
-        } break;
-		case 'h':
-			if(scanner.current - scanner.start > 1){
-				switch(scanner.start[1]){
-					case 's': return checkKeyword(2, 2, "in", TK_ASIN);
-					case 'c': return checkKeyword(2, 2, "os", TK_ACOS);
-					case 't': return checkKeyword(2, 2, "an", TK_ATAN);
-					default: return TK_ID;
-				}
-			}else{
-				return TK_ID;
-			}
-        case 'm':
-            if(scanner.current - scanner.start > 1){
-                switch(scanner.start[1]){
-                    case 'i': return checkKeyword(2, 4, "rror", TK_MIRR);
-                    case 'o': return checkKeyword(2, 2, "ve", TK_MOVE);
-                }
-            }else{
-                return TK_ID;
-            }
-        case 'j': return checkKeyword(1, 3, "ump", TK_JUMP);
-        case 'q': return checkKeyword(1, 6, "Bezier", TK_QBEZ);
-        case 'u': return checkKeyword(1, 4, "ngon", TK_UNGON);
-        default:
-            return TK_ID;
-    }
-}
-
 static TK identifier(){
     while(isAlpha(peek())) advance();
-    TKType type = findIdentifier();
+    TKType type = findIdentifier(scanner.start, scanner.current);
     switch(type){
         case TK_RECT:
-        case TK_CIRC:
-        case TK_ELLIP:
-        case TK_POLY:
+        case TK_CIRCLE:
+        case TK_ELLIPSE:
+        case TK_POLYGON:
         case TK_UNGON:
-        case TK_POLYL:
+        case TK_POLYLINE:
         case TK_PATH:
         case TK_MOVE:
         case TK_JUMP:
         case TK_TURN:
         case TK_ARC:
-        case TK_VERT:
-        case TK_QBEZ:
-        case TK_CBEZ:
+        case TK_VERTEX:
+        case TK_QBEZIER:
+        case TK_CBEZIER:
         case TK_LINE:
-        case TK_MIRR:
+        case TK_MIRROR:
             return makeDualToken(TK_SHAPE, type);
         case TK_SIN:
         case TK_COS:
@@ -527,7 +190,7 @@ static TK identifier(){
         case TK_ATAN:
         case TK_HSIN:
         case TK_HCOS:
-        case TK_RAD:
+        case TK_RADIANS:
         case TK_SQRT:
         case TK_RAND: 
             return makeDualToken(TK_NATIVE, type);
@@ -538,7 +201,7 @@ static TK identifier(){
 
 static TK constant(){
 	while(isAlpha(peek())) advance();
-	CSType constType = findConstantIdentifier();
+	CSType constType = findConstant(scanner.start, scanner.current);
 	return makeDualToken(TK_CONST, constType);
 }
 
@@ -604,8 +267,6 @@ TK scanTK(){
         case '<': 
             if(match('=')){
                 return makeToken(TK_LESS_EQUALS);
-            }else if(match('-') && peek() != '-'){
-                return makeToken(TK_L_LIMIT);
             }else{
                 return makeToken(TK_LESS);
             }
@@ -652,9 +313,6 @@ TK scanTK(){
                 case '-': 
                     ++scanner.current;
                     return makeToken(TK_DECR);
-                case '>':
-                    ++scanner.current;
-                    return makeToken(TK_R_LIMIT);
                 default:
                     if(isDigit(peek())) {
                         return number();

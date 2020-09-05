@@ -10,8 +10,7 @@
 #include "obj.h"
 #include "svg.h"
 
-#define POLY(shape) (shape->shapeType == TK_POLY || shape->shapeType == TK_POLYG || shape->shapeType == TK_POLYL)
-#define PATH(shape) (shape->shapeType == TK_PATH)
+#define POLY_COMPATIBLE(objShape) (objShape->shapeType == TK_POLYLINE || objShape.shapeType == TK_POLYGON || objShape.shapeType == TK_PATH)
 
 Value nativeRandom(Value* params, int numParams){
 	switch(numParams){
@@ -160,7 +159,7 @@ Value jump(Value* params, int numParams){
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
+		if(POLY_COMPATIBLE(shape)){
 			addSegment(shape, jumpInstance);
 			return OBJ_VAL((ObjInstance*) jumpInstance);
 		}
@@ -176,7 +175,7 @@ Value move(Value* params, int numParams){
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
+		if(POLY_COMPATIBLE(shape)){
 			addSegment(shape, moveInstance);
 			return OBJ_VAL((ObjInstance*) moveInstance);
 		}
@@ -186,13 +185,13 @@ Value move(Value* params, int numParams){
 }
 
 Value vertex(Value* params, int numParams) {
-	ObjShape* vertexInstance = allocateShape(NULL, TK_VERT);
+	ObjShape* vertexInstance = allocateShape(NULL, TK_VERTEX);
 	add(vertexInstance->instance.map, string("position"), VECTOR(0, 0));
 
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
+		if(POLY_COMPATIBLE(shape)){
 			addSegment(shape, vertexInstance);
 			return OBJ_VAL((ObjInstance*) vertexInstance);
 		}
@@ -208,7 +207,7 @@ Value turn(Value* params, int numParams){
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
+		if(POLY_COMPATIBLE(shape)){
 			addSegment(shape, turnInstance);
 			return OBJ_VAL((ObjInstance*) turnInstance);
 		}
@@ -245,7 +244,7 @@ Value rect(Value* params, int numParams){
 }
 
 Value circle(Value* params, int numParams){
-	ObjShape* circInstance = allocateShape(NULL, TK_CIRC);
+	ObjShape* circInstance = allocateShape(NULL, TK_CIRCLE);
 	add(circInstance->instance.map, string("position"), VECTOR(0, 0));
 	add(circInstance->instance.map, string("radius"), NUM_VAL(0));
 	pushShape(circInstance);
@@ -253,7 +252,7 @@ Value circle(Value* params, int numParams){
 }
 
 Value ellipse(Value* params, int numParams){
-	ObjShape* ellipseInstance = allocateShape(NULL, TK_ELLIP);
+	ObjShape* ellipseInstance = allocateShape(NULL, TK_ELLIPSE);
 	add(ellipseInstance->instance.map, string("radius"), VECTOR(0, 0));
 	add(ellipseInstance->instance.map, string("position"), VECTOR(0, 0));
 	pushShape(ellipseInstance);
@@ -269,14 +268,14 @@ Value line(Value* params, int numParams){
 }
 
 Value polyline(Value* params, int numParams){
-	ObjShape* polylInstance = allocateShape(NULL, TK_POLYL);
+	ObjShape* polylInstance = allocateShape(NULL, TK_POLYLINE);
 	pushShape(polylInstance);
 
 	return OBJ_VAL((ObjInstance*) polylInstance);
 }
 
 Value polygon(Value* params, int numParams){
-	ObjShape* polygInstance = allocateShape(NULL, TK_POLY);
+	ObjShape* polygInstance = allocateShape(NULL, TK_POLYGON);
 	pushShape(polygInstance);
 
 	return OBJ_VAL((ObjInstance*) polygInstance);
@@ -297,7 +296,7 @@ Value ungon(Value* params, int numParams){
 }
 
 Value qBezier(Value* params, int numParams){
-	ObjShape* bezInstance = allocateShape(NULL, TK_QBEZ);
+	ObjShape* bezInstance = allocateShape(NULL, TK_QBEZIER);
 	add(bezInstance->instance.map, string("control"), VECTOR(0, 0));
 	add(bezInstance->instance.map, string("end"), VECTOR(0, 0));
 
@@ -315,7 +314,7 @@ Value qBezier(Value* params, int numParams){
 }
 
 Value cBezier(Value* params, int numParams){
-	ObjShape* bezInstance = allocateShape(NULL, TK_CBEZ);
+	ObjShape* bezInstance = allocateShape(NULL, TK_CBEZIER);
 
 	add(bezInstance->instance.map, string("startControl"), VECTOR(0, 0));
 	add(bezInstance->instance.map, string("endControl"), VECTOR(0, 0));
@@ -335,7 +334,7 @@ Value cBezier(Value* params, int numParams){
 }
 
 Value mirror(Value* params, int numParams){
-	ObjShape* mirrorInstance = allocateShape(NULL, TK_MIRR);
+	ObjShape* mirrorInstance = allocateShape(NULL, TK_MIRROR);
 	
 	add(mirrorInstance->instance.map, string("axis"), NUM_VAL(0));
 	add(mirrorInstance->instance.map, string("origin"), VECTOR(0, 0));
@@ -343,7 +342,7 @@ Value mirror(Value* params, int numParams){
 	ObjInstance* current = currentInstance();
 	if(current && current->type == INST_SHAPE){
 		ObjShape* shape = (ObjShape*) current;
-		if(shape->shapeType >= TK_POLY){
+		if(POLY_COMPATIBLE(shape)){
 			addSegment(shape, mirrorInstance);
 			return OBJ_VAL((ObjInstance*) mirrorInstance);
 		}
@@ -354,7 +353,7 @@ Value mirror(Value* params, int numParams){
 }
 
 Value nativeTranslate(Value* params, int numParams){
-	ObjShape* translate = allocateShape(NULL, TK_CBEZ);
+	ObjShape* translate = allocateShape(NULL, TK_CBEZIER);
 
 	add(translate->instance.map, string("diff"), VECTOR(0, 0));
 	
