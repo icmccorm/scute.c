@@ -44,9 +44,10 @@ $(BUILD)/%.c.o : %.c
 
 .PHONY : clean
 
-scanner: ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
-./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py:
+scanner:
 	python autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
+
+./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py: scanner
 
 clean:
 	@$(RM) -r $(BUILD)

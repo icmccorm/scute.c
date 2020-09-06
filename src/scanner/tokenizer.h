@@ -68,7 +68,6 @@ typedef enum {
 	TK_RAND,
 	TK_CIRCLE,
 	TK_COS,
-	TK_CONST,
 	TK_CBEZIER,
 	TK_SIN,
 	TK_SQRT,

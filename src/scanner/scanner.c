@@ -202,7 +202,7 @@ static TK identifier(){
 static TK constant(){
 	while(isAlpha(peek())) advance();
 	CSType constType = findConstant(scanner.start, scanner.current);
-	return makeDualToken(TK_CONST, constType);
+	return makeDualToken(TK_CONSTANT, constType);
 }
 
 

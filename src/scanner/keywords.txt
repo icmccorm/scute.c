@@ -62,7 +62,6 @@ radians
 rand
 circle
 cos
-const
 cbezier
 sin
 sqrt

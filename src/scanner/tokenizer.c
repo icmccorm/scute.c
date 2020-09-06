@@ -37,15 +37,7 @@ TKType findKeyword(char* start, char* current){
 				switch(start[1]){
 					case 'i': return checkKeyword(2, 4, "rcle", TK_CIRCLE);
 					case 'b': return checkKeyword(2, 5, "ezier", TK_CBEZIER);
-					case 'o':{
-						if(length > 2){
-							switch(start[2]){
-								case 's': return TK_COS;
-								case 'n': return checkKeyword(3, 2, "st", TK_CONST);
-							}
-						}
-					} break;
-
+					case 'o': return checkKeyword(2, 1, "s", TK_COS);
 				}
 			}
 		return TK_ID;

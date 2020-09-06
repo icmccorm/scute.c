@@ -360,22 +360,21 @@ static void parsePrecedence(PCType precedence){
 		prefixRule->prefix(canAssign);
 
 		ParseRule* rule = getRule(parser.current.type);
-		if(rule){
-			while(precedence <= rule->precedence){
-				advance();
-				ParseRule* infixRule = rule;
-				if(infixRule){
-					parser.lastOperator = parser.previous.type;
-					parser.lastOperatorPrecedence = infixRule->precedence;
-					infixRule->infix(canAssign);
-				}
-				rule = getRule(parser.current.type);
+	
+		while(rule && precedence <= rule->precedence){
+			advance();
+			ParseRule* infixRule = rule;
+			if(infixRule){
+				parser.lastOperator = parser.previous.type;
+				parser.lastOperatorPrecedence = infixRule->precedence;
+				infixRule->infix(canAssign);
 			}
+			rule = getRule(parser.current.type);
+		}
 
-			if(!canAssign && match(TK_ASSIGN)){
-				error("Invalid assignment target.");
-				expression(false);
-			}
+		if(!canAssign && match(TK_ASSIGN)){
+			error("Invalid assignment target.");
+			expression(false);
 		}
 	}
 }
