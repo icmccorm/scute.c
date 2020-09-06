@@ -1,5 +1,6 @@
-
 #include "tokenizer.h"
+
+#include "scanner.h"
 TKType findKeyword(char* start, char* current){
 	int length = current - start;
 	switch(start[0]){
@@ -22,10 +23,10 @@ TKType findKeyword(char* start, char* current){
 						}
 					} break;
 
-					case 'n': return checkKeyword(2, 1, "d", TK_AND);
+					case 't': return checkKeyword(2, 2, "an", TK_ATAN);
 					case 'r': return checkKeyword(2, 1, "c", TK_ARC);
 					case 'c': return checkKeyword(2, 2, "os", TK_ACOS);
-					case 't': return checkKeyword(2, 2, "an", TK_ATAN);
+					case 'n': return checkKeyword(2, 1, "d", TK_AND);
 				}
 			}
 		return TK_ID;
@@ -240,6 +241,7 @@ TKType findKeyword(char* start, char* current){
 		return TK_ID;
 		} break;
 
+		default: return TK_ID;
 	}
 }
 CSType findConstant(char* start, char* current){
@@ -403,5 +405,6 @@ CSType findConstant(char* start, char* current){
 		return CS_ERROR;
 		} break;
 
+		default: return CS_ERROR;
 	}
 }

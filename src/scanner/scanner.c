@@ -145,7 +145,7 @@ static TK number(){
     return numericalToken;
 }
 
-static TKType checkKeyword(int start, int length, char* rest, TKType type){
+TKType checkKeyword(int start, int length, char* rest, TKType type){
     if(scanner.current - scanner.start == start + length 
         && memcmp(scanner.start + start, rest, length) == 0){
             return type;
@@ -153,7 +153,7 @@ static TKType checkKeyword(int start, int length, char* rest, TKType type){
     return TK_ID;
 }
 
-static CSType checkConst(int start, int length, char* rest, CSType type){
+CSType checkConstant(int start, int length, char* rest, CSType type){
 	if(scanner.current - scanner.start == start + length &&
         memcmp(scanner.start + start, rest, length) == 0){
             return type;
@@ -163,7 +163,7 @@ static CSType checkConst(int start, int length, char* rest, CSType type){
 
 static TK identifier(){
     while(isAlpha(peek())) advance();
-    TKType type = findIdentifier(scanner.start, scanner.current);
+    TKType type = findKeyword(scanner.start, scanner.current);
     switch(type){
         case TK_RECT:
         case TK_CIRCLE:

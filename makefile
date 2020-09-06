@@ -1,7 +1,5 @@
 # thanks to Job Vranish for his tutorial on makefiles for medium sized projects!
 # https://spin.atomicobject.com/2016/08/26/makefile-c-projects/
-
-
 CC = gcc
 WASMC = emcc
 
@@ -40,7 +38,7 @@ all : ./$(EXEC_FILE) test web node
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
 	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS) -lm
 
-$(BUILD)/%.c.o : %.c 
+$(BUILD)/%.c.o : %.c ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
 	@$(MKDIR) -p $(dir $@)
 	@$(CC) -g -D DEBUG $(INC_TEST_FLAGS) $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
@@ -50,6 +48,9 @@ clean:
 	@$(RM) -r $(BUILD)
 	@$(RM) *.wasm *.map $(EXEC_FILE).js $(EXEC_FILE) $(EXEC_TEST_FILE) $(EXEC_FILE)-test.js
 	
+./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py:
+	python autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
+
 -include $(DEPS)
 
 EM_FLAGS = --js-library ./library.js --extern-pre-js ./library-interop.js --pre-js ./pre.js

@@ -16,6 +16,8 @@
 #include "vm.h"
 #include "package.h"
 #include "natives.h"
+#include "tokenizer.h"
+#include "parsemap.h"
 
 Parser parser;
 Compiler* compiler = NULL;
@@ -322,93 +324,6 @@ static bool isInitialized(TK* id){
 
 static void expression(bool emitTrace);
 static void indentedBlock();
-
-static void and_(bool canAssign);
-static void binary(bool canAssign);
-static void unary(bool canAssign);
-static void grouping(bool canAssign);
-static void number(bool canAssign);
-static void literal(bool canAssign);
-static void constant(bool canAssign);
-static void constant(bool canAssign);
-static void stringLiteral(bool canAssign);
-static void array(bool canAssign);
-static void variable(bool canAssign);
-static void deref(bool canAssign);
-static void scopeDeref(bool canAssign);
-static void native(bool canAssign);
-
-ParseRule rules[] = {
-	{ NULL,     binary,     PC_TERM },    // TK_PLUS,
-	{ unary,    binary,     PC_TERM },    // TK_MINUS,
-	{ NULL,     binary,     PC_FACTOR },  // TK_TIMES,
-	{ NULL,     binary,     PC_FACTOR },  // TK_DIVIDE,
-	{ NULL,     binary,     PC_FACTOR },  // TK_MODULO,
-	{ NULL,     binary,     PC_EQUALS },  // TK_EQUALS,
-	{ NULL,	    binary,	    PC_EQUALS },  // TK_BANG_EQUALS,
-	{ NULL,	    binary,	    PC_COMPARE }, // TK_LESS_EQUALS,
-	{ NULL,	    binary,	    PC_COMPARE }, // TK_GREATER_EQUALS,
-	{ NULL,	    binary,	    PC_COMPARE }, // TK_LESS,
-	{ NULL,	    binary,	    PC_COMPARE }, // TK_GREATER,
-	{ NULL,     binary,     PC_ASSIGN },  // TK_ASSIGN,
-	{ NULL,     binary,     PC_ASSIGN },  // TK_INCR_ASSIGN,
-	{ NULL,     binary,     PC_ASSIGN },  // TK_DECR_ASSIGN,
-	{ unary,    NULL,       PC_UNARY },   // TK_BANG,
-	{ unary,	NULL,	    PC_UNARY },   // TK_INCR, 
-	{ unary,	NULL,	    PC_UNARY },   // TK_DECR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_COLON,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_QUESTION,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_EVAL_ASSIGN,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_L_LIMIT, 
-	{ NULL,	    NULL,	    PC_NONE },    // TK_R_LIMIT,
-	{ literal,  NULL,       PC_NONE },    // TK_REAL,
-	{ literal,  NULL,       PC_NONE },    // TK_INTEGER,
-	{ literal,	NULL,	    PC_NONE },    // TK_TRUE,
-	{ literal,	NULL,	    PC_NONE },    // TK_FALSE,
-	{ literal,	NULL,	    PC_NONE },    // TK_NULL,
-	{ stringLiteral,	NULL,	    PC_NONE },    // TK_STRING,
-	{ variable, NULL,	    PC_NONE },    // TK_ID,
-	{ constant, NULL,	    PC_NONE },    // TK_CONST,	
-	{ NULL,	    NULL,	    PC_NONE },    // TK_FUNC,
-	{ NULL,	    and_,	    PC_AND },     // TK_AND,
-	{ NULL,	    NULL,	    PC_OR },    // TK_OR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_PRE,
-	{ native,	NULL,		PC_NONE },    // TK_SHAPE,
-	{ native,	NULL,		PC_NONE },    // TK_NATIVE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_SEMI,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_L_BRACE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACE,
-	{ grouping, NULL,       PC_NONE },    // TK_L_PAREN,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_R_PAREN, 
-	{ array,	NULL,	    PC_NONE },    // TK_L_BRACK,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_R_BRACK,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_COMMA,
-	{ scopeDeref,	deref,	PC_CALL },    // TK_DEREF, 
-	{ NULL,	    NULL,	    PC_NONE },    // TK_TILDA, 
-	{ NULL,	    NULL,	    PC_NONE },    // TK_NEWLINE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_INDENT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DO,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_WHILE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_FOR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_IF,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ELSE,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_LET,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_VAR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_PRINT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DRAW,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_TEXT,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_T,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_ERROR,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_EOF,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_AS,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_DEF,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_RET,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_REP,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_TO,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_FROM,
-	{ NULL,	    NULL,	    PC_NONE },    // TK_WITH,
-};
-
 static void printStatement();
 static void expressionStatement();
 static void assignStatement(bool enforceGlobal);
@@ -425,37 +340,43 @@ static void whileStatement();
 static void funcStatement();
 
 static ParseRule* getRule(TKType type){
-	ParseRule* rule = &rules[type];
-	return rule;
+	uint32_t typeAsInt = (uint32_t) type;
+	if(typeAsInt < NUM_PARSE_RULES){
+		ParseRule* rule = &rules[type];
+		return rule;
+	}else{
+		return NULL;
+	}
+
 }
 
 static void parsePrecedence(PCType precedence){
 	advance();
 	ParseRule* prefixRule = getRule(parser.previous.type);
-
-	if(prefixRule->prefix == NULL){
+	if(prefixRule == NULL || prefixRule->prefix == NULL){
 		errorAtCurrent("Expect expression.");
-		return;
-	}
+	}else{
+		bool canAssign = (precedence <= PC_ASSIGN);
+		prefixRule->prefix(canAssign);
 
-	bool canAssign = (precedence <= PC_ASSIGN);
-	prefixRule->prefix(canAssign);
+		ParseRule* rule = getRule(parser.current.type);
+		if(rule){
+			while(precedence <= rule->precedence){
+				advance();
+				ParseRule* infixRule = rule;
+				if(infixRule){
+					parser.lastOperator = parser.previous.type;
+					parser.lastOperatorPrecedence = infixRule->precedence;
+					infixRule->infix(canAssign);
+				}
+				rule = getRule(parser.current.type);
+			}
 
-	ParseRule* rule = getRule(parser.current.type);
-	while(precedence <= rule->precedence){
-		advance();
-		ParseRule* infixRule = rule;
-		if(infixRule){
-			parser.lastOperator = parser.previous.type;
-			parser.lastOperatorPrecedence = infixRule->precedence;
-			infixRule->infix(canAssign);
+			if(!canAssign && match(TK_ASSIGN)){
+				error("Invalid assignment target.");
+				expression(false);
+			}
 		}
-		rule = getRule(parser.current.type);
-	}
-
-	if(!canAssign && match(TK_ASSIGN)){
-		error("Invalid assignment target.");
-		expression(false);
 	}
 }
 
@@ -585,7 +506,7 @@ static double tokenToNumber(TK token){
 	}
 }
 
-static void literal(bool canAssign) {
+void literal(bool canAssign) {
 	switch(parser.previous.type){
 		case TK_FALSE:  emitByte(OP_FALSE); break;
 		case TK_TRUE:   emitByte(OP_TRUE); break;
@@ -923,39 +844,8 @@ static void withStatement(){
 
 	emitBytes(OP_POP_INST, (uint8_t) false);
 }
-/*
-static void frameStatement() {
-	double upperVal = -1;
-	double lowerVal = -1;
 
-	if(parser.previous.type == TK_T){
-		consume(TK_R_LIMIT, "Expected right limit.");
-	}else{
-		lowerVal = tokenToNumber(parser.previous);
-	
-	}
-
-	consume(TK_INTEGER, "Expected upper-bound");
-	TK upper = parser.previous;
-	int upperVal = (strtod(parser.previous.start, NULL));	
-	
-	if((upperVal) <= 0){
-		error("Invalid upper bound.");
-	}
-
-	if((upperVal) > currentResult()->upperLimit) currentResult()->upperLimit = upperVal;
-
-	int jumpIndex = emitLimit(currentResult()->lowerLimit, upperVal);
-	endLine();
-
-	enterScope();
-	indentedBlock();
-	exitScope();
-
-	patchJump(jumpIndex);
-}*/
-
-static void and_(bool canAssign) {
+void and_(bool canAssign) {
 	int endJump = emitJump(OP_JMP_FALSE);
 	emitByte(OP_POP);
 	parsePrecedence(PC_AND);
@@ -963,11 +853,11 @@ static void and_(bool canAssign) {
 	patchJump(endJump);
 }
 
-static void stringLiteral(bool canAssign) {
+void stringLiteral(bool canAssign) {
 	emitLinkedConstant(getTokenStringValue(&parser.previous), &parser.previous);
 }
 
-static void array(bool canAssign) {
+void array(bool canAssign) {
 	uint32_t numParameters = 0;
 	while(parser.current.type != TK_R_BRACK){
 		expression(true);
@@ -1023,7 +913,7 @@ static void parseAssignment() {
 	}
 }
 
-static void constant(bool canAssign) {
+void constant(bool canAssign) {
 	TK constId = parser.previous;
 	CSType constType = (CSType) constId.subtype;
 	switch(constType){
@@ -1136,7 +1026,7 @@ static void initNative(void* func, TK* id){
 	add(currentResult()->globals, nativeString, OBJ_VAL(nativeObj));
 }
 
-static void native(bool canAssign){
+void native(bool canAssign){
 	TK nativeId = parser.previous;
 	uint8_t numParams = emitParams();
 	emitBundle(OP_GET_GLOBAL, getStringObjectIndex(&nativeId));
@@ -1228,16 +1118,7 @@ static void native(bool canAssign){
 	initNative(func, &nativeId);
 }
 
-static void scopeDeref(bool canAssign){
-	if(currentCompiler()->enclosed){
-		emitByte(OP_LOAD_INST);
-		deref(canAssign);
-	}else{
-		errorAtCurrent("The current instance is null.");
-	}
-}
-
-static void deref(bool canAssign){
+void deref(bool canAssign){
 	while(parser.previous.type == TK_DEREF){
 		if(parser.current.type == TK_ID){
 			advance();
@@ -1254,6 +1135,16 @@ static void deref(bool canAssign){
 		}else{
 			errorAtCurrent("Expected an identifier.");
 		}
+	}
+}
+
+
+void scopeDeref(bool canAssign){
+	if(currentCompiler()->enclosed){
+		emitByte(OP_LOAD_INST);
+		deref(canAssign);
+	}else{
+		errorAtCurrent("The current instance is null.");
 	}
 }
 
@@ -1305,7 +1196,7 @@ static void namedVariable(TK* id, bool canAssign){
 	}	
 }
 
-static void variable(bool canAssign){
+void variable(bool canAssign){
 	if(parser.current.type == TK_L_PAREN){
 		TK funcName = parser.previous;
 		Value classValue = getValue(currentCompiler()->classes, getTokenStringObject(&funcName));
@@ -1363,7 +1254,7 @@ static void assignStatement(bool enforceGlobal){
 	endLine();
 }
 
-static void binary(bool canAssign){
+void binary(bool canAssign){
 	TKType op = parser.previous.type;
 
 	ParseRule* rule = getRule(op);
@@ -1407,7 +1298,7 @@ static void binary(bool canAssign){
 	}
 }
 
-static void unary(bool canAssign){
+void unary(bool canAssign){
 	TKType op = parser.previous.type;
 	switch(op){
 		case TK_MINUS: parsePrecedence(PC_UNARY); emitByte(OP_NEGATE); break;
@@ -1444,7 +1335,7 @@ static void unary(bool canAssign){
 	}
 }
 
-static void grouping(bool canAssign){
+void grouping(bool canAssign){
 	++parser.parenDepth;
 	parsePrecedence(PC_ASSIGN);
 	--parser.parenDepth;

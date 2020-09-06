@@ -108,7 +108,7 @@ static InterpretResult runInput(){
 		fgets(buffer, CHUNK, stdin);
 		currentBuffLength = strlen(buffer);
 
-		source = reallocate(source, currentSourceLength, currentSourceLength + currentBuffLength); //void* reallocate(void* previous, size_t oldSize, size_t newSize) {
+		source = reallocate(source, currentSourceLength, currentSourceLength + currentBuffLength); //void* reallocate(void* previous, size_t oldSize, size_t newSize)
 		
 		if(buffer == NULL){
 			print(O_ERR, "Not enough memory to read \"%s\".\n", path);

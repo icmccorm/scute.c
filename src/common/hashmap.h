@@ -4,7 +4,7 @@
 #include "value.h"
 #include "output.h"
 
-#define LOAD_FACTOR = .75
+#define LOAD_FACTOR .75
 
 typedef struct HashEntry {
 	ObjString* key;

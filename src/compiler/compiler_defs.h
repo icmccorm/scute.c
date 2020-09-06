@@ -81,7 +81,6 @@ extern Parser parser;
 
 typedef struct sCompiler Compiler;
 
-
 typedef void (*ParseFn)(bool canAssign);
 
 typedef struct{

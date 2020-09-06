@@ -64,7 +64,7 @@ void drawShape(ObjShape* shape, unsigned address){
 				em_addAttribute("rounding", &roundingVal);
 			} break;
 
-			case TK_CIRC:{
+			case TK_CIRCLE:{
 				em_newCirc(address);
 
 				Value posVal = getValue(shapeMap, string("position"));
@@ -75,7 +75,7 @@ void drawShape(ObjShape* shape, unsigned address){
 				em_addAttribute("radius", &radVal);
 				} break;
 
-			case TK_ELLIP: {
+			case TK_ELLIPSE: {
 				em_newEllip(address);
 
 				Value posVal = getValue(shapeMap, string("position"));
@@ -136,7 +136,7 @@ void drawPoints(ObjShape* shape){
 					print(O_OUT, "Jump: (%d, %d)\n", points[0], points[1]);
 				#endif
 			} break;
-			case TK_VERT: ;
+			case TK_VERTEX: ;
 				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
 				points[0] = AS_NUM(getValueArray(vector->array, 0));
 				points[1] = AS_NUM(getValueArray(vector->array, 1));
@@ -165,7 +165,7 @@ void drawPoints(ObjShape* shape){
 				#endif
 				angle += AS_NUM(degrees);
 				break;
-			case TK_QBEZ: {
+			case TK_QBEZIER: {
 				Value control = getValue(map, string("control"));
 				Value end = getValue(map, string("end"));
 
@@ -181,7 +181,7 @@ void drawPoints(ObjShape* shape){
 					print(O_OUT, "\n");
 				#endif
 			} break;
-			case TK_CBEZ: {
+			case TK_CBEZIER: {
 				Value control1 = getValue(map, string("startControl"));
 				Value control2 = getValue(map, string("endControl"));
 				Value end = getValue(map, string("end"));
@@ -217,7 +217,7 @@ void drawPoints(ObjShape* shape){
 					print(O_OUT, "\n");
 				#endif
 			} break;
-			case TK_MIRR: {
+			case TK_MIRROR: {
 				Value origin = getValue(map, string("origin"));
 				Value* originArray = AS_ARRAY(origin)->array->values;
 
@@ -290,14 +290,14 @@ void renderFrame(CompilePackage* code){
 		ObjShape* shape = popShape();
 		unsigned address = (unsigned) shape->instance.map;
 		switch(shape->shapeType){
-			case TK_POLY: {
+			case TK_POLYGON: {
 				#ifdef EM_MAIN
 					em_newPolygon(address);
 					assignStyles(shape);
 				#endif
 				drawPoints(shape);
 			} break;
-			case TK_POLYL: {
+			case TK_POLYLINE: {
 				#ifdef EM_MAIN
 					em_newPolyline(address);
 					assignStyles(shape);

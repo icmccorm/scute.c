@@ -1,52 +1,53 @@
-:id
-:shape
-:native 
-:plus 
-:minus
-:times
-:divide
-:modulo
-:equals
-:bang_equals
-:less_equals
-:greater_equals
-:less
-:greater
-:assign
-:incr_assign
-:decr_assign
-:bang
-:incr
-:decr
+:id[variable,,none]
+:constant[constant,, none]
+:shape[native,,none]
+:native[native,,none]
+:plus[,binary,term]
+:minus[unary, binary, term]
+:times[,binary, factor]
+:divide[,binary, factor]
+:modulo[, binary, factor]
+:equals[, binary, equals]
+:bang_equals[, binary, equals]
+:less_equals[, binary, compare]
+:greater_equals[, binary, compare]
+:less[, binary, compare]
+:greater[, binary, compare]
+:assign[, binary, assign]
+:incr_assign[, binary, assign]
+:decr_assign[, binary, assign]
+:bang[unary,,unary]
+:incr[unary,,unary]
+:decr[unary,,unary]
 :colon
 :question
 :eval_assign
-:real
-:integer
+:real[literal,,none]
+:integer[literal,,none]
 :error
 :eof
 :newline
-:string
 :indent
-:l_paren
+:l_paren[grouping,,none]
 :r_paren
-:l_brack
+:l_brack[array,,none]
 :r_brack
 :comma
-:deref
+:deref[scopeDeref,deref,call]
 :tilda
 :semi
+:string[stringLiteral,,none]
 asin
 acos
 atan
-and
+and[,and_,and]
 arc
 by
 do
 draw
 def
 for
-false
+false[literal,,none]
 func
 from
 if
@@ -67,7 +68,7 @@ sin
 sqrt
 tan
 text
-true
+true[literal,,none]
 to
 turn
 or
@@ -77,7 +78,6 @@ polyline
 polygon
 ellipse
 else
-null
 vertex
 var
 hsin
@@ -85,6 +85,7 @@ hcos
 htan
 mirror
 move
+null[literal,,none]
 jump
 qbezier
 ungon

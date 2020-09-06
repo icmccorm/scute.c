@@ -15,6 +15,9 @@ typedef struct{
 void initScanner(char* source);
 TK scanTK();
 
+CSType checkConstant(int start, int length, char* rest, CSType type);
+TKType checkKeyword(int start, int length, char* rest, TKType type);
+
 typedef struct {
     char* start;
     char* current;

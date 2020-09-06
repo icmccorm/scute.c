@@ -26,7 +26,7 @@ bool shouldGrow(HashMap* map){
 	if(map->capacity == 0) return true;
 	if(map->numEntries == 0) return false;
 	float ratio = (float) map->numEntries/map->capacity;
-	return ratio > 0.75;
+	return ratio > LOAD_FACTOR;
 }
 
 void grow(HashMap* map){
