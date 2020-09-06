@@ -33,23 +33,25 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS := $(shell find $(SRC_DIR) -type d)
 INC_FLAGS := $(addprefix -I, $(INC_DIRS)) 
 
-all : ./$(EXEC_FILE) test web node
+all : scanner ./$(EXEC_FILE) test web node
 
-./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
+./$(EXEC_FILE) : $(OBJS) $(C_ENTRY) ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
 	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS) -lm
 
-$(BUILD)/%.c.o : %.c ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
+$(BUILD)/%.c.o : %.c 
 	@$(MKDIR) -p $(dir $@)
 	@$(CC) -g -D DEBUG $(INC_TEST_FLAGS) $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
 .PHONY : clean
 
+scanner: ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
+./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py:
+	python autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
+
 clean:
 	@$(RM) -r $(BUILD)
 	@$(RM) *.wasm *.map $(EXEC_FILE).js $(EXEC_FILE) $(EXEC_TEST_FILE) $(EXEC_FILE)-test.js
 	
-./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py:
-	python autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
 
 -include $(DEPS)
 
@@ -59,14 +61,14 @@ EM_NODE_FLAGS = $(EM_EXPORTS) -O0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT
 EM_EXPORTS = -s EXPORTED_FUNCTIONS='["_free", "_malloc", "_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["intArrayFromString", "ccall", "UTF8ToString"]'
 EM_ENTRY = ./src/em_main.c
 
-web : $(SRC_FILES) $(EM_ENTRY)
+web : $(SRC_FILES) $(EM_ENTRY) scanner
 	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js
 
-web-prod: $(SRC_FILES) $(EM_ENTRY)
+web-prod: $(SRC_FILES) $(EM_ENTRY) scanner
 	@$(WASMC) $(EM_MAP) $(EM_FLAGS) -O3 $(EM_WEB_FLAGS) $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE).js 
 
-node: $(SRC_FILES) $(EM_ENTRY)
+node: $(SRC_FILES) $(EM_ENTRY) scanner
 	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_NODE_FLAGS) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE)-test.js 
 
-test :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
+test :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY) scanner
 	@$(CC) $(TEST_ENTRY) $(TEST_OBJS) $(OBJS) $(INC_FLAGS) $(INC_TEST_FLAGS) -o $(EXEC_TEST_FILE)
