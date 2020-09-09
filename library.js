@@ -177,7 +177,7 @@ mergeInto(LibraryManager.library, {
 		};
 	},
 
-	setMaxFrameIndex: function(num){
+	em_setMaxFrameIndex: function(num){
 		Module._maxFrameIndex = num;
 	},
 

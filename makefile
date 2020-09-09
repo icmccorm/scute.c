@@ -57,7 +57,7 @@ clean:
 -include $(DEPS)
 
 EM_FLAGS = --js-library ./library.js --extern-pre-js ./library-interop.js --pre-js ./pre.js
-EM_WEB_FLAGS = $(EM_EXPORTS)  -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -s STRICT=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0  -s EXPORT_NAME="'scute'" -s FILESYSTEM=0 -s ENVIRONMENT='worker'
+EM_WEB_FLAGS = $(EM_EXPORTS) -s ASSERTIONS=1 -s SAFE_HEAP=1 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -s STRICT=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0  -s EXPORT_NAME="'scute'" -s FILESYSTEM=0 -s ENVIRONMENT='worker'
 EM_NODE_FLAGS = $(EM_EXPORTS) -O0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='node' -s EXPORT_NAME="'scute'"
 EM_EXPORTS = -s EXPORTED_FUNCTIONS='["_free", "_malloc", "_runCode", "_compileCode", "_freeCompilationPackage"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["intArrayFromString", "ccall", "UTF8ToString"]'
 EM_ENTRY = ./src/em_main.c

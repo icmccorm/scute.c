@@ -29,6 +29,7 @@ CompilePackage* result = NULL;
 	extern void em_addStringValue(char* charPtr, int inlineOffset, int length);
 	extern void em_endLine(int* newlineIndex);
 	extern void em_addUnlinkedValue(int* insertionIndex, Value* value);
+	extern void em_setMaxFrameIndex(uint32_t maxFrameIndex);
 
 	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
@@ -73,8 +74,12 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	if(comp){
 		mergeMaps(comp->classes, newComp->classes);
 		newComp->scopeDepth = comp->scopeDepth + 1;
+		newComp->animUpperBound = comp->animUpperBound;
+		newComp->animLowerBound = comp->animLowerBound;
 	}else{
 		newComp->scopeDepth = 0;
+		newComp->animUpperBound = 0;
+		newComp->animLowerBound = 0;
 	}
 
 	newComp->scopeCapacity = 0;
@@ -611,14 +616,21 @@ static void animStatement(){
 			errorAtCurrent("Expected 'to' or 'from'.");
 			return;
 		}
+		if(upperBound > 0) currentCompiler()->animUpperBound = upperBound;
+		if(lowerBound > 0) currentCompiler()->animLowerBound = lowerBound;
+
 		addLocal(currentCompiler(), animToken);
 
-		emitByte(OP_FRAME_INDEX);
-		emitConstant(NUM_VAL(upperBound));
-		emitByte(OP_DIVIDE);
-		emitBundle(OP_DEF_LOCAL, latestLocal());
 
 		int jumpOffset = emitLimit(lowerBound, upperBound);	
+
+
+		emitByte(OP_FRAME_INDEX);
+		emitConstant(NUM_VAL(lowerBound));
+		emitByte(OP_SUBTRACT);
+		emitConstant(NUM_VAL(upperBound - lowerBound));
+		emitByte(OP_DIVIDE);
+		emitBundle(OP_DEF_LOCAL, latestLocal());
 
 		endLine();
 		enterScope();
@@ -1434,6 +1446,8 @@ bool compile(char* source, CompilePackage* package){
 	}
 
 	consume(TK_EOF, "Expected end of expression.");
+
+	result->upperLimit = compiler->animUpperBound;
 	compiler = exitCompilationScope();
 
 	#ifdef DEBUG

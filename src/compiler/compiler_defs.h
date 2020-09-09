@@ -45,6 +45,7 @@ typedef struct {
     PCType manipPrecedence;
     int manipTargetCharIndex;
     int manipTargetLength;
+
 } Parser;
 
 
@@ -77,6 +78,9 @@ extern Parser parser;
     ObjChunk* compilingChunk;
 	HashMap* classes;
     bool returned;
+
+    uint32_t animUpperBound;
+    uint32_t animLowerBound;
 };
 
 typedef struct sCompiler Compiler;

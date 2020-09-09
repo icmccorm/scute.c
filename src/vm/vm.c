@@ -14,7 +14,7 @@
 #include "natives.h"
 
 #ifdef EM_MAIN
-	extern void setMaxFrameIndex(int index);
+	extern void em_setMaxFrameIndex(int index);
 	extern void em_addStage(Value* value, uint8_t* op);
 #endif
 
@@ -482,35 +482,23 @@ CompilePackage* initCompilationPackage();
 
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
+	initVM(code, index);
+	#ifndef EM_MAIN
+		printMem("before runtime");
+	#endif
+	
+	result = run();
+	
+	#ifndef EM_MAIN
+		printMem("after runtime");
+	#endif
+	
+	renderFrame(code);
+	freeVM();
 
-	if(index <= 0){
-		
-		initVM(code, index);
-		#ifndef EM_MAIN
-			printMem("before runtime");
-		#endif
-		
-		result = run();
-		
-		#ifndef EM_MAIN
-			printMem("after runtime");
-		#endif
-		
-		renderFrame(code);
-		freeVM();
-
-		#ifndef EM_MAIN
-			printMem("after fruntime");
-		#endif
-
-	}else{
-		for(int i = code->lowerLimit; i<=code->upperLimit; ++i){
-			initVM(code, i);
-			result = run();
-			renderFrame(code);
-			freeVM();
-		}
-	}
+	#ifndef EM_MAIN
+		printMem("after fruntime");
+	#endif
 	return result;
 }
 
@@ -534,6 +522,6 @@ void runCompiler(CompilePackage* package, char* source){
 	if(!compiled) package->result = INTERPRET_COMPILE_ERROR;
 
 	#ifdef EM_MAIN
-		setMaxFrameIndex(package->upperLimit);
+		em_setMaxFrameIndex(package->upperLimit);
 	#endif
 }
