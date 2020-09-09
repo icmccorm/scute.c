@@ -64,7 +64,7 @@ typedef enum {
 
 	OP_JMP_FALSE,
 	OP_LIMIT,
-	OP_T,
+	OP_FRAME_INDEX,
 	OP_SCOPE,
 	OP_DEREF,
 	OP_CALL,

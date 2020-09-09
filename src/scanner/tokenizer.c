@@ -26,7 +26,15 @@ TKType findKeyword(char* start, char* current){
 					case 't': return checkKeyword(2, 2, "an", TK_ATAN);
 					case 'r': return checkKeyword(2, 1, "c", TK_ARC);
 					case 'c': return checkKeyword(2, 2, "os", TK_ACOS);
-					case 'n': return checkKeyword(2, 1, "d", TK_AND);
+					case 'n':{
+						if(length > 2){
+							switch(start[2]){
+								case 'i': return checkKeyword(3, 1, "m", TK_ANIM);
+								case 'd': return TK_AND;
+							}
+						}
+					} break;
+
 				}
 			}
 		return TK_ID;
@@ -227,6 +235,7 @@ TKType findKeyword(char* start, char* current){
 			if(length > 1){
 				switch(start[1]){
 					case 'a': return checkKeyword(2, 1, "r", TK_VAR);
+					case 'i': return checkKeyword(2, 1, "a", TK_VIA);
 					case 'e': return checkKeyword(2, 4, "rtex", TK_VERTEX);
 				}
 			}

@@ -465,7 +465,7 @@ static InterpretResult run() {
 			case OP_NOT:
 				push(BOOL_VAL(isFalsey(pop())));
 				break;
-			case OP_T:
+			case OP_FRAME_INDEX:
 				push(NUM_VAL(vm.frameIndex));
 				break;
 		}	

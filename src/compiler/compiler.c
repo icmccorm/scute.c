@@ -338,6 +338,8 @@ static void forStatement();
 static void withStatement();
 static void whileStatement();
 static void funcStatement();
+static void animStatement();
+static void toStatement();
 
 static ParseRule* getRule(TKType type){
 	uint32_t typeAsInt = (uint32_t) type;
@@ -421,6 +423,10 @@ static void statement() {
 			case TK_REPEAT:
 				advance();
 				repeatStatement();
+				break;
+			case TK_ANIM:
+				advance();
+				animStatement();
 				break;
 			case TK_FOR:
 				advance();
@@ -578,6 +584,54 @@ static void internGlobal(TK* id){
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
 	
+static void animStatement(){
+	consume(TK_ID, "Expected an identifier.");
+	if(!parser.hadError){
+		TK animToken = parser.previous;			
+		int lowerBound = 0;
+		int upperBound = 999;
+
+		if(parser.current.type == TK_TO){
+			advance();
+			consume(TK_INTEGER, "Expected an upper bound.");	
+			upperBound = tokenToNumber(parser.previous);
+			if(upperBound < 0) errorAt(&parser.previous, "Upper bounds must be non-negative.");
+		}else if(parser.current.type == TK_FROM){
+			advance();
+			consume(TK_INTEGER, "Expected a lower bound.");
+			lowerBound = tokenToNumber(parser.previous);
+			if(lowerBound < 0) errorAt(&parser.previous, "Lower bounds must be non-negative.");
+			if(parser.current.type == TK_TO){
+				advance();
+				consume(TK_INTEGER, "Expected an upper bound");
+				upperBound = tokenToNumber(parser.previous);
+				if(upperBound < 0) errorAt(&parser.previous, "Upper bounds must be non-negative.");
+			}
+		}else{
+			errorAtCurrent("Expected 'to' or 'from'.");
+			return;
+		}
+		addLocal(currentCompiler(), animToken);
+
+		emitByte(OP_FRAME_INDEX);
+		emitConstant(NUM_VAL(upperBound));
+		emitByte(OP_DIVIDE);
+		emitBundle(OP_DEF_LOCAL, latestLocal());
+
+		int jumpOffset = emitLimit(lowerBound, upperBound);	
+
+		endLine();
+		enterScope();
+		indentedBlock();
+		exitScope();
+
+		emitByte(OP_POP);
+		--currentCompiler()->localCount;
+
+		patchJump(jumpOffset);
+	}
+}
+
 static void whileStatement(){
 	uint32_t jumpIndex = currentChunk()->count;
 	consume(TK_L_PAREN, "Expected '('.");
@@ -865,10 +919,6 @@ void array(bool canAssign) {
 	}
 	consume(TK_R_BRACK, "Expected ']'");
 	emitBundle(OP_BUILD_ARRAY, numParameters);
-}
-
-static void timeStep(bool canAssign) {
-	emitByte(OP_T);
 }
 
 static void ifStatement() {

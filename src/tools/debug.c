@@ -103,10 +103,10 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return simpleInstruction("OP_DRAW", offset);
 		case OP_POP:
 			return simpleInstruction("OP_POP", offset);
-		case OP_T:
-			return simpleInstruction("OP_T", offset);
 		case OP_CALL:
 			return paramInstruction("OP_CALL", chunk, offset);
+		case OP_FRAME_INDEX:
+			return simpleInstruction("OP_FRAME_INDEX", offset);
 		case OP_DEREF:
 			return embeddedValueInstruction("OP_DEREF", chunk, offset);
 		case OP_DEF_INST:
@@ -149,13 +149,15 @@ static int jumpInstruction(const char* name, Chunk* chunk, int offset){
 
 static int limitInstruction(const char* name, Chunk* chunk, int offset){
 	uint8_t numLowerBytes = chunk->code[offset + 1];
+	int lowerValue = readEmbeddedInteger(chunk, numLowerBytes, offset);
 	offset = offset + 1 + numLowerBytes;
 
 	uint8_t numUpperBytes = chunk->code[offset + 1];
+	int upperValue = readEmbeddedInteger(chunk, numUpperBytes, offset);
 	offset = offset + 1 + numUpperBytes;
 
-	print(O_DEBUG, "%-16s\n", name);
-	return offset + 1;
+	print(O_DEBUG, "%-16s %4d %4d\n", name, lowerValue, upperValue);
+	return offset + 3;
 }	
 
 static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset){
