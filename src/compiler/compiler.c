@@ -770,7 +770,10 @@ static void forStatement() {
 						jumpTo(OP_JMP, jumpBackIndex);
 
 						patchJump(jumpIndex);
-						if(!wasDefinedInOuterScope) emitByte(OP_POP);
+						if(!wasDefinedInOuterScope) {
+							emitByte(OP_POP);
+							--currentCompiler()->localCount;
+						}
 					}	
 				}
 			}

@@ -1,0 +1,21 @@
+with canvas
+	.size = [500, 500]
+	.origin = [250, 250]
+
+def drawCircles(dist, shift)
+	let numCircles = 8
+	for i = 0 to 8 by 1
+		angle = i/8 * 2 * :pi + shift
+		coords = [dist*cos(angle), dist*sin(angle)]
+		with circle()
+			.radius = 4
+			.position = coords
+			.fill = :black
+			
+anim t from 0 to 100
+	for i = 0 to 7 by 1
+		drawCircles(t*i*20, t*2*:pi + i*0.25)
+
+anim t from 100 to 200
+	for i = 0 to 7 by 1
+		drawCircles(i*20-t*i*20, t*2*:pi + i*0.25)
