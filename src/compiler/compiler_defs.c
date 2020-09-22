@@ -12,10 +12,29 @@ uint32_t addLocal(Compiler* compiler, TK idName){
 	target->type = VAR;
     target->depth = -1;
     target->id = idName;
-    ++compiler->localCount;
-	return compiler->localCount-1;
+	return compiler->localCount++;
 }
 
+uint32_t addUpvalue(Compiler* compiler, int index, bool isLocal){
+	int upvalueCount = compiler->compilingChunk->upvalueCount;
+    if(upvalueCount + 1 > compiler->upvalueCapacity){
+        int oldCapacity = compiler->upvalueCapacity;
+		compiler->upvalueCapacity = GROW_CAPACITY(oldCapacity);
+		compiler->upvalues = GROW_ARRAY(compiler->upvalues, Upvalue, oldCapacity, compiler->upvalueCapacity);
+    }
+	for(int i = 0; i<upvalueCount; ++i){
+		Upvalue* up = &compiler->upvalues[i];
+		if(up->index == index && up -> isLocal == isLocal){
+			return i;
+		}
+	}
+
+	Upvalue* up = &(compiler->upvalues[upvalueCount]);
+	up->isLocal = isLocal;
+	up->index = index;
+
+	return compiler->compilingChunk->upvalueCount++;
+}
 
 static uint32_t addDummyLocal(Compiler* compiler, LocalType type){
     if(compiler->localCount + 1 > compiler->scopeCapacity){

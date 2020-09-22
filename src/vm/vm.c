@@ -24,7 +24,7 @@ static void resetStack(){
 	vm.stackTop = vm.stack;
 }
 
-static bool pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams);
+static bool pushStackFrame(ObjClosure* closure, ObjInstance* super, uint8_t numParams);
 static uint8_t* popStackFrame();
 void initGlobals(HashMap* map);
 
@@ -46,7 +46,10 @@ void initVM(CompilePackage* package, int frameIndex) {
 	initMap(&vm.globals);
 	initGlobals(vm.globals);
   	mergeMaps(package->globals, vm.globals);
-	pushStackFrame(package->compiled, NULL, 0);
+	
+
+	ObjClosure* close = allocateClosure(package->compiled);
+	pushStackFrame(close, NULL, 0);
 }
 void freeVM() {
 	freeMap(vm.globals);
@@ -70,7 +73,7 @@ ObjInstance* currentInstance(){
 }
 
 static Chunk* currentChunk(){
-	return currentStackFrame()->chunkObj->chunk;
+	return currentStackFrame()->closeObject->chunkObj->chunk;
 }
 
 int stackSize(){
@@ -89,7 +92,7 @@ static Value peek(int distance){
 }
 
 InterpretResult runtimeError(char* format, ...){
-	Chunk* currentChunk = currentStackFrame()->chunkObj->chunk;
+	Chunk* currentChunk = currentStackFrame()->closeObject->chunkObj->chunk;
 	size_t opIndex = vm.ip - currentChunk->code;
 	int line = getLine(currentChunk, opIndex);
 	print(O_ERR, "[line %d] ", line);
@@ -108,20 +111,24 @@ static void pushInstance(ObjInstance* instance){
 	++vm.instanceCount;
 }
 
-static bool pushStackFrame(ObjChunk* funcChunk, ObjInstance* super, uint8_t numParams){
+static bool pushStackFrame(ObjClosure* closure, ObjInstance* super, uint8_t numParams){
 	if(vm.stackFrameCount < STACK_MAX - 1){
+		
 		StackFrame* newFrame = &(vm.stackFrames[vm.stackFrameCount]);
+		
+		newFrame->closeObject = closure;
+
 		++vm.stackFrameCount;
-		newFrame->chunkObj = funcChunk;
+
 		newFrame->stackOffset = vm.stackTop - numParams;
 		newFrame->returnTo = vm.ip;
-		vm.ip = funcChunk->chunk->code;
+		
+		vm.ip = newFrame->closeObject->chunkObj->chunk->code;
+
 		return true;
 	}
 	return false;
 }
-
-
 
 static uint8_t* popStackFrame(){
 	StackFrame* frame = currentStackFrame();
@@ -158,9 +165,7 @@ static bool valuesEqual(Value a, Value b){
 	}	
 }
 
-static InterpretResult callFunction(ObjChunk* chunkObj);
-
-
+static InterpretResult callFunction(ObjClosure* closeObject);
 
 void transferIndex(Value* a, Value* b, Value* result){
 	#define TRACED(value) (value->lineIndex > -1)
@@ -251,6 +256,11 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(readByte()){
+			case OP_CLOSURE:{
+				ObjChunk* chunk = AS_CHUNK(READ_CONSTANT());
+				ObjClosure* close = allocateClosure(chunk);
+				push(OBJ_VAL(close));
+			} break;
 			case OP_INIT_INST:{
 				pushInstance(allocateInstance(NULL));
 			}break;
@@ -326,17 +336,14 @@ static InterpretResult run() {
 				if(fnValue.type == VL_OBJ){
 					Obj* object = AS_OBJ(fnValue);
 					switch(object->type){
-
-						case OBJ_CHUNK: {
-							ObjChunk* chunkObj = (ObjChunk*) object;
-
-							bool success = pushStackFrame(chunkObj, NULL, numParams);
+						case OBJ_CLOSURE: {
+							ObjClosure* closeObj = (ObjClosure*) object;
+							bool success = pushStackFrame(closeObj, NULL, numParams);
 							if(!success) return runtimeError("Stack overflow.");
 
-							for(int i = numParams; i< chunkObj->numParameters; ++i){
+							for(int i = numParams; i< closeObj->chunkObj->numParameters; ++i){
 								push(NULL_VAL());
 							}
-
 							} break;
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;

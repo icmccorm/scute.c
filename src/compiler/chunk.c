@@ -72,13 +72,13 @@ int writeVariableData(Chunk* chunk, uint64_t value){
 	return 1 + numBytes;
 }
 
-Value* writeConstant(Chunk* chunk, Value value, uint32_t line){
-	uint64_t valIndex = pushValueArray(chunk->constants, value);
-	writeOperatorBundle(chunk, OP_CONSTANT, valIndex, line);
-	return &(chunk->constants->values[valIndex]);
+uint32_t writeConstant(Chunk* chunk, Value value, uint32_t line){
+	uint32_t valIndex = pushValueArray(chunk->constants, value);
+	writeVariableData(chunk, valIndex);
+	return valIndex;
 }
 
-uint64_t writeValue(Chunk* chunk, Value value, uint32_t line){
+uint32_t writeValue(Chunk* chunk, Value value, uint32_t line){
 	return pushValueArray(chunk->constants, value);
 }
 

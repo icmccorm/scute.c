@@ -4,10 +4,6 @@
 #include "chunk.h"
 #include "value.h"
 #include "package.h"
-
-#define PI 3.141593
-#define E 2.71828
-
 #define STACK_MAX 256
 #define INST_STACK_MAX 16
 
@@ -17,7 +13,7 @@ struct sStackFrame {
 	Value* stackOffset;
 	struct sStackFrame* nextLower;
 	uint8_t* returnTo;
-	ObjChunk* chunkObj;
+	ObjClosure* closeObject;
 };
 
 typedef struct sStackFrame StackFrame;

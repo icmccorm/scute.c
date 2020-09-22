@@ -86,6 +86,9 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	newComp->localCount = 0;
 	newComp->locals = NULL;
 
+	newComp->upvalues = NULL;
+	newComp->upvalueCapacity = 0;
+
 	if(chunkObj->chunkType == CK_CONSTR) newComp->enclosed = true;
 	
 	newComp->instanceType = TK_NULL;
@@ -192,12 +195,15 @@ static void emitLinkedConstant(Value value, TK* token){
 		}
 	}
 	#endif
-	writeConstant(currentChunk(), value, parser.previous.line);
+	emitConstant(value);
 }
 
 static Value* emitConstant(Value value){
-	return writeConstant(currentChunk(), value, parser.previous.line);
+	emitByte(OP_CONSTANT);
+	return &(currentChunk()->constants->values[writeConstant(currentChunk(), value, parser.previous.line)]);
+	
 }
+
 
 static void errorAt(TK* token, char* message){
 	if(parser.panicMode) return;
@@ -292,8 +298,7 @@ static uint32_t getObjectIndex(Obj* obj){
 	return writeValue(currentChunk(), OBJ_VAL(obj), parser.previous.line);
 }
 
-static int32_t resolveLocal(TK*id){
-	Compiler* comp = currentCompiler();
+static int32_t resolveLocal(Compiler* comp, TK*id){
 	for(int i = comp->localCount-1; i>=0; --i){
 		Local* currentLocal = &comp->locals[i];
 		if(tokensEqual(*id, currentLocal->id)){
@@ -324,7 +329,7 @@ static bool isGloballyDefined(TK* id){
 }
 
 static bool isInitialized(TK* id){
-	return isGloballyDefined(id) || (resolveLocal(id) >= 0);
+	return isGloballyDefined(id) || (resolveLocal(currentCompiler(), id) >= 0);
 }
 
 static void expression(bool emitTrace);
@@ -731,8 +736,7 @@ static void forStatement() {
 				getCode = OP_GET_GLOBAL;
 				defCode = OP_DEF_GLOBAL;
 				varIndex = getStringObjectIndex(&counterToken);
-			}else if(resolveLocal(&counterToken) >= 0){
-				varIndex = resolveLocal(&counterToken);
+			}else if((varIndex = resolveLocal(currentCompiler(), &counterToken)) >= 0){
 			}else{
 				errorAt(&counterToken, "Expected an initialized variable or an initialization expression.");
 				return;
@@ -790,8 +794,9 @@ static void forStatement() {
 static void inherit(ObjChunk* currentChunk, uint8_t* numParams) {
 	if(currentChunk){
 		inherit(currentChunk->superChunk, numParams);
-		int paramsConsumed = fmin(*numParams, currentChunk->numParameters);
+		uint8_t paramsConsumed = (uint8_t) fmin(*numParams, currentChunk->numParameters);
 		*numParams = *numParams - paramsConsumed;
+		
 		emitConstant(OBJ_VAL(currentChunk));
 		emitBytes(OP_CALL, paramsConsumed);
 	}
@@ -844,9 +849,14 @@ static void funcStatement(){
 			compiler = exitCompilationScope();
 			
 			uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
-			emitBundle(OP_CONSTANT, scopeIndex);
+			emitBundle(OP_CLOSURE, scopeIndex);
+			for (int i = 0; i < newChunk->upvalueCount; i++) {
+    			emitByte(currentComp->upvalues[i].isLocal ? 1 : 0);
+   				emitByte(currentComp->upvalues[i].index);
+  			}
+
 			if(currentCompiler()->scopeDepth > 0){	
-				emitBundle(OP_DEF_LOCAL, resolveLocal(&funcIDToken));
+				emitBundle(OP_DEF_LOCAL, addLocal(currentCompiler(), funcIDToken));
 			}else{
 				emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&funcIDToken));
 				internGlobal(&funcIDToken);
@@ -891,9 +901,10 @@ static void defStatement() {
 	}
 
 	uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
-	emitBundle(OP_CONSTANT, scopeIndex);
+	emitBundle(OP_CLOSURE, scopeIndex);
+
 	if(currentCompiler()->scopeDepth > 0){	
-		emitBundle(OP_DEF_LOCAL, resolveLocal(&idToken));
+		emitBundle(OP_DEF_LOCAL, resolveLocal(currentCompiler(), &idToken));
 	}else{
 		emitBundle(OP_DEF_GLOBAL, getStringObjectIndex(&idToken));
 		internGlobal(&idToken);
@@ -977,6 +988,9 @@ static void parseAssignment() {
 	}
 }
 
+
+#define E (2.718281828459045235360)
+#define PI (3.141592653589793238462)
 void constant(bool canAssign) {
 	TK constId = parser.previous;
 	CSType constType = (CSType) constId.subtype;
@@ -1212,52 +1226,55 @@ void scopeDeref(bool canAssign){
 	}
 }
 
-static void namedLocal(TK* id, bool canAssign, uint32_t index){
-	if(canAssign && match(TK_ASSIGN)){
-		expression(true);
-		emitBundle(OP_DEF_LOCAL, index);
-	}else{
-		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
-			advance();
-			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
-			emitConstant(NUM_VAL(delta));
-			emitBundle(OP_GET_LOCAL, index);
-			emitByte(OP_ADD);
-			emitBundle(OP_DEF_LOCAL, index);
-			emitByte(OP_POP);
-		}else{
-			emitBundle(OP_GET_LOCAL, index);
-		}
-	}
-}
+static int resolveUpvalue(Compiler* compiler, TK* id) {
+	if(compiler->super == NULL) return -1;
 
-static void namedGlobal(TK* id, bool canAssign, uint32_t index){
-	if(canAssign && match(TK_ASSIGN)){
-		expression(true);
-		emitBundle(OP_DEF_GLOBAL, index);
-		internGlobal(id);
-	}else{
-		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
-			advance();
-			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
-			emitConstant(NUM_VAL(delta));
-			emitBundle(OP_GET_GLOBAL, index);
-			emitByte(OP_ADD);
-			emitBundle(OP_DEF_GLOBAL, index);
-			emitByte(OP_POP);
-		}else{
-			emitBundle(OP_GET_GLOBAL, index);
-		}
+	int local = resolveLocal(compiler->super, id);
+	if(local >= 0){
+		return addUpvalue(compiler, local, true);
 	}
+
+	int upvalue = resolveUpvalue(compiler->super, id);
+	if(upvalue >= 0){
+		return addUpvalue(compiler, upvalue, false);
+	}
+
+	return -1;
 }
 
 static void namedVariable(TK* id, bool canAssign){
-	int32_t index = resolveLocal(id);
+	int32_t index = resolveLocal(currentCompiler(), id);
+	uint8_t getOp;
+	uint8_t defOp;
+
 	if(index >= 0){
-		namedLocal(id, canAssign, index);
+		getOp = OP_GET_LOCAL;
+		defOp = OP_DEF_LOCAL;
+	}else if ((index = resolveUpvalue(currentCompiler(), id)) >= 0){
+		getOp = OP_GET_UPVALUE;
+		defOp = OP_DEF_UPVALUE;
 	}else{
-		namedGlobal(id, canAssign, getStringObjectIndex(id));
+		index = getStringObjectIndex(id);
+		getOp = OP_GET_GLOBAL;
+		defOp = OP_DEF_GLOBAL;
 	}	
+
+	if(canAssign && match(TK_ASSIGN)){
+		expression(true);
+		emitBundle(defOp, index);
+	}else{
+		if(parser.current.type == TK_INCR || parser.current.type == TK_DECR){
+			advance();
+			int delta = (parser.previous.type == TK_INCR ? 1 : -1);
+			emitConstant(NUM_VAL(delta));
+			emitBundle(getOp, index);
+			emitByte(OP_ADD);
+			emitBundle(defOp, index);
+			emitByte(OP_POP);
+		}else{
+			emitBundle(getOp, index);
+		}
+	}
 }
 
 void variable(bool canAssign){
@@ -1273,7 +1290,6 @@ void variable(bool canAssign){
 			namedVariable(&funcName, canAssign);
 			emitBytes(OP_CALL, numParams);
 		}
-
 	}else{
 		namedVariable(&parser.previous, canAssign);
 	}
@@ -1374,7 +1390,7 @@ void unary(bool canAssign){
 				errorAtCurrent("Expected an identifier.");
 			}else{
 				TK idToken = parser.previous;
-				int32_t varIndex = resolveLocal(&idToken);
+				int32_t varIndex = resolveLocal(currentCompiler(), &idToken);
 				uint8_t assignOp, getOp;
 
 				if(varIndex >= 0){

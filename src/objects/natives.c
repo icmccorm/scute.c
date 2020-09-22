@@ -123,7 +123,7 @@ Value nativeDegrees(Value* params, int numParams){
 	if(numParams > 0) {
 		Value operand = params[0];
 		double number = AS_NUM(operand);
-		return NUM_VAL(number * 180 / PI);
+		return NUM_VAL(number * 180 / M_PI);
 	}else{
 		runtimeError("Missing operand.");
 		return NULL_VAL();
@@ -134,7 +134,7 @@ Value nativeRadians(Value* params, int numParams){
 	if(numParams > 0) {
 		Value operand = params[0];
 		double number = AS_NUM(operand);
-		return NUM_VAL(number * PI / 180);
+		return NUM_VAL(number * M_PI / 180);
 	}else{
 		runtimeError("Missing operand.");
 		return NULL_VAL();

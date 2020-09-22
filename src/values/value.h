@@ -15,6 +15,7 @@ typedef struct sObjNative ObjNative;
 typedef struct sObjColor ObjColor;
 typedef struct sObjArray ObjArray;
 typedef struct sObjShape ObjShape;
+typedef struct sObjClosure ObjClosure;
 
 typedef enum {
 	VL_NULL,

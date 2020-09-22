@@ -1,6 +1,6 @@
 # thanks to Job Vranish for his tutorial on makefiles for medium sized projects!
 # https://spin.atomicobject.com/2016/08/26/makefile-c-projects/
-CC = gcc
+CC = clang
 WASMC = emcc
 
 D_FLAGS = -MMD -MP   
@@ -36,7 +36,7 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 all : scanner ./$(EXEC_FILE) test web node
 
 ./$(EXEC_FILE) : $(OBJS) $(C_ENTRY) ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
-	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS) -lm
+	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
 
 $(BUILD)/%.c.o : %.c 
 	@$(MKDIR) -p $(dir $@)

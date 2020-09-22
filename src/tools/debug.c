@@ -4,6 +4,7 @@
 #include "value.h"
 #include "chunk.h"
 #include "output.h"
+#include "obj_def.h"
 
 static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine);
 
@@ -26,6 +27,7 @@ static int jumpInstruction(const char* name, Chunk* chunk, int offset);
 static int limitInstruction(const char* name, Chunk* chunk, int offset);
 static int scopeInstruction(const char* name, Chunk* chunk, int offset);
 static int paramInstruction(const char* name, Chunk* chunk, int offset);
+static int closureInstruction(Chunk* chunk, int offset);
 
 
 static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine){
@@ -43,6 +45,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return 1 + simpleInstruction("OP_POP_INST", offset);
 		case OP_PUSH_INST:
 			return simpleInstruction("OP_PUSH_INST", offset);
+		case OP_INIT_INST:
+			return simpleInstruction("OP_INIT_INST", offset);
 		case OP_DIVIDE:
 			return simpleInstruction("OP_DIVIDE", offset);
 		case OP_RETURN:
@@ -105,6 +109,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return simpleInstruction("OP_POP", offset);
 		case OP_CALL:
 			return paramInstruction("OP_CALL", chunk, offset);
+		case OP_CLOSURE:
+			return closureInstruction(chunk, offset);
 		case OP_FRAME_INDEX:
 			return simpleInstruction("OP_FRAME_INDEX", offset);
 		case OP_DEREF:
@@ -119,16 +125,6 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 	}
 }
 
-static int simpleInstruction(const char* name, int offset){	
-	print(O_DEBUG, "%s\n", name);
-	return offset + 1;
-}
-
-static int paramInstruction(const char* name, Chunk* chunk, int offset){
-	print(O_DEBUG, "%s(%d)\n", name, chunk->code[offset + 1]);
-	return offset + 2;
-}
-
 static uint32_t readEmbeddedInteger(Chunk* chunk, int numBytes, int offset){
 	uint8_t bytes[numBytes];
 	uint32_t valIndex = 0;
@@ -138,6 +134,32 @@ static uint32_t readEmbeddedInteger(Chunk* chunk, int numBytes, int offset){
 		valIndex += append;
 	}
 	return valIndex;
+}
+
+static int closureInstruction(Chunk* chunk, int offset){
+	uint8_t numBytes = chunk->code[offset + 1];
+	uint32_t constant = readEmbeddedInteger(chunk, numBytes, offset);
+	offset += numBytes + 2;
+
+	print(O_DEBUG, "%-16s %4d ", "OP_CLOSURE", constant);
+	printValue(O_DEBUG, chunk->constants->values[constant]);
+	ObjChunk* chunkObj = (ObjChunk*) AS_OBJ(chunk->constants->values[constant]);
+	for (int i = 0; i< chunkObj->upvalueCount; ++i){
+		int isLocal = chunk->code[offset++];
+		int index = chunk->code[offset++];
+		print(O_DEBUG, "%04d	|				%s %d\n", offset - 2, isLocal ? "local" : "upvalue", index);
+	}	
+	return offset;
+}
+
+static int simpleInstruction(const char* name, int offset){	
+	print(O_DEBUG, "%s\n", name);
+	return offset + 1;
+}
+
+static int paramInstruction(const char* name, Chunk* chunk, int offset){
+	print(O_DEBUG, "%s(%d)\n", name, chunk->code[offset + 1]);
+	return offset + 2;
 }
 
 static int jumpInstruction(const char* name, Chunk* chunk, int offset){

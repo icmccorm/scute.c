@@ -6,6 +6,7 @@
 #include "hashmap.h"
 #include "vm.h"
 #include "package.h"
+#include "obj_def.h"
 
 typedef enum{
 	PC_NONE,
@@ -47,7 +48,8 @@ typedef struct {
     int manipTargetLength;
 
 } Parser;
-
+ 
+extern Parser parser;
 
 typedef enum {
     VAR,
@@ -61,11 +63,17 @@ typedef struct{
     int depth;
 } Local;
 
-extern Parser parser;
+typedef struct{
+    bool isLocal;
+    int index;
+} Upvalue;
 
- struct sCompiler{
+struct sCompiler{
     Local* locals;
     int localCount;
+
+    Upvalue* upvalues;
+    int upvalueCapacity;
 
     int scopeDepth;
     int scopeCapacity;
@@ -75,7 +83,9 @@ extern Parser parser;
     CompilePackage* result;
     TKType instanceType;
     struct sCompiler* super;
+
     ObjChunk* compilingChunk;
+    ObjClosure* compilingClosure;
 	HashMap* classes;
     bool returned;
 
@@ -96,6 +106,6 @@ typedef struct{
 uint32_t addLocal(Compiler* compiler, TK idName);
 uint32_t addInstanceLocal(Compiler* compiler);
 uint32_t addCounterLocal(Compiler* compiler);
-
+uint32_t addUpvalue(Compiler* compiler, int index, bool isLocal);
 void freeCompiler(Compiler* compiler);
 #endif

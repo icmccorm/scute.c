@@ -63,6 +63,10 @@ void freeObject(Obj* obj){
 			freeValueArray(arrayObj->array);
 			FREE(ObjArray, arrayObj);
 			break;
+		case(OBJ_CLOSURE): ;
+			ObjClosure* closeObj = (ObjClosure*) obj;
+			FREE(ObjClosure, closeObj);
+			break;
 		default:
 			print(O_OUT, "Object type not found.");
 			break;
@@ -137,10 +141,17 @@ ObjChunk* allocateChunkObject(ObjString* funcName){
 	initChunk(chunkObj->chunk);
 
 	chunkObj->numParameters = 0;
+	chunkObj->upvalueCount = 0;
 	chunkObj->funcName = funcName;
 	chunkObj->chunkType = CK_UNDEF;
 	chunkObj->superChunk = NULL;
 	return chunkObj;
+}
+
+ObjClosure* allocateClosure(ObjChunk* innerChunk){
+	ObjClosure* closeObj = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+	closeObj->chunkObj = innerChunk;
+	return closeObj;
 }
 
 ObjString* tokenString(char* chars, int length){

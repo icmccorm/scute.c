@@ -15,6 +15,7 @@ ObjNative* allocateNative(void* func);
 ObjArray* allocateArray();
 ObjArray* allocateArrayWithCapacity(int capacity);
 ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
+ObjClosure* allocateClosure(ObjChunk* innerChunk);
 
 bool isObjectType(Value value, OBJType type);
 ObjString* tokenString(char * start, int length);
@@ -29,6 +30,7 @@ void addSegment(ObjShape* shape, ObjShape* segment);
 #define IS_CHUNK(value) (isObjectType(value, OBJ_CHUNK))
 #define IS_COLOR(value) (isObjectType(value, OBJ_COLOR))
 #define IS_ARRAY(value) (isObjectType(value, OBJ_ARRAY))
+#define IS_CLOSURE(value) (isObjectType(value, OBJ_CLOSURE))
 
 #define AS_STRING(value) ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString*)AS_OBJ(value))->chars)
@@ -37,6 +39,7 @@ void addSegment(ObjShape* shape, ObjShape* segment);
 #define AS_NATIVE(value) ((ObjNative*)AS_OBJ(value))
 #define AS_COLOR(value) ((ObjColor*)AS_OBJ(value))
 #define AS_ARRAY(value) ((ObjArray*)AS_OBJ(value))
+#define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
 
 #define AS_SHAPE(value) ((ObjShape*) AS_INST(value))
 

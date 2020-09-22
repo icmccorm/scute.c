@@ -53,8 +53,8 @@ typedef enum {
 	OP_GET_GLOBAL,
 	OP_DEF_LOCAL,
 	OP_GET_LOCAL,
-	OP_DEF_SCOPE,
-	OP_GET_SCOPE,
+	OP_GET_UPVALUE,
+	OP_DEF_UPVALUE,
 
 	OP_PUSH_STACKFRAME,
 	OP_POP_STACKFRAME,
@@ -77,6 +77,8 @@ typedef enum {
 	OP_POP_INST,
 	OP_LOAD_INST,
 	OP_DEF_INST,
+
+	OP_CLOSURE,
 } OpCode;
 
 void initChunk(Chunk* chunk);
@@ -85,9 +87,9 @@ void freeChunk(Chunk* chunk);
 
 int getLine(Chunk* chunk, uint32_t opIndex);
 
-Value* writeConstant(Chunk* chunk, Value value, uint32_t line);
+uint32_t writeConstant(Chunk* chunk, Value value, uint32_t line);
 void writeOperatorBundle(Chunk* chunk, OpCode op, uint64_t value, uint32_t line);
-uint64_t writeValue(Chunk* chunk, Value value, uint32_t line);
+uint32_t writeValue(Chunk* chunk, Value value, uint32_t line);
 int writeVariableData(Chunk* chunk, uint64_t value);
 
 #endif
