@@ -121,17 +121,6 @@ static void emitReturn(){
 	}
 }
 
-static Compiler* exitCompilationScope(){
-	Compiler* toFree = currentCompiler();
-	Compiler* superComp = currentCompiler()->super;
-	for(int i = 0; i<currentChunkObject()->numParameters; ++i){
-		emitByte(OP_POP);
-	}
-	emitReturn();
-	freeCompiler(toFree);
-	return superComp;
-}
-
 static void enterScope(){
 	++currentCompiler()->scopeDepth;
 }
@@ -296,6 +285,25 @@ static uint32_t getStringObjectIndex(TK* token){
 static uint32_t getObjectIndex(Obj* obj){
 	if(obj == NULL) return -1;
 	return writeValue(currentChunk(), OBJ_VAL(obj), parser.previous.line);
+}
+
+static Compiler* exitCompilationScope(){
+	Compiler* toFree = currentCompiler();
+	Compiler* superComp = currentCompiler()->super;
+	for(int i = 0; i<currentChunkObject()->numParameters; ++i){
+		emitByte(OP_POP);
+	}
+	emitReturn();
+	if(superComp){
+		uint32_t scopeIndex = writeValue(superComp->compilingChunk->chunk, OBJ_VAL(toFree->compilingChunk), parser.previous.line);
+		writeOperatorBundle(superComp->compilingChunk->chunk, OP_CLOSURE, scopeIndex, parser.current.line);
+		for (int i = 0; i < toFree->compilingChunk->upvalueCount; i++) {
+			writeChunk(superComp->compilingChunk->chunk, toFree->upvalues[i].isLocal ? 1 : 0, parser.current.line);
+			writeVariableData(superComp->compilingChunk->chunk, toFree->upvalues[i].index);
+		}
+	}
+	freeCompiler(toFree);
+	return superComp;
 }
 
 static int32_t resolveLocal(Compiler* comp, TK*id){
@@ -848,15 +856,8 @@ static void funcStatement(){
 			endLine();
 			indentedBlock();
 
-			Compiler *subCompiler = compiler;
 			compiler = exitCompilationScope();
 
-			uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
-			emitBundle(OP_CLOSURE, scopeIndex);
-			for (int i = 0; i < newChunk->upvalueCount; i++) {
-    			emitByte(subCompiler->upvalues[i].isLocal ? 1 : 0);
-   				emitByte(subCompiler->upvalues[i].index);
-			}
 			if(currentCompiler()->scopeDepth > 0){	
 				emitBundle(OP_DEF_LOCAL, addLocal(currentCompiler(), funcIDToken));
 			}else{
@@ -901,10 +902,7 @@ static void defStatement() {
 	if(newChunk->chunkType == CK_CONSTR) {
 		add(currentCompiler()->classes, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
 	}
-
-	uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
-	emitBundle(OP_CLOSURE, scopeIndex);
-
+	
 	if(currentCompiler()->scopeDepth > 0){	
 		emitBundle(OP_DEF_LOCAL, resolveLocal(currentCompiler(), &idToken));
 	}else{

@@ -91,6 +91,10 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return embeddedValueInstruction("OP_DEF_GLOBAL", chunk, offset);
 		case OP_GET_GLOBAL:
 			return embeddedValueInstruction("OP_GET_GLOBAL", chunk, offset);
+		case OP_GET_UPVALUE:
+			return embeddedValueInstruction("OP_GET_UPVALUE", chunk, offset);
+		case OP_DEF_UPVALUE:
+			return embeddedValueInstruction("OP_DEF_UPVALUE", chunk, offset);
 		case OP_BUILD_ARRAY:
 			return embeddedInstruction("OP_BUILD_ARRAY", chunk, offset);
 		case OP_DEF_LOCAL:
@@ -148,7 +152,12 @@ static int closureInstruction(Chunk* chunk, int offset){
 	ObjChunk* chunkObj = (ObjChunk*) AS_OBJ(chunk->constants->values[constant]);
 	for (int i = 0; i< chunkObj->upvalueCount; ++i){
 		int isLocal = chunk->code[offset++];
-		int index = chunk->code[offset++];
+
+		uint8_t numBytes = chunk->code[offset];
+		int index = readEmbeddedInteger(chunk, numBytes, offset);
+		offset += numBytes + 1;
+
+		//int index = chunk->code[offset++];
 		print(O_DEBUG, "%04d	|				%s %d\n", offset - 2, isLocal ? "local" : "upvalue", index);
 	}	
 	return offset;

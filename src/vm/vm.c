@@ -305,7 +305,7 @@ static InterpretResult run() {
 				StackFrame* frame = currentStackFrame();
 				for(int i = 0; i<close->upvalueCount; ++i){
 					uint8_t isLocal = READ_BYTE();
-					uint8_t index = READ_BYTE();
+					uint8_t index = READ_INT();
 					if(isLocal){
 						close->upvalues[i] = captureUpvalue(frame->stackOffset + index);
 					}else{

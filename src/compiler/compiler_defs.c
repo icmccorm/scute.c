@@ -62,5 +62,6 @@ uint32_t addCounterLocal(Compiler* compiler){
 void freeCompiler(Compiler* compiler){
 	freeMap(compiler->classes);
 	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);
+	FREE_ARRAY(Upvalue, compiler->upvalues, compiler->upvalueCapacity);
 	FREE(Compiler, compiler);
 }
