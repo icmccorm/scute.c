@@ -41,6 +41,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
+		case OP_CLOSE_UPVALUE:
+			return simpleInstruction("OP_CLOSE_UPVALUE", offset);
 		case OP_POP_INST:
 			return 1 + simpleInstruction("OP_POP_INST", offset);
 		case OP_PUSH_INST:

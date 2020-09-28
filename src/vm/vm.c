@@ -40,6 +40,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.shapeStack = NULL;
 	vm.ip = NULL;	
 
+	vm.openUpvalues = NULL;
 	vm.instanceCount = 0;
 
 	resetStack();
@@ -188,6 +189,43 @@ void transferIndex(Value* a, Value* b, Value* result){
 	#undef TRACED
 }
 
+static ObjUpvalue* captureUpvalue(Value* local){
+	ObjUpvalue* prevUpvalue = NULL;
+	ObjUpvalue* upvalue = vm.openUpvalues;
+
+	while(upvalue != NULL && upvalue->location > local){
+		prevUpvalue = upvalue;
+		upvalue = upvalue->next;
+	}
+
+	if(upvalue != NULL && upvalue->location == local){
+		return upvalue;
+	}else{
+		ObjUpvalue* createdUpvalue = allocateUpvalue(local);
+		createdUpvalue->next = upvalue;
+
+		if(prevUpvalue != NULL){
+			prevUpvalue->next = createdUpvalue;
+		}else{
+			vm.openUpvalues = createdUpvalue;
+		}
+
+		return createdUpvalue;
+	}	
+}
+
+void closeUpvalues(Value* stackTop){
+	while(vm.openUpvalues != NULL &&
+		  vm.openUpvalues->location >= stackTop){
+		
+		ObjUpvalue* upvalue = vm.openUpvalues;
+		upvalue->closed = *upvalue->location;
+		upvalue->location = &upvalue->closed;
+		vm.openUpvalues = upvalue->next;
+	}
+}
+
+
 #define READ_BYTE() (*vm.ip++)
 static uint32_t readInteger() {
 	uint8_t numBytes = READ_BYTE();
@@ -256,10 +294,34 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(readByte()){
+			case OP_CLOSE_UPVALUE:{
+				closeUpvalues(vm.stackTop - 1);
+				pop();
+			} break;
 			case OP_CLOSURE:{
 				ObjChunk* chunk = AS_CHUNK(READ_CONSTANT());
 				ObjClosure* close = allocateClosure(chunk);
 				push(OBJ_VAL(close));
+				StackFrame* frame = currentStackFrame();
+				for(int i = 0; i<close->upvalueCount; ++i){
+					uint8_t isLocal = READ_BYTE();
+					uint8_t index = READ_BYTE();
+					if(isLocal){
+						close->upvalues[i] = captureUpvalue(frame->stackOffset + index);
+					}else{
+						close->upvalues[i] = currentStackFrame()->closeObject->upvalues[index];
+					}
+				}
+			} break;
+			case OP_GET_UPVALUE: {
+				uint32_t stackIndex = readInteger();
+				StackFrame* frame = currentStackFrame();
+				push(*(frame->closeObject->upvalues[stackIndex]->location));
+			} break;
+			case OP_DEF_UPVALUE: {
+				uint32_t stackIndex = readInteger();
+				StackFrame* frame = currentStackFrame();
+				*frame->closeObject->upvalues[stackIndex]->location = peek(0);
 			} break;
 			case OP_INIT_INST:{
 				pushInstance(allocateInstance(NULL));
@@ -322,6 +384,7 @@ static InterpretResult run() {
 				vm.ip += jumpDistance;
 				} break;
 			case OP_RETURN: ;
+				closeUpvalues(currentStackFrame()->stackOffset);
 				uint8_t* returnAddress = popStackFrame();
 				if(returnAddress){
 					vm.ip = returnAddress;

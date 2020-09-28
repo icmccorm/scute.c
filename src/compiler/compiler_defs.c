@@ -46,6 +46,7 @@ static uint32_t addDummyLocal(Compiler* compiler, LocalType type){
     Local* target = &(compiler->locals[compiler->localCount]);
 	target->type = type;
     target->depth = compiler->scopeDepth + 1;
+	target->isCaptured = false;
     ++compiler->localCount;	
 	return compiler->localCount-1;
 }

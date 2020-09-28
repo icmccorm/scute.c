@@ -79,6 +79,7 @@ typedef enum {
 	OP_DEF_INST,
 
 	OP_CLOSURE,
+	OP_CLOSE_UPVALUE,
 } OpCode;
 
 void initChunk(Chunk* chunk);

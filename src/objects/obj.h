@@ -16,6 +16,7 @@ ObjArray* allocateArray();
 ObjArray* allocateArrayWithCapacity(int capacity);
 ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
 ObjClosure* allocateClosure(ObjChunk* innerChunk);
+ObjUpvalue* allocateUpvalue(Value* slot);
 
 bool isObjectType(Value value, OBJType type);
 ObjString* tokenString(char * start, int length);

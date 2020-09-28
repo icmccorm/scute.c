@@ -41,6 +41,8 @@ typedef struct {
 
 	Obj* runtimeObjects;
 	
+	ObjUpvalue* openUpvalues;
+
 	int frameIndex;
 } VM;
 

@@ -25,6 +25,7 @@ typedef enum {
 	OBJ_COLOR,
 	OBJ_ARRAY,
 	OBJ_CLOSURE,
+	OBJ_UPVALUE,
 } OBJType;
 
 typedef enum {
@@ -68,9 +69,19 @@ struct sObjChunk{
 	int upvalueCount;
 };
 
+
+struct sObjUpvalue {
+	Obj object;
+	Value* location;
+	struct sObjUpvalue* next;
+	Value closed;
+};
+
 struct sObjClosure{
 	Obj object;
 	ObjChunk* chunkObj;
+	struct sObjUpvalue** upvalues;
+	int upvalueCount;
 };
 
 struct sObjNative {

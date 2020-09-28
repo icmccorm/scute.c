@@ -16,6 +16,7 @@ typedef struct sObjColor ObjColor;
 typedef struct sObjArray ObjArray;
 typedef struct sObjShape ObjShape;
 typedef struct sObjClosure ObjClosure;
+typedef struct sObjUpvalue ObjUpvalue;
 
 typedef enum {
 	VL_NULL,

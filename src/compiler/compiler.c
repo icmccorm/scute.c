@@ -559,9 +559,12 @@ static void indentedBlock() {
 	}
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
-			&& currentComp->locals[currentComp->localCount-1].depth 
-				== currentComp->scopeDepth){
-		emitByte(OP_POP);
+			&& currentComp->locals[currentComp->localCount-1].depth == currentComp->scopeDepth){
+		if(currentComp->locals[currentComp->localCount-1].isCaptured){
+			emitByte(OP_CLOSE_UPVALUE);
+		}else{
+			emitByte(OP_POP);
+		}
 		--currentComp->localCount;
 	}
 }
@@ -830,7 +833,6 @@ static uint8_t emitParameters(){
 }
 
 static void funcStatement(){
-	Compiler* currentComp = currentCompiler();
 	consume(TK_ID, "Expected an identifier.");
 	if(!parser.hadError){
 		TK funcIDToken = parser.previous;
@@ -845,16 +847,16 @@ static void funcStatement(){
 			newChunk->numParameters = paramCount;
 			endLine();
 			indentedBlock();
-			
+
+			Compiler *subCompiler = compiler;
 			compiler = exitCompilationScope();
-			
+
 			uint32_t scopeIndex = getObjectIndex((Obj*) newChunk);
 			emitBundle(OP_CLOSURE, scopeIndex);
 			for (int i = 0; i < newChunk->upvalueCount; i++) {
-    			emitByte(currentComp->upvalues[i].isLocal ? 1 : 0);
-   				emitByte(currentComp->upvalues[i].index);
-  			}
-
+    			emitByte(subCompiler->upvalues[i].isLocal ? 1 : 0);
+   				emitByte(subCompiler->upvalues[i].index);
+			}
 			if(currentCompiler()->scopeDepth > 0){	
 				emitBundle(OP_DEF_LOCAL, addLocal(currentCompiler(), funcIDToken));
 			}else{
@@ -1231,6 +1233,7 @@ static int resolveUpvalue(Compiler* compiler, TK* id) {
 
 	int local = resolveLocal(compiler->super, id);
 	if(local >= 0){
+		compiler->super->locals[local].isCaptured = true;
 		return addUpvalue(compiler, local, true);
 	}
 

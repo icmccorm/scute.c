@@ -61,6 +61,7 @@ typedef struct{
     LocalType type;
     TK id;
     int depth;
+    bool isCaptured; 
 } Local;
 
 typedef struct{
