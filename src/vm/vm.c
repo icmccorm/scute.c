@@ -556,14 +556,13 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	#ifndef EM_MAIN
 		printMem("before runtime");
 	#endif
-	
 	result = run();
 	
 	#ifndef EM_MAIN
 		printMem("after runtime");
 	#endif
 	
-	renderFrame(code);
+	//renderFrame(code);
 	freeVM();
 
 	#ifndef EM_MAIN

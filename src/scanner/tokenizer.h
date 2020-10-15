@@ -96,6 +96,7 @@ typedef enum {
 	TK_AS,
 	TK_VIA,
 	TK_ANIM,
+	TK_AT,
 } TKType;
 
 typedef enum {

@@ -2,7 +2,10 @@ mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
 	currentTurtle: null,
-	
+	intervals: {},
+	currentLower: 0,
+	currentUpper: 999,
+
 	valuePointerOffsets: {
 		type: 0,
 		union: 0,
@@ -87,6 +90,15 @@ mergeInto(LibraryManager.library, {
 	},
 	em_printError: function(ptr){
 		Module["_printFunction"]({type: 4, payload: Module.UTF8ToString(ptr)});
+	},
+
+	em_setInterval: function(lower, upper){
+		_currentLower = getValue(lower, 'i32');
+		_currentUpper = getValue(upper, 'i32');
+	},
+
+	em_addThunkToInterval: function(thunkPointer){
+		_intervals[thunkPointer] = [_currentlower, _currentUpper];
 	},
 
 	em_newRect: function(idPtr){
@@ -431,6 +443,16 @@ mergeInto(LibraryManager.library, {
 	em_addColorStyle__deps: [
 		'lib_getValue',
 		'currentShape'
-	] 
-
+	],
+	  
+	em_setInterval__deps: [
+		'currentLower',
+		'currentUpper'
+	],
+	
+	em_addThunkToInterval__deps: [
+		'intervals',
+		'currentLower',
+		'currentUpper'
+	],
 });

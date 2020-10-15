@@ -43,6 +43,9 @@ $(BUILD)/%.c.o : %.c
 	@$(CC) -g -D DEBUG $(INC_TEST_FLAGS) $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
 .PHONY : clean
+ 
+scanner:
+	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
 
 /scanner/parsemap.c /scanner/parsemap.h /scanner/tokenizer.c /scanner/tokenizer.h: 
 	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 

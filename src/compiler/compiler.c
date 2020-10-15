@@ -30,7 +30,8 @@ CompilePackage* result = NULL;
 	extern void em_endLine(int* newlineIndex);
 	extern void em_addUnlinkedValue(int* insertionIndex, Value* value);
 	extern void em_setMaxFrameIndex(uint32_t maxFrameIndex);
-
+	extern void em_addThunkToInterval(unsigned long thunkPointer);
+	extern void em_setInterval(int lower, int upper);
 	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
 		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
@@ -76,10 +77,12 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 		newComp->scopeDepth = comp->scopeDepth + 1;
 		newComp->animUpperBound = comp->animUpperBound;
 		newComp->animLowerBound = comp->animLowerBound;
+		newComp->animated = comp->animated;
 	}else{
 		newComp->scopeDepth = 0;
 		newComp->animUpperBound = 0;
 		newComp->animLowerBound = 0;
+		newComp->animated = false;
 	}
 
 	newComp->scopeCapacity = 0;
@@ -192,7 +195,6 @@ static Value* emitConstant(Value value){
 	return &(currentChunk()->constants->values[writeConstant(currentChunk(), value, parser.previous.line)]);
 	
 }
-
 
 static void errorAt(TK* token, char* message){
 	if(parser.panicMode) return;
@@ -341,6 +343,7 @@ static bool isInitialized(TK* id){
 }
 
 static void expression(bool emitTrace);
+static void thunkExpression(bool emitTrace);
 static void indentedBlock();
 static void printStatement();
 static void expressionStatement();
@@ -479,6 +482,20 @@ static void synchronize() {
 	if(parser.previous.type == TK_NEWLINE) parser.lastNewline = parser.previous.start;
 }
 
+static void thunkExpression(bool emitTrace){		
+	ObjChunk* newChunk = allocateChunkObject(NULL);
+	newChunk->chunkType = CK_FUNC;
+	compiler = enterCompilationScope(newChunk);
+	expression(emitTrace);
+	compiler = exitCompilationScope();
+
+	if(currentCompiler()->animated){
+		#ifdef EM_MAIN
+			em_addThunkToInterval((unsigned long) newChunk);
+		#endif
+	}
+	emitConstant(OBJ_VAL(newChunk));
+}
 
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
@@ -611,52 +628,74 @@ static void animStatement(){
 		TK animToken = parser.previous;			
 		int lowerBound = 0;
 		int upperBound = 999;
-
-		if(parser.current.type == TK_TO){
-			advance();
-			consume(TK_INTEGER, "Expected an upper bound.");	
-			upperBound = tokenToNumber(parser.previous);
-			if(upperBound < 0) errorAt(&parser.previous, "Upper bounds must be non-negative.");
-		}else if(parser.current.type == TK_FROM){
-			advance();
-			consume(TK_INTEGER, "Expected a lower bound.");
-			lowerBound = tokenToNumber(parser.previous);
-			if(lowerBound < 0) errorAt(&parser.previous, "Lower bounds must be non-negative.");
-			if(parser.current.type == TK_TO){
-				advance();
-				consume(TK_INTEGER, "Expected an upper bound");
-				upperBound = tokenToNumber(parser.previous);
-				if(upperBound < 0) errorAt(&parser.previous, "Upper bounds must be non-negative.");
-			}
-		}else{
-			errorAtCurrent("Expected 'to' or 'from'.");
-			return;
-		}
-		if(upperBound > 0) currentCompiler()->animUpperBound = upperBound;
-		if(lowerBound > 0) currentCompiler()->animLowerBound = lowerBound;
-
-		addLocal(currentCompiler(), animToken);
-
-
-		int jumpOffset = emitLimit(lowerBound, upperBound);	
-
-
-		emitByte(OP_FRAME_INDEX);
-		emitConstant(NUM_VAL(lowerBound));
-		emitByte(OP_SUBTRACT);
-		emitConstant(NUM_VAL(upperBound - lowerBound));
-		emitByte(OP_DIVIDE);
-		emitBundle(OP_DEF_LOCAL, latestLocal());
-
 		endLine();
-		enterScope();
-		indentedBlock();
-		exitScope();
+		int currentScopeDepth = currentCompiler()->scopeDepth;
+		while(parser.current.type != TK_EOF 
+				&& getIndentation() >= currentScopeDepth
+			){
+			int lowerBound = 0;
+			int upperBound = 999;
+			//there are four possible cases for handling animation: to x, from y, to x from y, from y to x, and at x
+			advance();
+			switch(parser.previous.type){
+				case TK_AT: {
+					if(parser.current.type != TK_INTEGER) {
+						print(O_ERR, "Expected an integer.");
+					}else{
+						upperBound = tokenToNumber(parser.current);
+						advance();
+					}
+				} break;
+				case TK_FROM:{
+					if(parser.current.type != TK_INTEGER){
+						print(O_ERR, "Expected an integer lower bound.");
+					}else{
+						lowerBound = tokenToNumber(parser.current);
+						advance();
+						if(parser.current.type == TK_TO){
+							advance();
+							if(parser.current.type != TK_INTEGER){
+								print(O_ERR, "Expected an integer upper bound.");
+							}else{
+								upperBound = tokenToNumber(parser.current);
+								advance();
+							}
+						}
+					}
+				} break;
+				case TK_TO:{
+					if(parser.current.type != TK_INTEGER){
+						print(O_ERR, "Expected an integer upper bound.");
+					}else{
+						upperBound = tokenToNumber(parser.current);
+						advance();
+						if(parser.current.type == TK_FROM){
+							advance();
+							if(parser.current.type != TK_INTEGER){
+								print(O_ERR, "Expected an integer lower bound.");
+							}else{
+								lowerBound = tokenToNumber(parser.current);
+								advance();
+							}
+						}
+					}					
+				}break;
+				default:{
+					print(O_ERR, "Expected a to, from, or at statement.");
+				} break;
+			}
+			endLine();
 
-		emitByte(OP_POP);
-		--currentCompiler()->localCount;
+			#ifdef EM_MAIN
+			em_setInterval(lowerBound, upperBound);
+			#endif
 
-		patchJump(jumpOffset);
+			currentCompiler()->animated = true;
+			enterScope();	
+			indentedBlock();
+			exitScope();
+			currentCompiler()->animated = false;
+		}
 	}
 }
 
@@ -1203,7 +1242,11 @@ void deref(bool canAssign){
 			TK idToken = parser.previous;
 			
 			if(canAssign && match(TK_ASSIGN)){
-				expression(true);
+				if(currentCompiler()->animated){
+					thunkExpression(true);
+				}else{
+					expression(true);
+				}
 				emitBundle(OP_DEF_INST, getStringObjectIndex(&idToken));
 				emitByte(0);
 			}else{

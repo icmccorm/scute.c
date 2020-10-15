@@ -127,6 +127,7 @@ void drawPoints(ObjShape* shape){
 
 		switch(segment->shapeType){
 			case TK_JUMP: {
+
 				ObjArray* vector = AS_ARRAY(getValue(map, string("position")));
 				points[0] = AS_NUM(getValueArray(vector->array, 0));
 				points[1] = AS_NUM(getValueArray(vector->array, 1));
@@ -226,7 +227,7 @@ void drawPoints(ObjShape* shape){
 
 				#ifdef EM_MAIN
 					em_addMirror(originArray, axisType == CS_X ||
-					 axisType == CS_XY, axisType == CS_Y || axisType == CS_XY);
+					axisType == CS_XY, axisType == CS_Y || axisType == CS_XY);
 				#else
 					print(O_OUT, "Mirror ");
 					printValue(O_OUT, origin);

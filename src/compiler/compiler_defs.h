@@ -80,6 +80,7 @@ struct sCompiler{
     int scopeCapacity;
 
     bool enclosed;
+    bool animated;
 
     CompilePackage* result;
     TKType instanceType;
