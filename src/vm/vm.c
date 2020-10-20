@@ -438,6 +438,16 @@ static InterpretResult run() {
 					return INTERPRET_RUNTIME_ERROR;
 				}
 			} break;
+			case OP_ANIM:{
+				ObjInstance* inst = currentInstance();
+				ObjAnim* anim = (ObjAnim*) AS_OBJ(pop());
+				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
+					ObjShape* shape = (ObjShape*) inst;
+					shape->animation = anim;
+				}else{	
+					runtimeError("Only instances of shapes and segments can be animated.");
+				}
+			} break;
 			case OP_JMP_FALSE: ;
 				signed short offset = READ_SHORT();
 				Value boolVal = pop();
@@ -561,7 +571,6 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	#ifndef EM_MAIN
 		printMem("after runtime");
 	#endif
-	
 	//renderFrame(code);
 	freeVM();
 

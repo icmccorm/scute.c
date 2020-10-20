@@ -11,12 +11,16 @@ struct sIntermediate{
 
 typedef struct {
 	InterpretResult result;
+	
 	Obj* objects;
 	ObjChunk* compiled;
+	
 	int lowerLimit;
 	int upperLimit;
+
 	HashMap* strings;
 	HashMap* globals;
+
 } CompilePackage;
 
 void freeCompilationPackage(CompilePackage* code);

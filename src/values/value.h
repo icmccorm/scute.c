@@ -17,6 +17,9 @@ typedef struct sObjArray ObjArray;
 typedef struct sObjShape ObjShape;
 typedef struct sObjClosure ObjClosure;
 typedef struct sObjUpvalue ObjUpvalue;
+typedef struct sObjAnim ObjAnim;
+typedef struct sObjTimeline ObjTimeline;
+typedef struct sTimestep Timestep;
 
 typedef enum {
 	VL_NULL,

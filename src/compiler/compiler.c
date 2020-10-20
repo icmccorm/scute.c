@@ -637,8 +637,9 @@ static void animStatement(){
 			int upperBound = 999;
 			//there are four possible cases for handling animation: to x, from y, to x from y, from y to x, and at x
 			advance();
-			switch(parser.previous.type){
+			switch(parser.current.type){
 				case TK_AT: {
+					advance();
 					if(parser.current.type != TK_INTEGER) {
 						print(O_ERR, "Expected an integer.");
 					}else{
@@ -647,6 +648,7 @@ static void animStatement(){
 					}
 				} break;
 				case TK_FROM:{
+					advance();
 					if(parser.current.type != TK_INTEGER){
 						print(O_ERR, "Expected an integer lower bound.");
 					}else{
@@ -664,6 +666,7 @@ static void animStatement(){
 					}
 				} break;
 				case TK_TO:{
+					advance();
 					if(parser.current.type != TK_INTEGER){
 						print(O_ERR, "Expected an integer upper bound.");
 					}else{

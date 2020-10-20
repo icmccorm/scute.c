@@ -72,6 +72,16 @@ void freeObject(Obj* obj){
 			ObjUpvalue* upval = (ObjUpvalue*) obj;
 			FREE(ObjUpvalue, upval);
 			break;
+		case(OBJ_TIMELINE): ;
+			ObjTimeline* timeline = (ObjTimeline*) obj;
+			FREE_ARRAY(Timestep, timeline->steps, timeline->stepCapacity);
+			FREE(ObjTimeline, timeline);
+			break;
+		case (OBJ_ANIM): ;
+			ObjAnim* anim = (ObjAnim*) obj;
+			freeMap(anim->map);
+			FREE(ObjAnim, anim);
+			break;
 		default:
 			print(O_OUT, "Object type not found.");
 			break;
@@ -88,6 +98,7 @@ ObjShape* allocateShape(ObjInstance* super, TKType shapeType){
 	shape->numSegments = 0;
 	shape->shapeType = shapeType;
 	shape->segments = NULL;
+	shape->animation = NULL;
 
 	if(super != NULL){
 		HashEntry* current = super->map->first;
@@ -137,6 +148,43 @@ ObjInstance* allocateInstance(ObjInstance* super){
 		}
 	}
 	return close;
+}
+
+ObjAnim* allocateAnimation(){
+	ObjAnim* anim = ALLOCATE_OBJ(ObjAnim, OBJ_ANIM);
+	initMap(&anim->map);
+	return anim;
+}
+
+ObjTimeline* allocateTimeline(){
+	ObjTimeline* timeline = ALLOCATE_OBJ(ObjTimeline, OBJ_TIMELINE);
+	timeline->steps = NULL;
+	timeline->numSteps = 0;
+	timeline->stepCapacity = 0;
+	return timeline;
+}
+
+void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min){
+	if(timeline->numSteps + 1 > timeline->stepCapacity){
+        int oldCapacity = timeline->stepCapacity;
+		timeline->stepCapacity = GROW_CAPACITY(oldCapacity);
+		timeline->steps = GROW_ARRAY(timeline->steps, Timestep, oldCapacity, timeline->stepCapacity);
+    }
+	Timestep* step = &(timeline->steps[timeline->numSteps]);
+	step->min = min;
+	step->thunk = thunk;
+}
+
+void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min){
+	Value propertyEntry = getValue(anim->map, propName);
+	ObjTimeline* timeline = NULL;
+	if(!IS_NULL(propertyEntry)){
+		timeline = (ObjTimeline*) AS_OBJ(propertyEntry);
+	}else{
+		timeline = allocateTimeline();
+		add(anim->map, propName, OBJ_VAL(timeline));
+	}
+	addItemToTimeline(timeline, thunk, min);
 }
 
 ObjChunk* allocateChunkObject(ObjString* funcName){

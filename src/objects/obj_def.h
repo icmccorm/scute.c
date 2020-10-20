@@ -26,6 +26,8 @@ typedef enum {
 	OBJ_ARRAY,
 	OBJ_CLOSURE,
 	OBJ_UPVALUE,
+	OBJ_ANIM,
+	OBJ_TIMELINE,
 } OBJType;
 
 typedef enum {
@@ -94,8 +96,24 @@ struct sObjShape {
 	struct sObjShape* nextShape;
 	TKType shapeType;
 	struct sObjShape** segments;
+	struct sObjAnim* animation;
 	int numSegments;
 	int segmentCapacity;
+};
+
+struct sTimestep{
+	int min;
+	struct sObjClosure* thunk;	
+};
+
+struct sObjTimeline{
+	struct sTimestep* steps;
+	int numSteps;
+	int stepCapacity;
+};
+
+struct sObjAnim {
+	HashMap* map;
 };
 
 struct sObjShapeSegment {
