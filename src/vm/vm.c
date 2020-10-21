@@ -448,8 +448,6 @@ static InterpretResult run() {
 				uint16_t max = steps & 0xff;
 				uint16_t min = (steps >> 16) & 0xff;
 
-				Value test = executeThunk(close, 0);
-
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
 					animateProperty(anim, property, close, min, max);
 				}else{	
@@ -605,7 +603,7 @@ Value executeThunk(ObjClosure* thunk, int index){
 
 	InterpretResult thunkInterpretSuccess = run();
 
-	Value result = *vm.stackTop;
+	Value result = *vm.stack;
 
 	freeVM();
 	return result;
