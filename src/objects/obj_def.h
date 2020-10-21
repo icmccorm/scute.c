@@ -103,16 +103,19 @@ struct sObjShape {
 
 struct sTimestep{
 	int min;
+	int max;
 	struct sObjClosure* thunk;	
 };
 
 struct sObjTimeline{
+	Obj object;
 	struct sTimestep* steps;
 	int numSteps;
 	int stepCapacity;
 };
 
 struct sObjAnim {
+	Obj object;
 	HashMap* map;
 };
 

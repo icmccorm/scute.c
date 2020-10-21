@@ -36,14 +36,10 @@ typedef struct {
 
 	ObjInstance* instanceStack[INST_STACK_MAX];
 	int instanceCount;
-
-	HashMap* globals;
-
-	Obj* runtimeObjects;
-	
+	HashMap* globals;	
 	ObjUpvalue* openUpvalues;
-
 	int frameIndex;
+	CompilePackage* package;
 } VM;
 
 extern VM vm;

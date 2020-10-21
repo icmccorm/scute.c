@@ -78,11 +78,13 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 		newComp->animUpperBound = comp->animUpperBound;
 		newComp->animLowerBound = comp->animLowerBound;
 		newComp->animated = comp->animated;
+		newComp->compilingAnimation = comp->compilingAnimation;
 	}else{
 		newComp->scopeDepth = 0;
 		newComp->animUpperBound = 0;
 		newComp->animLowerBound = 0;
 		newComp->animated = false;
+		newComp->compilingAnimation = NULL;
 	}
 
 	newComp->scopeCapacity = 0;
@@ -165,7 +167,10 @@ static void emitTriple(uint8_t opCode, uint32_t val1, uint32_t val2){
 	writeChunk(currentChunk(), opCode, parser.previous.line);
 	writeVariableData(currentChunk(), val1);
 	writeVariableData(currentChunk(), val2);
+
 }
+
+
 
 static int emitLimit(int low, int high){
 	emitByte(OP_LIMIT);
@@ -343,7 +348,7 @@ static bool isInitialized(TK* id){
 }
 
 static void expression(bool emitTrace);
-static void thunkExpression(bool emitTrace);
+static ObjChunk* thunkExpression(bool emitTrace);
 static void indentedBlock();
 static void printStatement();
 static void expressionStatement();
@@ -482,19 +487,14 @@ static void synchronize() {
 	if(parser.previous.type == TK_NEWLINE) parser.lastNewline = parser.previous.start;
 }
 
-static void thunkExpression(bool emitTrace){		
+static ObjChunk* thunkExpression(bool emitTrace){		
 	ObjChunk* newChunk = allocateChunkObject(NULL);
-	newChunk->chunkType = CK_FUNC;
+
 	compiler = enterCompilationScope(newChunk);
 	expression(emitTrace);
 	compiler = exitCompilationScope();
 
-	if(currentCompiler()->animated){
-		#ifdef EM_MAIN
-			em_addThunkToInterval((unsigned long) newChunk);
-		#endif
-	}
-	emitConstant(OBJ_VAL(newChunk));
+	return newChunk;
 }
 
 static void expression(bool emitTrace) {
@@ -540,7 +540,7 @@ static void number(bool canAssign) {
 
 static double tokenToNumber(TK token){
 	if(token.type == TK_INTEGER || token.type == TK_REAL){
-		return strtod(parser.previous.start, NULL);
+		return strtod(token.start, NULL);
 	}else{
 		return 0;
 	}
@@ -622,14 +622,27 @@ static void internGlobal(TK* id){
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
 	
+
+static void emitAnimation(ObjAnim* anim, ObjString* property, uint16_t min, uint16_t max){
+	writeChunk(currentChunk(), OP_ANIM, parser.previous.line);
+	writeVariableData(currentChunk(), getObjectIndex((Obj*) property));
+	writeVariableData(currentChunk(), getObjectIndex((Obj*) anim));
+	uint32_t animationStep = (((uint16_t) currentCompiler()->animLowerBound) << 16) & ((uint16_t) currentCompiler()->animUpperBound);
+	writeVariableData(currentChunk(), animationStep);
+}
+
 static void animStatement(){
 	consume(TK_ID, "Expected an identifier.");
+	Compiler* rootCompiler = currentCompiler();
 	if(!parser.hadError){
 		TK animToken = parser.previous;			
-		int lowerBound = 0;
-		int upperBound = 999;
+		int prevLowerBound = rootCompiler->animLowerBound;
+		int prevUpperBound = rootCompiler->animUpperBound;
+
+		ObjAnim* anim = allocateAnimation();
+		rootCompiler->compilingAnimation = anim;
 		endLine();
-		int currentScopeDepth = currentCompiler()->scopeDepth;
+		int currentScopeDepth = rootCompiler->scopeDepth + 1;
 		while(parser.current.type != TK_EOF 
 				&& getIndentation() >= currentScopeDepth
 			){
@@ -643,7 +656,7 @@ static void animStatement(){
 					if(parser.current.type != TK_INTEGER) {
 						print(O_ERR, "Expected an integer.");
 					}else{
-						upperBound = tokenToNumber(parser.current);
+						rootCompiler->animUpperBound = tokenToNumber(parser.current);
 						advance();
 					}
 				} break;
@@ -652,14 +665,14 @@ static void animStatement(){
 					if(parser.current.type != TK_INTEGER){
 						print(O_ERR, "Expected an integer lower bound.");
 					}else{
-						lowerBound = tokenToNumber(parser.current);
+						rootCompiler->animLowerBound = tokenToNumber(parser.current);
 						advance();
 						if(parser.current.type == TK_TO){
 							advance();
 							if(parser.current.type != TK_INTEGER){
 								print(O_ERR, "Expected an integer upper bound.");
 							}else{
-								upperBound = tokenToNumber(parser.current);
+								rootCompiler->animUpperBound = tokenToNumber(parser.current);
 								advance();
 							}
 						}
@@ -670,35 +683,53 @@ static void animStatement(){
 					if(parser.current.type != TK_INTEGER){
 						print(O_ERR, "Expected an integer upper bound.");
 					}else{
-						upperBound = tokenToNumber(parser.current);
+						int rootNumber = tokenToNumber(parser.current);
+						rootCompiler->animUpperBound = rootNumber;
 						advance();
 						if(parser.current.type == TK_FROM){
 							advance();
 							if(parser.current.type != TK_INTEGER){
 								print(O_ERR, "Expected an integer lower bound.");
 							}else{
-								lowerBound = tokenToNumber(parser.current);
+								rootCompiler->animLowerBound = tokenToNumber(parser.current);
 								advance();
 							}
 						}
 					}					
 				}break;
 				default:{
-					print(O_ERR, "Expected a to, from, or at statement.");
+					print(O_ERR, "Expected a 'to', 'from', or 'at' statement.");
 				} break;
 			}
 			endLine();
-
-			#ifdef EM_MAIN
-			em_setInterval(lowerBound, upperBound);
-			#endif
-
-			currentCompiler()->animated = true;
-			enterScope();	
-			indentedBlock();
-			exitScope();
-			currentCompiler()->animated = false;
+			Compiler* comp = rootCompiler;
+			int innerScopeDepth = currentScopeDepth + 1;
+			while(parser.current.type != TK_EOF 
+				&& getIndentation() >= innerScopeDepth
+			){
+				advance();
+				switch(parser.current.type){
+					case TK_DEREF:{
+						advance();
+						consume(TK_ID, "Expected an identifier.");
+						TK idToken = parser.previous;
+						consume(TK_ASSIGN, "Expected an '='.");
+						ObjChunk* thunk = thunkExpression(false);
+						endLine();
+						ObjString* assignString = getTokenStringObject(&idToken);
+						emitAnimation(anim, assignString, rootCompiler->animLowerBound, rootCompiler->animUpperBound);
+					} break;
+					default:{
+						errorAtCurrent("Only instance variable definitions are allowed within timesteps.");
+						synchronize();
+					} break;
+				}
+			}
 		}
+
+		if(rootCompiler->animUpperBound == 0) errorAtCurrent("An animation's set of intervals must have a defined upper bound.");
+		rootCompiler->animLowerBound = prevLowerBound;
+		rootCompiler->animUpperBound = prevUpperBound;
 	}
 }
 

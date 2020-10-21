@@ -31,6 +31,6 @@ void freeObjects(Obj* list){
 void freeCompilationPackage(CompilePackage* code){
 	freeMap(code->strings);
 	freeMap(code->globals);
-	freeObjects(code->objects);
+	freeObjects(heap);
 	FREE(CompilePackage, code);
 }

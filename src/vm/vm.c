@@ -27,11 +27,13 @@ static void resetStack(){
 static bool pushStackFrame(ObjClosure* closure, ObjInstance* super, uint8_t numParams);
 static uint8_t* popStackFrame();
 void initGlobals(HashMap* map);
-
+Value executeThunk(ObjClosure* thunk, int index);
 
 void initVM(CompilePackage* package, int frameIndex) {
+	package->objects = heap;
+	heap = NULL;
+
 	vm.frameIndex = frameIndex;
-	vm.runtimeObjects = NULL;
 	vm.stackSize = 0;
 	vm.stackFrameCount = 0;
 
@@ -42,21 +44,19 @@ void initVM(CompilePackage* package, int frameIndex) {
 
 	vm.openUpvalues = NULL;
 	vm.instanceCount = 0;
-
+	vm.package = package;
 	resetStack();
 	initMap(&vm.globals);
 	initGlobals(vm.globals);
   	mergeMaps(package->globals, vm.globals);
-	
-
-	ObjClosure* close = allocateClosure(package->compiled);
-	pushStackFrame(close, NULL, 0);
 }
+
 void freeVM() {
 	freeMap(vm.globals);
 	FREE_ARRAY(ObjShape*, vm.shapeStack, vm.shapeCapacity);
-	freeObjects(vm.runtimeObjects);
+	freeObjects(heap);
 	vm.chunk = NULL;
+	heap = vm.package->objects;
 }
 
 void push(Value value) {
@@ -440,12 +440,20 @@ static InterpretResult run() {
 			} break;
 			case OP_ANIM:{
 				ObjInstance* inst = currentInstance();
-				ObjAnim* anim = (ObjAnim*) AS_OBJ(pop());
+				ObjString* property = (ObjString*) AS_OBJ(READ_CONSTANT());
+				ObjAnim* anim = (ObjAnim*) AS_OBJ(READ_CONSTANT());
+				ObjClosure* close = (ObjClosure*) AS_OBJ(pop());	
+				uint32_t steps = READ_INT();
+
+				uint16_t max = steps & 0xff;
+				uint16_t min = (steps >> 16) & 0xff;
+
+				Value test = executeThunk(close, 0);
+
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
-					ObjShape* shape = (ObjShape*) inst;
-					shape->animation = anim;
+					animateProperty(anim, property, close, min, max);
 				}else{	
-					runtimeError("Only instances of shapes and segments can be animated.");
+					runtimeError("Only instances of shapes and segments can have animated properties.");
 				}
 			} break;
 			case OP_JMP_FALSE: ;
@@ -563,6 +571,9 @@ CompilePackage* initCompilationPackage();
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
 	initVM(code, index);
+	ObjClosure* close = allocateClosure(code->compiled);
+	pushStackFrame(close, NULL, 0);
+
 	#ifndef EM_MAIN
 		printMem("before runtime");
 	#endif
@@ -582,15 +593,23 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 
 InterpretResult interpretCompiled(CompilePackage* code, int index){
 	InterpretResult result = code->result;
-
 	if(result != INTERPRET_COMPILE_ERROR) {
 		result = executeCompiled(code, index);
 	}
-
-
 	return result;
 }
 
+Value executeThunk(ObjClosure* thunk, int index){
+	initVM(currentResult(), index);
+	pushStackFrame(thunk, NULL, 0);
+
+	InterpretResult thunkInterpretSuccess = run();
+
+	Value result = *vm.stackTop;
+
+	freeVM();
+	return result;
+}
 void runCompiler(CompilePackage* package, char* source){	
 	bool compiled = compile(source, package);
 	#ifndef EM_MAIN

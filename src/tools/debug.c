@@ -4,9 +4,18 @@
 #include "value.h"
 #include "chunk.h"
 #include "output.h"
-#include "obj_def.h"
+#include "obj_def.h"  
 
 static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine);
+static int tripleInstruction(const char* name, Chunk* chunk, int offset);
+static int simpleInstruction(const char* name, int offset);
+static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset);
+static int embeddedInstruction(const char* name, Chunk* chunk, int offset);
+static int jumpInstruction(const char* name, Chunk* chunk, int offset);
+static int limitInstruction(const char* name, Chunk* chunk, int offset);
+static int scopeInstruction(const char* name, Chunk* chunk, int offset);
+static int paramInstruction(const char* name, Chunk* chunk, int offset);
+static int closureInstruction(Chunk* chunk, int offset);
 
 void printChunk(Chunk* chunk, const char* name) {
 	if(name != NULL) print(O_DEBUG, "== %s ==\n", name);
@@ -19,16 +28,6 @@ void printChunk(Chunk* chunk, const char* name) {
 	}
 	if(name != NULL) print(O_DEBUG, "======\n");
 }
-static int tripleInstruction(const char* name, Chunk* chunk, int offset);
-static int simpleInstruction(const char* name, int offset);
-static int embeddedValueInstruction(const char* name, Chunk* chunk, int offset);
-static int embeddedInstruction(const char* name, Chunk* chunk, int offset);
-static int jumpInstruction(const char* name, Chunk* chunk, int offset);
-static int limitInstruction(const char* name, Chunk* chunk, int offset);
-static int scopeInstruction(const char* name, Chunk* chunk, int offset);
-static int paramInstruction(const char* name, Chunk* chunk, int offset);
-static int closureInstruction(Chunk* chunk, int offset);
-
 
 static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine){
 	print(O_DEBUG, "%4d ", offset);
@@ -41,6 +40,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
+		case OP_ANIM:
+			return tripleInstruction("OP_ANIM", chunk, offset);
 		case OP_CLOSE_UPVALUE:
 			return simpleInstruction("OP_CLOSE_UPVALUE", offset);
 		case OP_POP_INST:
@@ -228,9 +229,12 @@ static int tripleInstruction(const char* name, Chunk* chunk, int offset){
 	uint32_t linkIndex = readEmbeddedInteger(chunk, numBytes, offset);
 	offset = offset + 1 + numSecondBytes;
 
+	uint8_t numThirdBytes = chunk->code[offset+1];
+	uint32_t stepIndex = readEmbeddedInteger(chunk, numBytes, offset);
+	offset = offset + 1 + numThirdBytes;
+
 	print(O_DEBUG, "%-16s %4d %4d ", name, valIndex, linkIndex);
 	printValue(O_DEBUG, chunk->constants->values[valIndex]);
 	print(O_DEBUG, "\n");
-
 	return offset + 1;
 }

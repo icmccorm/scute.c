@@ -2,7 +2,6 @@ mergeInto(LibraryManager.library, {
 	currentShape: {},
 	values: [],
 	currentTurtle: null,
-	intervals: {},
 	currentLower: 0,
 	currentUpper: 999,
 
@@ -92,15 +91,10 @@ mergeInto(LibraryManager.library, {
 		Module["_printFunction"]({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 
-	em_setInterval: function(lower, upper){
-		_currentLower = getValue(lower, 'i32');
-		_currentUpper = getValue(upper, 'i32');
+	em_setShapeAnimation: function(ptr){
+		_currentShape.animationObject = ptr;
 	},
-
-	em_addThunkToInterval: function(thunkPointer){
-		_intervals[thunkPointer] = [_currentlower, _currentUpper];
-	},
-
+	
 	em_newRect: function(idPtr){
 		_lib_newShape(idPtr, Shapes.RECT);
 	},
@@ -444,15 +438,8 @@ mergeInto(LibraryManager.library, {
 		'lib_getValue',
 		'currentShape'
 	],
-	  
-	em_setInterval__deps: [
-		'currentLower',
-		'currentUpper'
-	],
-	
-	em_addThunkToInterval__deps: [
-		'intervals',
-		'currentLower',
-		'currentUpper'
+
+	em_setShapeAnimation__deps:[
+		'currentShape'
 	],
 });

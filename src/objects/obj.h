@@ -7,7 +7,7 @@
 #include "natives.h"
 
 extern size_t objectBytesAllocated;
-
+extern Obj* heap;
 Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);
@@ -17,6 +17,11 @@ ObjArray* allocateArrayWithCapacity(int capacity);
 ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
 ObjClosure* allocateClosure(ObjChunk* innerChunk);
 ObjUpvalue* allocateUpvalue(Value* slot);
+
+ObjAnim* allocateAnimation();
+ObjTimeline* allocateTimeline();
+void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int max);
+void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min, int max);
 
 bool isObjectType(Value value, OBJType type);
 ObjString* tokenString(char * start, int length);

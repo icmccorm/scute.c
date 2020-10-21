@@ -18,16 +18,13 @@ bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
+Obj* heap = NULL;
+
 Obj* allocateObject(size_t size, OBJType type){
 	Obj* obj = (Obj*) reallocate(NULL, 0, size);
 	obj->type = type;
-	if(vm.chunk){
-		obj->next = vm.runtimeObjects;
-		vm.runtimeObjects = obj;
-	}else{
-		obj->next = currentResult()->objects;
-		currentResult()->objects = obj;
-	}
+	obj->next = heap;
+	heap = obj;
 	return obj;
 }
 
@@ -83,7 +80,7 @@ void freeObject(Obj* obj){
 			FREE(ObjAnim, anim);
 			break;
 		default:
-			print(O_OUT, "Object type not found.");
+			print(O_OUT, "Object type not found: %d", obj->type);
 			break;
 	}
 }
@@ -164,7 +161,7 @@ ObjTimeline* allocateTimeline(){
 	return timeline;
 }
 
-void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min){
+void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int max){
 	if(timeline->numSteps + 1 > timeline->stepCapacity){
         int oldCapacity = timeline->stepCapacity;
 		timeline->stepCapacity = GROW_CAPACITY(oldCapacity);
@@ -175,7 +172,10 @@ void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min){
 	step->thunk = thunk;
 }
 
-void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min){
+void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min, int max){
+	Obj* temporaryVMHeap = heap;
+	heap = vm.package->objects;
+
 	Value propertyEntry = getValue(anim->map, propName);
 	ObjTimeline* timeline = NULL;
 	if(!IS_NULL(propertyEntry)){
@@ -184,7 +184,9 @@ void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int 
 		timeline = allocateTimeline();
 		add(anim->map, propName, OBJ_VAL(timeline));
 	}
-	addItemToTimeline(timeline, thunk, min);
+	addItemToTimeline(timeline, thunk, min, max);
+
+	heap = temporaryVMHeap;
 }
 
 ObjChunk* allocateChunkObject(ObjString* funcName){
