@@ -91,7 +91,8 @@ mergeInto(LibraryManager.library, {
 		Module["_printFunction"]({type: 4, payload: Module.UTF8ToString(ptr)});
 	},
 
-	em_setShapeAnimation: function(ptr){
+	em_assignAnimation: function(ptr){
+		console.log(ptr);
 		_currentShape.animationObject = ptr;
 	},
 	

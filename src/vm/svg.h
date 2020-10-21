@@ -18,7 +18,7 @@ void assignDimensions(ObjShape* close, Value* values, uint8_t numValues);
 extern void em_addAttribute(const char* key, Value* val);
 extern void em_addVectorAttr(const char* keyPtr, Value* vecPtr);
 extern void em_setCanvas(Value* sizePtr, Value* originPtr);
-
+extern void em_assignAnimation(ObjAnim* anim);
 extern void em_addStyle(const char* key, Value* val);
 extern void em_addStringStyle(const char* key);
 

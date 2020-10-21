@@ -47,7 +47,8 @@ void assignStyles(ObjShape* shape){
 void drawShape(ObjShape* shape, unsigned address){
 	HashMap* shapeMap = shape->instance.map;
 	TKType type = shape->shapeType;
-	#ifdef EM_MAIN	
+	#ifdef EM_MAIN
+		em_assignAnimation(shape->animation);
 		switch(type){
 			case TK_RECT: {
 				em_newRect(address);
@@ -295,6 +296,7 @@ void renderFrame(CompilePackage* code){
 				#ifdef EM_MAIN
 					em_newPolygon(address);
 					assignStyles(shape);
+					em_assignAnimation(shape->animation);
 				#endif
 				drawPoints(shape);
 			} break;
@@ -302,6 +304,7 @@ void renderFrame(CompilePackage* code){
 				#ifdef EM_MAIN
 					em_newPolyline(address);
 					assignStyles(shape);
+					em_assignAnimation(shape->animation);
 				#endif
 				drawPoints(shape);
 			} break;
@@ -309,6 +312,7 @@ void renderFrame(CompilePackage* code){
 				#ifdef EM_MAIN
 					em_newPath(address);
 					assignStyles(shape);
+					em_assignAnimation(shape->animation);
 				#endif
 				drawPoints(shape);
 			} break;
@@ -316,12 +320,13 @@ void renderFrame(CompilePackage* code){
 				#ifdef EM_MAIN
 					em_newUngon(address);
 					assignStyles(shape);
+					em_assignAnimation(shape->animation);
 				#endif
 				drawPoints(shape);
 			} break;
-			default:
-				drawShape(shape, address);	
-				break;
+			default: {
+				drawShape(shape, address);
+			} break;
 		}
 	}
 }
