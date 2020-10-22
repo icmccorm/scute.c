@@ -640,6 +640,7 @@ static void animStatement(){
 		int prevUpperBound = rootCompiler->animUpperBound;
 
 		ObjAnim* anim = allocateAnimation();
+		addAnimation(currentResult(), anim);
 		rootCompiler->compilingAnimation = anim;
 		endLine();
 		int currentScopeDepth = rootCompiler->scopeDepth + 1;

@@ -13,11 +13,30 @@ CompilePackage* initCompilationPackage(){
 
 	code->lowerLimit = 0;
 	code->upperLimit = 0;
+	code->result = INTERPRET_OK;
+
+	code->animations = NULL;
+	code->numAnimations = 0;
+	code->animCapacity = 0;
+
 	code->objects = NULL;
+	heap = &code->objects;
+
 	code->compiled = NULL;
 	initMap(&code->strings);
 	initMap(&code->globals);
 	return code;
+}
+
+
+void addAnimation(CompilePackage* package, ObjAnim* anim){
+	if(package->numAnimations + 1 > package->animCapacity){
+		int oldCapacity = package->animCapacity;
+		package->animCapacity = GROW_CAPACITY(oldCapacity);
+		package->animations = GROW_ARRAY(package->animations, ObjAnim*, oldCapacity, package->animCapacity);
+	}
+	package->animations[package->numAnimations] = anim;
+	++package->numAnimations;
 }
 
 void freeObjects(Obj* list){
@@ -31,6 +50,10 @@ void freeObjects(Obj* list){
 void freeCompilationPackage(CompilePackage* code){
 	freeMap(code->strings);
 	freeMap(code->globals);
-	freeObjects(heap);
+	
+	heap = NULL;
+	freeObjects(code->objects);
+
+	FREE_ARRAY(ObjAnim*, code->animations, code->animCapacity);
 	FREE(CompilePackage, code);
 }

@@ -7,7 +7,7 @@
 #include "natives.h"
 
 extern size_t objectBytesAllocated;
-extern Obj* heap;
+extern Obj** heap;
 Obj* allocateObject(size_t size, OBJType type);
 ObjChunk* allocateChunkObject(ObjString* funcName);
 ObjInstance* allocateInstance(ObjInstance* super);

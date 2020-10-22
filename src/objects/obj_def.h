@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include "common.h"
 #include "memory.h"
 #include "hashmap.h"
@@ -102,6 +101,7 @@ struct sObjShape {
 };
 
 struct sTimestep{
+	Obj obj;
 	int min;
 	int max;
 	struct sObjClosure* thunk;	

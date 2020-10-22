@@ -4,7 +4,7 @@ mergeInto(LibraryManager.library, {
 	currentTurtle: null,
 	currentLower: 0,
 	currentUpper: 999,
-
+	
 	valuePointerOffsets: {
 		type: 0,
 		union: 0,
@@ -92,6 +92,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_assignAnimation: function(ptr){
+		console.log("Ummm... hello?!?!");
 		console.log(ptr);
 		_currentShape.animationObject = ptr;
 	},

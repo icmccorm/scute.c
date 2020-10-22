@@ -34,6 +34,8 @@ typedef struct {
 	int shapeCount;
 	int shapeCapacity;
 
+	Obj* objects;
+
 	ObjInstance* instanceStack[INST_STACK_MAX];
 	int instanceCount;
 	HashMap* globals;	

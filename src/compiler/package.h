@@ -15,6 +15,10 @@ typedef struct {
 	Obj* objects;
 	ObjChunk* compiled;
 	
+	ObjAnim** animations;
+	int numAnimations;
+	int animCapacity;
+
 	int lowerLimit;
 	int upperLimit;
 
@@ -27,5 +31,6 @@ void freeCompilationPackage(CompilePackage* code);
 CompilePackage* initCompilationPackage();
 void freeObjects(Obj* list);
 void initCompilingChunk(CompilePackage* package);
+void addAnimation(CompilePackage* package, ObjAnim* anim);
 #endif
 

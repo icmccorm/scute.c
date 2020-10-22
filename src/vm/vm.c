@@ -29,9 +29,9 @@ static uint8_t* popStackFrame();
 void initGlobals(HashMap* map);
 Value executeThunk(ObjClosure* thunk, int index);
 
-void initVM(CompilePackage* package, int frameIndex) {
-	package->objects = heap;
-	heap = NULL;
+void initVM(CompilePackage* package, int frameIndex) {	
+	vm.objects = NULL;
+	heap = &vm.objects;
 
 	vm.frameIndex = frameIndex;
 	vm.stackSize = 0;
@@ -54,9 +54,9 @@ void initVM(CompilePackage* package, int frameIndex) {
 void freeVM() {
 	freeMap(vm.globals);
 	FREE_ARRAY(ObjShape*, vm.shapeStack, vm.shapeCapacity);
-	freeObjects(heap);
+	freeObjects(vm.objects);
 	vm.chunk = NULL;
-	heap = vm.package->objects;
+	heap = &vm.package->objects;
 }
 
 void push(Value value) {
@@ -449,7 +449,11 @@ static InterpretResult run() {
 				uint16_t min = (steps >> 16) & 0xff;
 
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
+					ObjShape* shape = (ObjShape*) inst;
 					animateProperty(anim, property, close, min, max);
+					if(shape->animation == NULL){
+						shape->animation = anim;
+					}
 				}else{	
 					runtimeError("Only instances of shapes and segments can have animated properties.");
 				}
@@ -580,7 +584,7 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	#ifndef EM_MAIN
 		printMem("after runtime");
 	#endif
-	//renderFrame(code);
+	renderFrame(code);
 	freeVM();
 
 	#ifndef EM_MAIN

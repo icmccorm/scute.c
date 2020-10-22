@@ -18,13 +18,14 @@ bool isObjectType(Value value, OBJType type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
-Obj* heap = NULL;
+Obj** heap = NULL;
 
 Obj* allocateObject(size_t size, OBJType type){
+	
 	Obj* obj = (Obj*) reallocate(NULL, 0, size);
 	obj->type = type;
-	obj->next = heap;
-	heap = obj;
+	obj->next = *heap;
+	*heap = obj;
 	return obj;
 }
 
@@ -137,6 +138,7 @@ ObjNative* allocateNative(void* func){
 ObjInstance* allocateInstance(ObjInstance* super){
 	ObjInstance* close = ALLOCATE_OBJ(ObjInstance, OBJ_INST);
 	initMap(&close->map);
+	close->type = INST_NONE;
 	if(super != NULL){
 		HashEntry* current = super->map->first;
 		while(current != NULL){
@@ -153,14 +155,6 @@ ObjAnim* allocateAnimation(){
 	return anim;
 }
 
-ObjTimeline* allocateTimeline(){
-	ObjTimeline* timeline = ALLOCATE_OBJ(ObjTimeline, OBJ_TIMELINE);
-	timeline->steps = NULL;
-	timeline->numSteps = 0;
-	timeline->stepCapacity = 0;
-	return timeline;
-}
-
 void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int max){
 	if(timeline->numSteps + 1 > timeline->stepCapacity){
         int oldCapacity = timeline->stepCapacity;
@@ -173,20 +167,24 @@ void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int ma
 }
 
 void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min, int max){
-	Obj* temporaryVMHeap = heap;
-	heap = vm.package->objects;
 
 	Value propertyEntry = getValue(anim->map, propName);
 	ObjTimeline* timeline = NULL;
 	if(!IS_NULL(propertyEntry)){
 		timeline = (ObjTimeline*) AS_OBJ(propertyEntry);
 	}else{
-		timeline = allocateTimeline();
+		heap = &currentResult()->objects;
+
+		timeline = ALLOCATE_OBJ(ObjTimeline, OBJ_TIMELINE);
+		timeline->steps = NULL;
+		timeline->numSteps = 0;
+		timeline->stepCapacity = 0;
 		add(anim->map, propName, OBJ_VAL(timeline));
+
+		heap = &vm.objects;
 	}
 	addItemToTimeline(timeline, thunk, min, max);
 
-	heap = temporaryVMHeap;
 }
 
 ObjChunk* allocateChunkObject(ObjString* funcName){
