@@ -76,4 +76,4 @@ test :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
 	@$(CC) $(TEST_ENTRY) $(TEST_OBJS) $(OBJS) $(INC_FLAGS) $(INC_TEST_FLAGS) -o $(EXEC_TEST_FILE)
 
 make grind: ./$(EXEC_FILE)
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(EXEC_FILE) ./test 
+	valgrind --leak-check=full --track-origins=yes ./$(EXEC_FILE) ./test 
