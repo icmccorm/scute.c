@@ -15,7 +15,7 @@ ObjNative* allocateNative(void* func);
 ObjArray* allocateArray();
 ObjArray* allocateArrayWithCapacity(int capacity);
 ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
-ObjClosure* allocateClosure(ObjChunk* innerChunk);
+ObjClosure* allocateClosure(ObjChunk* innerChunk, bool saveWithCompilation);
 ObjUpvalue* allocateUpvalue(Value* slot);
 
 ObjAnim* allocateAnimation();

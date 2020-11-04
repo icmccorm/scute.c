@@ -10,8 +10,8 @@
 #include "output.h"
 #include "package.h"
 
-void runCode(CompilePackage* code, int index){
-	InterpretResult result = interpretCompiled(code, index);
+void runCode(CompilePackage* code){
+	InterpretResult result = interpretCompiled(code, 0);
 }
 
 CompilePackage* compileCode(const char* code){

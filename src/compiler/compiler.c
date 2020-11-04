@@ -31,7 +31,6 @@ CompilePackage* result = NULL;
 	extern void em_addUnlinkedValue(int* insertionIndex, Value* value);
 	extern void em_setMaxFrameIndex(uint32_t maxFrameIndex);
 	extern void em_addThunkToInterval(unsigned long thunkPointer);
-	extern void em_setInterval(int lower, int upper);
 	void prepareValueConversion(){
 		// a value might have a different memory padding depending on the compiler implementation, system, and emscripten version
 		// so, the offsets are calculated each time the program is compiled to eliminate errors in converting values across the C/JS barrier
@@ -304,6 +303,7 @@ static Compiler* exitCompilationScope(){
 	if(superComp){
 		uint32_t scopeIndex = writeValue(superComp->compilingChunk->chunk, OBJ_VAL(toFree->compilingChunk), parser.previous.line);
 		writeOperatorBundle(superComp->compilingChunk->chunk, OP_CLOSURE, scopeIndex, parser.current.line);
+		writeChunk(superComp->compilingChunk->chunk, (uint8_t) (currentCompiler()->compilingAnimation != NULL ? 0 : 1), parser.current.line);
 		for (int i = 0; i < toFree->compilingChunk->upvalueCount; i++) {
 			writeChunk(superComp->compilingChunk->chunk, toFree->upvalues[i].isLocal ? 1 : 0, parser.current.line);
 			writeVariableData(superComp->compilingChunk->chunk, toFree->upvalues[i].index);
@@ -727,7 +727,10 @@ static void animStatement(){
 				}
 			}
 		}
-
+		CompilePackage* result = currentResult();
+		if(result->upperLimit < rootCompiler->animUpperBound) {
+			result->upperLimit = rootCompiler->animUpperBound;
+		}
 		if(rootCompiler->animUpperBound == 0) errorAtCurrent("An animation's set of intervals must have a defined upper bound.");
 		rootCompiler->animLowerBound = prevLowerBound;
 		rootCompiler->animUpperBound = prevUpperBound;
@@ -1545,7 +1548,6 @@ bool compile(char* source, CompilePackage* package){
 
 	consume(TK_EOF, "Expected end of expression.");
 
-	result->upperLimit = compiler->animUpperBound;
 	compiler = exitCompilationScope();
 
 	#ifdef DEBUG

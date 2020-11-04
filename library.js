@@ -4,7 +4,28 @@ mergeInto(LibraryManager.library, {
 	currentTurtle: null,
 	currentLower: 0,
 	currentUpper: 999,
+	animations: {},
+	currentAnimation: null,
+
+	em_initAnimationChunk: function(animObjectPtr){
+		_currentAnimation = {
+			id: animObjectPtr,
+		}
+	},
 	
+	em_finalizeAnimationChunk: function(){
+		if(_currentAnimation != null){
+			Module._animations[_currentAnimation.id] = _currentAnimation;
+		}
+	},
+
+	em_animateValue: function(propertyString, valuePtr){
+		var key = UTF8ToString(propertyString);
+		var value = _lib_getValueMeta(valuePtr);
+		console.log("[A] " + key + ":" + value);
+		_currentAnimation[key] = value;
+	},
+
 	valuePointerOffsets: {
 		type: 0,
 		union: 0,
@@ -444,4 +465,18 @@ mergeInto(LibraryManager.library, {
 	em_setShapeAnimation__deps:[
 		'currentShape'
 	],
+
+	em_animateValue__deps: [
+		'currentAnimation',
+		'lib_getValueMeta',
+	],
+	
+	em_initAnimationChunk__deps: [
+		'currentAnimation',
+	],
+
+	em_finalizeAnimationChunk__deps: [
+		'currentAnimation'
+	],
+	
 });

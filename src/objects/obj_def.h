@@ -112,6 +112,7 @@ struct sObjTimeline{
 	struct sTimestep* steps;
 	int numSteps;
 	int stepCapacity;
+	int stepIndex;
 };
 
 struct sObjAnim {

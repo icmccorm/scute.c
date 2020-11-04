@@ -44,6 +44,49 @@ void assignStyles(ObjShape* shape){
 }
 #endif
 
+void renderAnimationBlocks(CompilePackage* package, int timeIndex){
+	for(int i = 0; i<package->numAnimations; ++i){
+		ObjAnim* anim = package->animations[i];
+		HashEntry* currentEntry = anim->map->first;
+		#ifdef EM_MAIN
+			em_initAnimationChunk(anim);
+		#endif
+		while(currentEntry != NULL){
+			char* property = currentEntry->key->chars;
+			ObjTimeline* timeline = (ObjTimeline*) AS_OBJ(currentEntry->value);
+			
+			if(timeline->stepIndex < timeline->numSteps){
+				
+				Timestep* step = &timeline->steps[timeline->stepIndex];
+				++timeline->stepIndex;
+				Value currentValue = executeThunk(step->thunk, timeIndex);
+				
+				switch(currentValue.type){
+					case VL_OBJ:{
+						Obj* valueAsObject = AS_OBJ(currentValue);
+						switch(valueAsObject->type){
+							default: {
+								runtimeError("Animation value type not currently supported.");
+							} break;
+						}
+					}
+					default: {
+						printValue(O_OUT, currentValue);
+						print(O_OUT, "\n");
+						#ifdef EM_MAIN
+							em_animateValue(currentEntry->key->chars, &currentValue);
+						#endif
+					} break;
+				}				
+			}
+			currentEntry = currentEntry->next;
+		}
+		#ifdef EM_MAIN
+			em_finalizeAnimationChunk();
+		#endif
+	}
+}
+
 void drawShape(ObjShape* shape, unsigned address){
 	HashMap* shapeMap = shape->instance.map;
 	TKType type = shape->shapeType;

@@ -52,5 +52,6 @@ Value pop();
 InterpretResult interpretCompiled(CompilePackage* code, int index);
 void runCompiler(CompilePackage* package, char* source);
 ObjInstance* currentInstance();
+Value executeThunk(ObjClosure* thunk, int index);
 
 #endif

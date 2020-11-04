@@ -21,7 +21,6 @@ bool isObjectType(Value value, OBJType type){
 Obj** heap = NULL;
 
 Obj* allocateObject(size_t size, OBJType type){
-	
 	Obj* obj = (Obj*) reallocate(NULL, 0, size);
 	obj->type = type;
 	obj->next = *heap;
@@ -164,23 +163,22 @@ void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int ma
 	Timestep* step = &(timeline->steps[timeline->numSteps]);
 	step->min = min;
 	step->thunk = thunk;
+	++timeline->numSteps;
 }
 
 void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min, int max){
-
 	Value propertyEntry = getValue(anim->map, propName);
 	ObjTimeline* timeline = NULL;
 	if(!IS_NULL(propertyEntry)){
 		timeline = (ObjTimeline*) AS_OBJ(propertyEntry);
 	}else{
 		heap = &currentResult()->objects;
-
 		timeline = ALLOCATE_OBJ(ObjTimeline, OBJ_TIMELINE);
 		timeline->steps = NULL;
 		timeline->numSteps = 0;
 		timeline->stepCapacity = 0;
+		timeline->stepIndex = 0;
 		add(anim->map, propName, OBJ_VAL(timeline));
-
 		heap = &vm.objects;
 	}
 	addItemToTimeline(timeline, thunk, min, max);
@@ -201,16 +199,19 @@ ObjChunk* allocateChunkObject(ObjString* funcName){
 	return chunkObj;
 }
 
-ObjClosure* allocateClosure(ObjChunk* innerChunk){
+ObjClosure* allocateClosure(ObjChunk* innerChunk, bool saveWithCompilation){
 	ObjUpvalue** upvalues = ALLOCATE(ObjUpvalue*, innerChunk->upvalueCount);
 	for(int i = 0; i<innerChunk->upvalueCount; ++i){
 		upvalues[i] = NULL;
 	}
+	if(saveWithCompilation) heap = &currentResult()->objects;
+
 	ObjClosure* closeObj = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
 	closeObj->chunkObj = innerChunk;
 	closeObj->upvalueCount = innerChunk->upvalueCount;
 	closeObj->upvalues = upvalues;
 	
+	if(saveWithCompilation) heap = &vm.objects;
 	return closeObj;
 }
 

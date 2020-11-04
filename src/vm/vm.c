@@ -30,6 +30,10 @@ void initGlobals(HashMap* map);
 Value executeThunk(ObjClosure* thunk, int index);
 
 void initVM(CompilePackage* package, int frameIndex) {	
+
+	initMap(&vm.globals);
+	initGlobals(vm.globals);
+
 	vm.objects = NULL;
 	heap = &vm.objects;
 
@@ -46,8 +50,6 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.instanceCount = 0;
 	vm.package = package;
 	resetStack();
-	initMap(&vm.globals);
-	initGlobals(vm.globals);
   	mergeMaps(package->globals, vm.globals);
 }
 
@@ -300,7 +302,8 @@ static InterpretResult run() {
 			} break;
 			case OP_CLOSURE:{
 				ObjChunk* chunk = AS_CHUNK(READ_CONSTANT());
-				ObjClosure* close = allocateClosure(chunk);
+				bool saveWithCompilation = (bool) READ_BYTE();
+				ObjClosure* close = allocateClosure(chunk, !saveWithCompilation);
 				push(OBJ_VAL(close));
 				StackFrame* frame = currentStackFrame();
 				for(int i = 0; i<close->upvalueCount; ++i){
@@ -573,7 +576,7 @@ CompilePackage* initCompilationPackage();
 InterpretResult executeCompiled(CompilePackage* code, int index){
 	InterpretResult result;
 	initVM(code, index);
-	ObjClosure* close = allocateClosure(code->compiled);
+	ObjClosure* close = allocateClosure(code->compiled, false);
 	pushStackFrame(close, NULL, 0);
 
 	#ifndef EM_MAIN
@@ -612,6 +615,7 @@ Value executeThunk(ObjClosure* thunk, int index){
 	freeVM();
 	return result;
 }
+
 void runCompiler(CompilePackage* package, char* source){	
 	bool compiled = compile(source, package);
 	#ifndef EM_MAIN

@@ -21,7 +21,9 @@ extern void em_setCanvas(Value* sizePtr, Value* originPtr);
 extern void em_assignAnimation(ObjAnim* anim);
 extern void em_addStyle(const char* key, Value* val);
 extern void em_addStringStyle(const char* key);
-
+extern void em_initAnimationChunk(ObjAnim* anim);
+extern void em_finalizeAnimationChunk();
+extern void em_animateValue(char* property, Value* val);
 extern void em_addTurn(Value* degPtr);
 extern void em_addJump(Value* vecPtr);
 extern void em_addMove(Value* distPtr, int* angle);
@@ -44,6 +46,7 @@ extern void em_paintShape();
 extern void em_addColorStyle(const char* key, int length, Value* values);
 #endif
 
+void renderAnimationBlocks(CompilePackage* package, int timeIndex);
 void renderFrame(CompilePackage* code);
 void pushShape(ObjShape* close);
 ObjShape* popShape();

@@ -146,7 +146,7 @@ static uint32_t readEmbeddedInteger(Chunk* chunk, int numBytes, int offset){
 static int closureInstruction(Chunk* chunk, int offset){
 	uint8_t numBytes = chunk->code[offset + 1];
 	uint32_t constant = readEmbeddedInteger(chunk, numBytes, offset);
-	offset += numBytes + 2;
+	offset += numBytes + 2 + 1;
 
 	print(O_DEBUG, "%-16s %4d ", "OP_CLOSURE", constant);
 	printValue(O_DEBUG, chunk->constants->values[constant]);

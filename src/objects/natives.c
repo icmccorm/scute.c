@@ -372,8 +372,10 @@ Value nativeTranslate(Value* params, int numParams){
 
 void initGlobals(HashMap* map){
 	ObjString* canvasString = string("canvas");
+	ObjString* originString = string("origin");
+	ObjString* sizeString = string("size");
 	ObjInstance* canvasProperties = allocateInstance(NULL);
-	add(canvasProperties->map, string("origin"), VECTOR(0, 0));
-	add(canvasProperties->map, string("size"), VECTOR(500, 500));
+	add(canvasProperties->map, originString, VECTOR(0, 0));
+	add(canvasProperties->map, sizeString, VECTOR(500, 500));
 	add(map, canvasString, OBJ_VAL(canvasProperties));
 }
