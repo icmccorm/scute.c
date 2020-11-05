@@ -162,6 +162,7 @@ void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int ma
     }
 	Timestep* step = &(timeline->steps[timeline->numSteps]);
 	step->min = min;
+	step->max = max;
 	step->thunk = thunk;
 	++timeline->numSteps;
 }

@@ -54,30 +54,30 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 		while(currentEntry != NULL){
 			char* property = currentEntry->key->chars;
 			ObjTimeline* timeline = (ObjTimeline*) AS_OBJ(currentEntry->value);
-			
-			if(timeline->stepIndex < timeline->numSteps){
-				
-				Timestep* step = &timeline->steps[timeline->stepIndex];
-				++timeline->stepIndex;
-				Value currentValue = executeThunk(step->thunk, timeIndex);
-				
-				switch(currentValue.type){
-					case VL_OBJ:{
-						Obj* valueAsObject = AS_OBJ(currentValue);
-						switch(valueAsObject->type){
-							default: {
-								runtimeError("Animation value type not currently supported.");
-							} break;
+			for(int i = timeline->stepIndex; i<timeline->numSteps; ++i){
+				Timestep* step = &timeline->steps[i];
+				if(timeIndex >= step->min && timeIndex <= step->max){
+					Value currentValue = executeThunk(step->thunk, timeIndex);
+					switch(currentValue.type){
+						case VL_OBJ:{
+							Obj* valueAsObject = AS_OBJ(currentValue);
+							switch(valueAsObject->type){
+								default: {
+									runtimeError("Animation value type not currently supported.");
+								} break;
+							}
 						}
-					}
-					default: {
-						printValue(O_OUT, currentValue);
-						print(O_OUT, "\n");
-						#ifdef EM_MAIN
-							em_animateValue(currentEntry->key->chars, &currentValue);
-						#endif
-					} break;
-				}				
+						default: {
+							printValue(O_OUT, currentValue);
+							print(O_OUT, "\n");
+							#ifdef EM_MAIN
+								em_animateValue(currentEntry->key->chars, &currentValue);
+							#endif
+						} break;
+					}				
+				}else{
+					++timeline->stepIndex;
+				}
 			}
 			currentEntry = currentEntry->next;
 		}

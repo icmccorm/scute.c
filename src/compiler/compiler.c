@@ -80,8 +80,8 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 		newComp->compilingAnimation = comp->compilingAnimation;
 	}else{
 		newComp->scopeDepth = 0;
-		newComp->animUpperBound = 0;
-		newComp->animLowerBound = 0;
+		newComp->animUpperBound = -1;
+		newComp->animLowerBound = -1;
 		newComp->animated = false;
 		newComp->compilingAnimation = NULL;
 	}
@@ -144,7 +144,6 @@ static void exitEnclosedScope(){
 	currentCompiler()->enclosed = false;
 }
 
-
 CompilePackage* currentResult(){
 	return result;
 }
@@ -168,8 +167,6 @@ static void emitTriple(uint8_t opCode, uint32_t val1, uint32_t val2){
 	writeVariableData(currentChunk(), val2);
 
 }
-
-
 
 static int emitLimit(int low, int high){
 	emitByte(OP_LIMIT);
@@ -492,6 +489,16 @@ static ObjChunk* thunkExpression(bool emitTrace){
 
 	compiler = enterCompilationScope(newChunk);
 	expression(emitTrace);
+
+	//If we're in a one-sided limit
+	if(currentCompiler()->animUpperBound >= 0 && currentCompiler()->animLowerBound >= 0){
+		emitByte(OP_FRAME_INDEX);
+		emitConstant(NUM_VAL(currentCompiler()->animLowerBound));
+		emitByte(OP_SUBTRACT);
+		emitConstant(NUM_VAL(currentCompiler()->animUpperBound - currentCompiler()->animLowerBound));
+		emitBytes(OP_DIVIDE, OP_MULTIPLY);
+	}
+
 	compiler = exitCompilationScope();
 
 	return newChunk;
@@ -525,6 +532,7 @@ static void expression(bool emitTrace) {
 	parser.manipTargetCharIndex = -1;
 	parser.manipPrecedence = -1;
 }
+
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
@@ -622,13 +630,20 @@ static void internGlobal(TK* id){
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
 	
-
-static void emitAnimation(ObjAnim* anim, ObjString* property, uint16_t min, uint16_t max){
+static void emitAnimation(ObjAnim* anim, ObjString* property, int min, int max){
+	uint16_t capMin = min >= 0 ? min : 0;
+	uint16_t capMax = max >= 0 ? max : 0;
+	
 	writeChunk(currentChunk(), OP_ANIM, parser.previous.line);
+	
 	writeVariableData(currentChunk(), getObjectIndex((Obj*) property));
 	writeVariableData(currentChunk(), getObjectIndex((Obj*) anim));
-	uint32_t animationStep = (((uint16_t) currentCompiler()->animLowerBound) << 16) & ((uint16_t) currentCompiler()->animUpperBound);
-	writeVariableData(currentChunk(), animationStep);
+	uint8_t minFirstHalf = (capMin >> 8) & 0xff;
+	uint8_t minSecondHalf = capMin & 0xff;
+	uint8_t maxFirstHalf = (capMax >> 8) & 0xff;
+	uint8_t maxSecondHalf = capMax & 0xff;
+	emitBytes(maxFirstHalf, maxSecondHalf);
+	emitBytes(minFirstHalf, minSecondHalf);
 }
 
 static void animStatement(){
@@ -638,7 +653,6 @@ static void animStatement(){
 		TK animToken = parser.previous;			
 		int prevLowerBound = rootCompiler->animLowerBound;
 		int prevUpperBound = rootCompiler->animUpperBound;
-
 		ObjAnim* anim = allocateAnimation();
 		addAnimation(currentResult(), anim);
 		rootCompiler->compilingAnimation = anim;
@@ -647,8 +661,6 @@ static void animStatement(){
 		while(parser.current.type != TK_EOF 
 				&& getIndentation() >= currentScopeDepth
 			){
-			int lowerBound = 0;
-			int upperBound = 999;
 			//there are four possible cases for handling animation: to x, from y, to x from y, from y to x, and at x
 			advance();
 			switch(parser.current.type){
@@ -1065,7 +1077,6 @@ static void parseAssignment() {
 	}
 }
 
-
 #define E (2.718281828459045235360)
 #define PI (3.141592653589793238462)
 void constant(bool canAssign) {
@@ -1296,7 +1307,6 @@ void deref(bool canAssign){
 		}
 	}
 }
-
 
 void scopeDeref(bool canAssign){
 	if(currentCompiler()->enclosed){

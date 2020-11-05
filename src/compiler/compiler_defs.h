@@ -93,8 +93,8 @@ struct sCompiler{
 
     bool returned;
 
-    uint16_t animUpperBound;
-    uint16_t animLowerBound;
+    int animUpperBound;
+    int animLowerBound;
 
 };
 

@@ -386,7 +386,7 @@ static InterpretResult run() {
 				signed short jumpDistance = READ_SHORT();
 				vm.ip += jumpDistance;
 				} break;
-			case OP_RETURN: ;
+			case OP_RETURN: {
 				closeUpvalues(currentStackFrame()->stackOffset);
 				uint8_t* returnAddress = popStackFrame();
 				if(returnAddress){
@@ -394,7 +394,7 @@ static InterpretResult run() {
 				}else{	
 					return INTERPRET_OK;
 				}
-				break;
+			} break;
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
 
@@ -446,10 +446,8 @@ static InterpretResult run() {
 				ObjString* property = (ObjString*) AS_OBJ(READ_CONSTANT());
 				ObjAnim* anim = (ObjAnim*) AS_OBJ(READ_CONSTANT());
 				ObjClosure* close = (ObjClosure*) AS_OBJ(pop());	
-				uint32_t steps = READ_INT();
-
-				uint16_t max = steps & 0xff;
-				uint16_t min = (steps >> 16) & 0xff;
+				uint16_t max = READ_SHORT();
+				uint16_t min = READ_SHORT();
 
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
 					ObjShape* shape = (ObjShape*) inst;
@@ -461,11 +459,11 @@ static InterpretResult run() {
 					runtimeError("Only instances of shapes and segments can have animated properties.");
 				}
 			} break;
-			case OP_JMP_FALSE: ;
+			case OP_JMP_FALSE: {
 				signed short offset = READ_SHORT();
 				Value boolVal = pop();
 				if(isFalsey(boolVal)) vm.ip += (offset);
-				break;
+			} break;
 			case OP_LIMIT: {
 				uint32_t lowerBound = readInteger();
 				uint32_t upperBound = readInteger();
@@ -498,18 +496,18 @@ static InterpretResult run() {
 				uint32_t stackIndex = readInteger();
 				*(currentStackFrame()->stackOffset+stackIndex) = peek(0);
 			} break;
-			case OP_POP:
+			case OP_POP: {
 				pop();
-				break;
-			case OP_PRINT:
+			} break;
+			case OP_PRINT: {
 				printValue(O_OUT, pop());
 				print(O_OUT, "\n");
-				break;
-			case OP_CONSTANT: ;
+			} break;
+			case OP_CONSTANT: {
 				Value cons = READ_CONSTANT();
 				push(cons);
-				break;
-			case OP_NEGATE:
+			} break;
+			case OP_NEGATE: {
 				if(!IS_NUM(peek(0))){
 					runtimeError("Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
@@ -519,10 +517,10 @@ static InterpretResult run() {
 				toPush.inlineIndex = popped.inlineIndex;
 				toPush.lineIndex = popped.lineIndex;
 				push(toPush);
-				break;	
-			case OP_ADD: ;
+			} break;	
+			case OP_ADD: {
 				BINARY_OP(+, NUM_VAL, double);
-				break;
+			} break;
 			case OP_SUBTRACT:
 				BINARY_OP(-, NUM_VAL, double);
 				break;
