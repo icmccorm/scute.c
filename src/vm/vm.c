@@ -451,6 +451,7 @@ static InterpretResult run() {
 
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
 					ObjShape* shape = (ObjShape*) inst;
+					anim->shape = shape;
 					animateProperty(anim, property, close, min, max);
 					if(shape->animation == NULL){
 						shape->animation = anim;

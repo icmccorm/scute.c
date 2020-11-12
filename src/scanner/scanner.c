@@ -154,7 +154,8 @@ TKType checkKeyword(int start, int length, char* rest, TKType type){
 }
 
 CSType checkConstant(int start, int length, char* rest, CSType type){
-	if(scanner.current - scanner.start == start + length &&
+    int expectedLength = scanner.current - scanner.start;
+	if(expectedLength == start + length &&
         memcmp(scanner.start + start, rest, length) == 0){
             return type;
     }

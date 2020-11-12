@@ -319,7 +319,7 @@ CSType findConstant(char* start, char* current){
 
 					case 'e':{
 						if(length > 2 && start[2] == 'l'){
-							return checkConstant(2, 5, "low", CS_YELLOW);
+							return checkConstant(3, 3, "low", CS_YELLOW);
 						}
 					} break;
 

@@ -22,7 +22,6 @@ mergeInto(LibraryManager.library, {
 	em_animateValue: function(propertyString, valuePtr){
 		var key = UTF8ToString(propertyString);
 		var value = _lib_getValueMeta(valuePtr);
-		console.log("[A] " + key + ":" + value);
 		_currentAnimation[key] = value;
 	},
 
@@ -113,8 +112,6 @@ mergeInto(LibraryManager.library, {
 	},
 
 	em_assignAnimation: function(ptr){
-		console.log("Ummm... hello?!?!");
-		console.log(ptr);
 		_currentShape.animationObject = ptr;
 	},
 	
@@ -196,8 +193,8 @@ mergeInto(LibraryManager.library, {
 		_currentShape['styles'][key] = meta;
 	},
 
-	em_paintShape: function(){
-		Module["_currentFrame"].push(_currentShape);
+	em_paintShape: function(uniqueId){
+		Module["_currentFrame"].shapes[uniqueId] = _currentShape;
 		_currentTurtle = {
 			type: Segments.TURTLE,
 			move: null,
@@ -217,24 +214,25 @@ mergeInto(LibraryManager.library, {
 		}
 	},
 
-	em_addJump: function(vecPtr){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addJump: function(anim, vecPtr){
+		_currentShape.segments.push(anim)
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.JUMP,
 			point: _lib_getVector(vecPtr),
-		});
+		};
 	},
 
-	em_addVertex: function(vecPtr){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addVertex: function(anim, vecPtr){	
+		_currentShape.segments.push(anim)	
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.VERTEX,
 			point: _lib_getVector(vecPtr),
-		});
+		};
 	},
 
-	em_addMove: function(distancePtr, horizontalPtr){
-		if(!_currentShape.segments) _currentShape.segments = [];
+	em_addMove: function(anim, distancePtr, horizontalPtr){
+		_currentShape.segments.push(anim)	
+
 		if(!_currentTurtle) {
 			_currentTurtle = {
 				type: Segments.TURTLE,
@@ -245,7 +243,9 @@ mergeInto(LibraryManager.library, {
 		}
 		_currentTurtle.move = _lib_getValueMeta(distancePtr);
 		_currentTurtle.horizontal = getValue(horizontalPtr, "i32");
-		_currentShape.segments.push(_currentTurtle);
+		
+		Module["_currentFrame"].segments[anim] = _currentTurtle;
+
 		_currentTurtle = {
 				type: Segments.TURTLE,
 				move: null,
@@ -256,7 +256,6 @@ mergeInto(LibraryManager.library, {
 
 
 	em_addTurn: function(degreesPtr){
-		if(!_currentShape.segments) _currentShape.segments = [];
 		if(!_currentTurtle) {
 			_currentTurtle = {
 				type: Segments.TURTLE,
@@ -272,51 +271,50 @@ mergeInto(LibraryManager.library, {
 		return [_lib_getValueMeta(vecPtr), _lib_getValueMeta(vecPtr + _valuePointerOffsets.totalLength)];
 	},
 
-	em_addQuadBezier: function(control, end){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addQuadBezier: function(anim, control, end){
+		_currentShape.segments.push(anim)	
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.QBEZIER,
 			control: _lib_getVector(control),
 			end: _lib_getVector(end),
-		});
+		};
 	},
 
-	em_addMirror: function(originPtr, x, y){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addMirror: function(anim, originPtr, x, y){
+		_currentShape.segments.push(anim)	
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.MIRROR,
 			axis: (x && y ? Axes.XY : (x ? Axes.X : Axes.Y)),
 			origin: _lib_getVector(originPtr)
-		});
+		};
 	},
 
-	em_addCubicBezier: function(control1, control2, end){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addCubicBezier: function(anim, control1, control2, end){
+		_currentShape.segments.push(anim)	
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.CBEZIER,
 			control1: _lib_getVector(control1),
 			control2: _lib_getVector(control2),
 			end: _lib_getVector(end),
-		});
+		};
 	},
 
-	em_addArc: function(center, degrees, radius){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addArc: function(anim, center, degrees, radius){
+		_currentShape.segments.push(anim)	
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.ARC,
 			center: _lib_getVector(center),
 			degrees: _lib_getValueMeta(degrees),
-		});
+		};
 	},
 
-	em_addMirror: function(originPtr, axisPtr){
-		if(!_currentShape.segments) _currentShape.segments = [];
-		_currentShape.segments.push({
+	em_addMirror: function(anim, originPtr, axisPtr){
+		_currentShape.segments.push(anim)	
+		Module["_currentFrame"].segments[anim] = {
 			type: Segments.MIRROR,
 			origin: _lib_getVector(originPtr),
 			axis: _lib_getValue(axisPtr),
-		});
+		};
 	},
 
 	em_printOut__deps: [

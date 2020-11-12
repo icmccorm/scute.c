@@ -10,7 +10,7 @@
 #include "obj.h"
 #include "svg.h"
 
-#define POLY_COMPATIBLE(objShape) (objShape->shapeType == TK_POLYLINE || objShape->shapeType == TK_POLYGON || objShape->shapeType == TK_PATH)
+#define POLY_COMPATIBLE(objShape) (objShape->shapeType == TK_POLYLINE || objShape->shapeType == TK_POLYGON || objShape->shapeType == TK_PATH || objShape->shapeType == TK_UNGON)
 
 Value nativeRandom(Value* params, int numParams){
 	switch(numParams){

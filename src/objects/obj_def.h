@@ -117,6 +117,7 @@ struct sObjTimeline{
 
 struct sObjAnim {
 	Obj object;
+	struct sObjShape* shape;
 	HashMap* map;
 };
 

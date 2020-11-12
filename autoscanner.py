@@ -233,7 +233,7 @@ def buildLevel(currLevel, numIndents, currWord, checkMethod, enumHeader, default
 					if len(key) > 1:
 						levelText += tabIn + "\tif(length > " + str(numIndents) + " && start[" + str(numIndents) + "] == '" + key[1] + "'){\n"
 						if(len(key) > 2):
-							levelText += tabIn + "\t\treturn " + checkMethod + "(" + str(numIndents) + ", " + str(len(key)) + ", \"" + key[2:] + "\"" + ", " + enumItem + ");\n"
+							levelText += tabIn + "\t\treturn " + checkMethod + "(" + str(numIndents + 1) + ", " + str(len(key)-2) + ", \"" + key[2:] + "\"" + ", " + enumItem + ");\n"
 						else:
 							levelText += tabIn + "\t\treturn " + enumHeader.upper() + "_" + (currWord + key).upper() + ";\n"
 						levelText += tabIn + "\t}\n"

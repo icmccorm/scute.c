@@ -49,7 +49,7 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 		ObjAnim* anim = package->animations[i];
 		HashEntry* currentEntry = anim->map->first;
 		#ifdef EM_MAIN
-			em_initAnimationChunk(anim);
+			em_initAnimationChunk(anim->shape);
 		#endif
 		while(currentEntry != NULL){
 			char* property = currentEntry->key->chars;
@@ -68,10 +68,11 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 							}
 						}
 						default: {
-							printValue(O_OUT, currentValue);
-							print(O_OUT, "\n");
 							#ifdef EM_MAIN
 								em_animateValue(currentEntry->key->chars, &currentValue);
+							#else
+								printValue(O_OUT, currentValue);
+								print(O_OUT, "\n");
 							#endif
 						} break;
 					}				
@@ -149,7 +150,7 @@ void drawShape(ObjShape* shape, unsigned address){
 				break;
 		}
 		assignStyles(shape);
-		em_paintShape();
+		em_paintShape(shape);
 		#else	
 			printMap(O_OUT, shapeMap, 0);
 		#endif
@@ -176,7 +177,7 @@ void drawPoints(ObjShape* shape){
 				points[0] = AS_NUM(getValueArray(vector->array, 0));
 				points[1] = AS_NUM(getValueArray(vector->array, 1));
 				#ifdef EM_MAIN
-					em_addJump(vector->array->values);
+					em_addJump(segment, vector->array->values);
 				#else
 					print(O_OUT, "Jump: (%d, %d)\n", points[0], points[1]);
 				#endif
@@ -186,7 +187,7 @@ void drawPoints(ObjShape* shape){
 				points[0] = AS_NUM(getValueArray(vector->array, 0));
 				points[1] = AS_NUM(getValueArray(vector->array, 1));
 				#ifdef EM_MAIN
-					em_addVertex(vector->array->values);
+					em_addVertex(segment, vector->array->values);
 				#else
 					print(O_OUT, "Vertex: (%d, %d)\n", points[0], points[1]);
 				#endif
@@ -196,7 +197,7 @@ void drawPoints(ObjShape* shape){
 				points[0] += (int) round(cos(toRadians(angle))*AS_NUM(distance));
 				points[1] += (int) round(sin(toRadians(angle))*AS_NUM(distance));
 				#ifdef EM_MAIN
-					em_addMove(&distance, &angle);				
+					em_addMove(segment, &distance, &angle);				
 				#else
 					print(O_OUT, "Move %f: (%d, %d)\n", AS_NUM(distance), points[0], points[1]);
 				#endif
@@ -217,7 +218,7 @@ void drawPoints(ObjShape* shape){
 				Value* controlArray = AS_ARRAY(control)->array->values;
 				Value* endArray = AS_ARRAY(end)->array->values;
 				#ifdef EM_MAIN
-					em_addQuadBezier(controlArray, endArray);
+					em_addQuadBezier(segment, controlArray, endArray);
 				#else
 					print(O_OUT, "qBezier ");
 					printValue(O_OUT, control);
@@ -235,7 +236,7 @@ void drawPoints(ObjShape* shape){
 				Value* control2Array = AS_ARRAY(control2)->array->values;
 				Value* endArray = AS_ARRAY(end)->array->values;
 				#ifdef EM_MAIN
-					em_addCubicBezier(control1Array, control2Array, endArray);
+					em_addCubicBezier(segment, control1Array, control2Array, endArray);
 				#else
 					print(O_OUT, "cBezier ");
 					printValue(O_OUT, control1);
@@ -253,7 +254,7 @@ void drawPoints(ObjShape* shape){
 				Value degrees = getValue(map, string("degrees"));
 
 				#ifdef EM_MAIN
-					em_addArc(centerArray, &degrees);
+					em_addArc(segment, centerArray, &degrees);
 				#else
 					print(O_OUT, "Arc ");
 					printValue(O_OUT, center);
@@ -270,7 +271,7 @@ void drawPoints(ObjShape* shape){
 				CSType axisType = (CSType) axis.as.number;
 
 				#ifdef EM_MAIN
-					em_addMirror(originArray, axisType == CS_X ||
+					em_addMirror(segment, originArray, axisType == CS_X ||
 					axisType == CS_XY, axisType == CS_Y || axisType == CS_XY);
 				#else
 					print(O_OUT, "Mirror ");
@@ -285,7 +286,7 @@ void drawPoints(ObjShape* shape){
 		}
 	}
 	#ifdef EM_MAIN
-		em_paintShape();
+		em_paintShape(shape);
 	#endif
 }
 
