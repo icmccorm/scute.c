@@ -83,7 +83,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 		newComp->animUpperBound = -1;
 		newComp->animLowerBound = -1;
 		newComp->animated = false;
-		newComp->compilingAnimation = NULL;
+		newComp->compilingAnimation = false;
 	}
 
 	newComp->scopeCapacity = 0;
@@ -300,7 +300,7 @@ static Compiler* exitCompilationScope(){
 	if(superComp){
 		uint32_t scopeIndex = writeValue(superComp->compilingChunk->chunk, OBJ_VAL(toFree->compilingChunk), parser.previous.line);
 		writeOperatorBundle(superComp->compilingChunk->chunk, OP_CLOSURE, scopeIndex, parser.current.line);
-		writeChunk(superComp->compilingChunk->chunk, (uint8_t) (currentCompiler()->compilingAnimation != NULL ? 0 : 1), parser.current.line);
+		writeChunk(superComp->compilingChunk->chunk, (uint8_t) currentCompiler()->compilingAnimation, parser.current.line);
 		for (int i = 0; i < toFree->compilingChunk->upvalueCount; i++) {
 			writeChunk(superComp->compilingChunk->chunk, toFree->upvalues[i].isLocal ? 1 : 0, parser.current.line);
 			writeVariableData(superComp->compilingChunk->chunk, toFree->upvalues[i].index);
@@ -630,14 +630,11 @@ static void internGlobal(TK* id){
 static void markInitialized();
 static void namedVariable(TK* id, bool canAssign);
 	
-static void emitAnimation(ObjAnim* anim, ObjString* property, int min, int max){
+static void emitAnimation(ObjString* property, int min, int max){
 	uint16_t capMin = min >= 0 ? min : 0;
 	uint16_t capMax = max >= 0 ? max : 0;
-	
-	writeChunk(currentChunk(), OP_ANIM, parser.previous.line);
-	
+	writeChunk(currentChunk(), OP_ANIM, parser.previous.line);	
 	writeVariableData(currentChunk(), getObjectIndex((Obj*) property));
-	writeVariableData(currentChunk(), getObjectIndex((Obj*) anim));
 	uint8_t minFirstHalf = (capMin >> 8) & 0xff;
 	uint8_t minSecondHalf = capMin & 0xff;
 	uint8_t maxFirstHalf = (capMax >> 8) & 0xff;
@@ -653,9 +650,7 @@ static void animStatement(){
 		TK animToken = parser.previous;			
 		int prevLowerBound = rootCompiler->animLowerBound;
 		int prevUpperBound = rootCompiler->animUpperBound;
-		ObjAnim* anim = allocateAnimation();
-		addAnimation(currentResult(), anim);
-		rootCompiler->compilingAnimation = anim;
+		rootCompiler->compilingAnimation = true;
 		endLine();
 		int currentScopeDepth = rootCompiler->scopeDepth + 1;
 		while(parser.current.type != TK_EOF 
@@ -730,7 +725,7 @@ static void animStatement(){
 						ObjChunk* thunk = thunkExpression(false);
 						endLine();
 						ObjString* assignString = getTokenStringObject(&idToken);
-						emitAnimation(anim, assignString, rootCompiler->animLowerBound, rootCompiler->animUpperBound);
+						emitAnimation(assignString, rootCompiler->animLowerBound, rootCompiler->animUpperBound);
 					} break;
 					default:{
 						errorAtCurrent("Only instance variable definitions are allowed within timesteps.");
@@ -746,6 +741,7 @@ static void animStatement(){
 		if(rootCompiler->animUpperBound == 0) errorAtCurrent("An animation's set of intervals must have a defined upper bound.");
 		rootCompiler->animLowerBound = prevLowerBound;
 		rootCompiler->animUpperBound = prevUpperBound;
+		rootCompiler->compilingAnimation = false;
 	}
 }
 

@@ -444,14 +444,16 @@ static InterpretResult run() {
 			case OP_ANIM:{
 				ObjInstance* inst = currentInstance();
 				ObjString* property = (ObjString*) AS_OBJ(READ_CONSTANT());
-				ObjAnim* anim = (ObjAnim*) AS_OBJ(READ_CONSTANT());
 				ObjClosure* close = (ObjClosure*) AS_OBJ(pop());	
 				uint16_t max = READ_SHORT();
 				uint16_t min = READ_SHORT();
 
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
 					ObjShape* shape = (ObjShape*) inst;
+					if(!shape->animation) shape->animation = allocateAnimation(currentResult());
+					ObjAnim* anim = shape->animation;
 					anim->shape = shape;
+
 					animateProperty(anim, property, close, min, max);
 					if(shape->animation == NULL){
 						shape->animation = anim;

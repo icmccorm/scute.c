@@ -89,7 +89,7 @@ struct sCompiler{
     ObjChunk* compilingChunk;
     ObjClosure* compilingClosure;
 	HashMap* classes;
-    ObjAnim* compilingAnimation;
+    bool compilingAnimation;
 
     bool returned;
 

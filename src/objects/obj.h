@@ -18,7 +18,7 @@ ObjShape* allocateShape(ObjInstance* super, TKType shapeType);
 ObjClosure* allocateClosure(ObjChunk* innerChunk, bool saveWithCompilation);
 ObjUpvalue* allocateUpvalue(Value* slot);
 
-ObjAnim* allocateAnimation();
+ObjAnim* allocateAnimation(CompilePackage* package);
 ObjTimeline* allocateTimeline();
 void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int max);
 void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int min, int max);

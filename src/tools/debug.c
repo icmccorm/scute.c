@@ -225,13 +225,9 @@ static int animInstruction(const char* name, Chunk* chunk, int offset){
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
 	offset = offset + 1 + numBytes;
 
-	uint8_t numSecondBytes = chunk->code[offset+1];
-	uint32_t linkIndex = readEmbeddedInteger(chunk, numBytes, offset);
-	offset = offset + 1 + numSecondBytes;
-
 	offset = offset + 4;
 
-	print(O_DEBUG, "%-16s %4d %4d ", name, valIndex, linkIndex);
+	print(O_DEBUG, "%-16s %4d %4d ", name, valIndex);
 	printValue(O_DEBUG, chunk->constants->values[valIndex]);
 	print(O_DEBUG, "\n");
 	return offset + 1;

@@ -148,9 +148,11 @@ ObjInstance* allocateInstance(ObjInstance* super){
 	return close;
 }
 
-ObjAnim* allocateAnimation(){
+ObjAnim* allocateAnimation(CompilePackage* package){
+	heap = &currentResult()->objects;
 	ObjAnim* anim = ALLOCATE_OBJ(ObjAnim, OBJ_ANIM);
 	initMap(&anim->map);
+	heap = &vm.objects;
 	return anim;
 }
 
@@ -183,7 +185,6 @@ void animateProperty(ObjAnim* anim, ObjString* propName, ObjClosure* thunk, int 
 		heap = &vm.objects;
 	}
 	addItemToTimeline(timeline, thunk, min, max);
-
 }
 
 ObjChunk* allocateChunkObject(ObjString* funcName){
