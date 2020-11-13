@@ -78,12 +78,16 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 		newComp->animLowerBound = comp->animLowerBound;
 		newComp->animated = comp->animated;
 		newComp->compilingAnimation = comp->compilingAnimation;
+		newComp->compilingParametric = comp->compilingParametric;
+		newComp->timestepVariable = comp->timestepVariable;
 	}else{
 		newComp->scopeDepth = 0;
 		newComp->animUpperBound = -1;
 		newComp->animLowerBound = -1;
 		newComp->animated = false;
 		newComp->compilingAnimation = false;
+		newComp->compilingParametric = false;
+		newComp->timestepVariable = NULL;
 	}
 
 	newComp->scopeCapacity = 0;
@@ -491,7 +495,7 @@ static ObjChunk* thunkExpression(bool emitTrace){
 	expression(emitTrace);
 
 	//If we're in a one-sided limit
-	if(currentCompiler()->animUpperBound >= 0 && currentCompiler()->animLowerBound >= 0){
+	if(!currentCompiler()->compilingParametric && currentCompiler()->animUpperBound >= 0 && currentCompiler()->animLowerBound >= 0){
 		emitByte(OP_FRAME_INDEX);
 		emitConstant(NUM_VAL(currentCompiler()->animLowerBound));
 		emitByte(OP_SUBTRACT);
@@ -644,10 +648,8 @@ static void emitAnimation(ObjString* property, int min, int max){
 }
 
 static void animStatement(){
-	consume(TK_ID, "Expected an identifier.");
 	Compiler* rootCompiler = currentCompiler();
 	if(!parser.hadError){
-		TK animToken = parser.previous;			
 		int prevLowerBound = rootCompiler->animLowerBound;
 		int prevUpperBound = rootCompiler->animUpperBound;
 		rootCompiler->compilingAnimation = true;
@@ -681,6 +683,7 @@ static void animStatement(){
 								print(O_ERR, "Expected an integer upper bound.");
 							}else{
 								rootCompiler->animUpperBound = tokenToNumber(parser.current);
+								rootCompiler->compilingParametric = true;
 								advance();
 							}
 						}
@@ -700,6 +703,7 @@ static void animStatement(){
 								print(O_ERR, "Expected an integer lower bound.");
 							}else{
 								rootCompiler->animLowerBound = tokenToNumber(parser.current);
+								rootCompiler->compilingParametric = true;
 								advance();
 							}
 						}
@@ -733,6 +737,7 @@ static void animStatement(){
 					} break;
 				}
 			}
+			rootCompiler->compilingParametric = true;
 		}
 		CompilePackage* result = currentResult();
 		if(result->upperLimit < rootCompiler->animUpperBound) {
@@ -742,6 +747,8 @@ static void animStatement(){
 		rootCompiler->animLowerBound = prevLowerBound;
 		rootCompiler->animUpperBound = prevUpperBound;
 		rootCompiler->compilingAnimation = false;
+		rootCompiler->timestepVariable = NULL;
+
 	}
 }
 
@@ -1331,6 +1338,7 @@ static int resolveUpvalue(Compiler* compiler, TK* id) {
 }
 
 static void namedVariable(TK* id, bool canAssign){
+
 	int32_t index = resolveLocal(currentCompiler(), id);
 	uint8_t getOp;
 	uint8_t defOp;

@@ -89,13 +89,14 @@ struct sCompiler{
     ObjChunk* compilingChunk;
     ObjClosure* compilingClosure;
 	HashMap* classes;
-    bool compilingAnimation;
 
     bool returned;
 
     int animUpperBound;
     int animLowerBound;
-
+    bool compilingAnimation;
+    bool compilingParametric;
+    TK* timestepVariable;
 };
 
 typedef struct sCompiler Compiler;

@@ -38,6 +38,8 @@ void initVM(CompilePackage* package, int frameIndex) {
 	heap = &vm.objects;
 
 	vm.frameIndex = frameIndex;
+	double proportion = (frameIndex - package->lowerLimit) / (double) (package->upperLimit - package->lowerLimit);
+	add(vm.globals, string("t"), NUM_VAL(proportion));
 	vm.stackSize = 0;
 	vm.stackFrameCount = 0;
 
@@ -303,7 +305,7 @@ static InterpretResult run() {
 			case OP_CLOSURE:{
 				ObjChunk* chunk = AS_CHUNK(READ_CONSTANT());
 				bool saveWithCompilation = (bool) READ_BYTE();
-				ObjClosure* close = allocateClosure(chunk, !saveWithCompilation);
+				ObjClosure* close = allocateClosure(chunk, saveWithCompilation);
 				push(OBJ_VAL(close));
 				StackFrame* frame = currentStackFrame();
 				for(int i = 0; i<close->upvalueCount; ++i){
@@ -447,17 +449,16 @@ static InterpretResult run() {
 				ObjClosure* close = (ObjClosure*) AS_OBJ(pop());	
 				uint16_t max = READ_SHORT();
 				uint16_t min = READ_SHORT();
-
 				if(inst->type == INST_SHAPE || inst->type == INST_SEG){
 					ObjShape* shape = (ObjShape*) inst;
-					if(!shape->animation) shape->animation = allocateAnimation(currentResult());
+					if(!shape->animation) {
+						shape->animation = allocateAnimation(currentResult());
+						addAnimation(currentResult(), shape->animation);
+					}
 					ObjAnim* anim = shape->animation;
 					anim->shape = shape;
 
 					animateProperty(anim, property, close, min, max);
-					if(shape->animation == NULL){
-						shape->animation = anim;
-					}
 				}else{	
 					runtimeError("Only instances of shapes and segments can have animated properties.");
 				}
@@ -602,6 +603,7 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 	if(result != INTERPRET_COMPILE_ERROR) {
 		result = executeCompiled(code, index);
 	}
+	renderAnimationBlocks(code, 50);
 	return result;
 }
 
