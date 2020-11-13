@@ -714,6 +714,7 @@ static void animStatement(){
 				} break;
 			}
 			endLine();
+
 			Compiler* comp = rootCompiler;
 			int innerScopeDepth = currentScopeDepth + 1;
 			while(parser.current.type != TK_EOF 
@@ -737,7 +738,7 @@ static void animStatement(){
 					} break;
 				}
 			}
-			rootCompiler->compilingParametric = true;
+			rootCompiler->compilingParametric = false;
 		}
 		CompilePackage* result = currentResult();
 		if(result->upperLimit < rootCompiler->animUpperBound) {
@@ -748,9 +749,8 @@ static void animStatement(){
 		rootCompiler->animUpperBound = prevUpperBound;
 		rootCompiler->compilingAnimation = false;
 		rootCompiler->timestepVariable = NULL;
-
 	}
-}
+} 
 
 static void whileStatement(){
 	uint32_t jumpIndex = currentChunk()->count;

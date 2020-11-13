@@ -33,13 +33,14 @@ void initVM(CompilePackage* package, int frameIndex) {
 
 	initMap(&vm.globals);
 	initGlobals(vm.globals);
-
+	double proportion = (frameIndex - package->lowerLimit) / (double) (package->upperLimit - package->lowerLimit);
+	add(vm.globals, string("t"), NUM_VAL(proportion));
+	
 	vm.objects = NULL;
 	heap = &vm.objects;
 
 	vm.frameIndex = frameIndex;
-	double proportion = (frameIndex - package->lowerLimit) / (double) (package->upperLimit - package->lowerLimit);
-	add(vm.globals, string("t"), NUM_VAL(proportion));
+
 	vm.stackSize = 0;
 	vm.stackFrameCount = 0;
 
@@ -53,6 +54,8 @@ void initVM(CompilePackage* package, int frameIndex) {
 	vm.package = package;
 	resetStack();
   	mergeMaps(package->globals, vm.globals);
+	vm.objects = NULL;
+	heap = &vm.objects;
 }
 
 void freeVM() {
@@ -603,7 +606,6 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 	if(result != INTERPRET_COMPILE_ERROR) {
 		result = executeCompiled(code, index);
 	}
-	renderAnimationBlocks(code, 50);
 	return result;
 }
 
