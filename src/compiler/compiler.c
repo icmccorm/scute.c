@@ -495,7 +495,7 @@ static ObjChunk* thunkExpression(bool emitTrace){
 	expression(emitTrace);
 
 	//If we're in a one-sided limit
-	if(!currentCompiler()->compilingParametric && currentCompiler()->animUpperBound >= 0 && currentCompiler()->animLowerBound >= 0){
+	if(!currentCompiler()->compilingParametric && currentCompiler()->animUpperBound >= -1 && currentCompiler()->animLowerBound >= -1){
 		emitByte(OP_FRAME_INDEX);
 		emitConstant(NUM_VAL(currentCompiler()->animLowerBound));
 		emitByte(OP_SUBTRACT);
@@ -676,6 +676,7 @@ static void animStatement(){
 						print(O_ERR, "Expected an integer lower bound.");
 					}else{
 						rootCompiler->animLowerBound = tokenToNumber(parser.current);
+						rootCompiler->animUpperBound = -1;
 						advance();
 						if(parser.current.type == TK_TO){
 							advance();
@@ -695,6 +696,7 @@ static void animStatement(){
 						print(O_ERR, "Expected an integer upper bound.");
 					}else{
 						int rootNumber = tokenToNumber(parser.current);
+						rootCompiler->animLowerBound = rootCompiler->animUpperBound;
 						rootCompiler->animUpperBound = rootNumber;
 						advance();
 						if(parser.current.type == TK_FROM){
@@ -714,7 +716,6 @@ static void animStatement(){
 				} break;
 			}
 			endLine();
-
 			Compiler* comp = rootCompiler;
 			int innerScopeDepth = currentScopeDepth + 1;
 			while(parser.current.type != TK_EOF 
@@ -748,9 +749,10 @@ static void animStatement(){
 		rootCompiler->animLowerBound = prevLowerBound;
 		rootCompiler->animUpperBound = prevUpperBound;
 		rootCompiler->compilingAnimation = false;
+		rootCompiler->compilingParametric = false;
 		rootCompiler->timestepVariable = NULL;
 	}
-} 
+}
 
 static void whileStatement(){
 	uint32_t jumpIndex = currentChunk()->count;
@@ -1376,16 +1378,9 @@ static void namedVariable(TK* id, bool canAssign){
 void variable(bool canAssign){
 	if(parser.current.type == TK_L_PAREN){
 		TK funcName = parser.previous;
-		Value classValue = getValue(currentCompiler()->classes, getTokenStringObject(&funcName));
-		uint8_t numParams = 0;
-		if(!IS_NULL(classValue)){
-			numParams = emitParams();
-			inherit(AS_CHUNK(classValue), &numParams);
-		}else{
-			numParams = emitParams();
-			namedVariable(&funcName, canAssign);
-			emitBytes(OP_CALL, numParams);
-		}
+		uint8_t numParams = emitParams();
+		namedVariable(&funcName, canAssign);
+		emitBytes(OP_CALL, numParams);
 	}else{
 		namedVariable(&parser.previous, canAssign);
 	}

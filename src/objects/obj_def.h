@@ -104,6 +104,7 @@ struct sTimestep{
 	Obj obj;
 	int min;
 	int max;
+	Value resolved;
 	struct sObjClosure* thunk;	
 };
 

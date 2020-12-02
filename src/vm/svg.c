@@ -44,6 +44,11 @@ void assignStyles(ObjShape* shape){
 }
 #endif
 
+
+bool fallsWithinTimeline(int lower, int upper, int current){
+	return (current >= lower) && (current <= upper);
+}
+
 void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 	for(int i = 0; i<package->numAnimations; ++i){
 		ObjAnim* anim = package->animations[i];
@@ -56,8 +61,16 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 			ObjTimeline* timeline = (ObjTimeline*) AS_OBJ(currentEntry->value);
 			for(int i = timeline->stepIndex; i<timeline->numSteps; ++i){
 				Timestep* step = &timeline->steps[i];
-				if(timeIndex >= step->min && timeIndex <= step->max){
-					Value currentValue = executeThunk(step->thunk, timeIndex);
+
+				if(fallsWithinTimeline(step->min, step->max, timeIndex)){
+					Value executedValue = executeThunk(step->thunk, timeIndex);
+					Value currentValue;
+					if(i > 0){
+						currentValue = NUM_VAL(AS_NUM(timeline->steps[i-1].resolved) + AS_NUM(executedValue));
+					}else{
+						currentValue = executedValue;
+					}
+					step->resolved = currentValue;
 					switch(currentValue.type){
 						case VL_OBJ:{
 							Obj* valueAsObject = AS_OBJ(currentValue);

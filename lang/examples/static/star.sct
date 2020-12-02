@@ -1,10 +1,10 @@
 with canvas
 	.size = [100, 100]
-	.origin = [50, 50]
+	.origin = [-50, 50]
 with polygon()
 	.stroke = :black
 	.fill = :yellow
-	.strokeWidth = 2
+	.strokeWidth = 1
 	jump().position = [50, -10]	
 	repeat 5
 		move().distance = 20

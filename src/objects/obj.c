@@ -166,6 +166,7 @@ void addItemToTimeline(ObjTimeline* timeline, ObjClosure* thunk, int min, int ma
 	step->min = min;
 	step->max = max;
 	step->thunk = thunk;
+	step->resolved = NULL_VAL();
 	++timeline->numSteps;
 }
 

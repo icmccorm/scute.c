@@ -35,7 +35,7 @@ void initVM(CompilePackage* package, int frameIndex) {
 	initGlobals(vm.globals);
 	double proportion = (frameIndex - package->lowerLimit) / (double) (package->upperLimit - package->lowerLimit);
 	add(vm.globals, string("t"), NUM_VAL(proportion));
-	
+
 	vm.objects = NULL;
 	heap = &vm.objects;
 
@@ -606,6 +606,8 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 	if(result != INTERPRET_COMPILE_ERROR) {
 		result = executeCompiled(code, index);
 	}
+
+	//renderAnimationBlocks(code, 1);
 	return result;
 }
 
