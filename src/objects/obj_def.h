@@ -101,7 +101,7 @@ struct sObjShape {
 };
 
 struct sTimestep{
-	Obj obj;
+	Obj object;
 	int min;
 	int max;
 	Value resolved;

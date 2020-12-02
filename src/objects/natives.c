@@ -336,7 +336,7 @@ Value cBezier(Value* params, int numParams){
 Value mirror(Value* params, int numParams){
 	ObjShape* mirrorInstance = allocateShape(NULL, TK_MIRROR);
 	
-	add(mirrorInstance->instance.map, string("axis"), NUM_VAL(0));
+	add(mirrorInstance->instance.map, string("axis"), NUM_VAL((double) CS_X));
 	add(mirrorInstance->instance.map, string("origin"), VECTOR(0, 0));
 
 	ObjInstance* current = currentInstance();

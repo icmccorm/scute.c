@@ -70,6 +70,8 @@ typedef struct{
 } Upvalue;
 
 struct sCompiler{
+    struct sCompiler* super;
+
     Local* locals;
     int localCount;
 
@@ -84,11 +86,9 @@ struct sCompiler{
 
     CompilePackage* result;
     TKType instanceType;
-    struct sCompiler* super;
 
     ObjChunk* compilingChunk;
     ObjClosure* compilingClosure;
-	HashMap* classes;
 
     bool returned;
 

@@ -70,9 +70,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 	Compiler* comp = currentCompiler();
 	newComp->super = comp;
 
-	initMap(&newComp->classes);
 	if(comp){
-		mergeMaps(comp->classes, newComp->classes);
 		newComp->scopeDepth = comp->scopeDepth + 1;
 		newComp->animUpperBound = comp->animUpperBound;
 		newComp->animLowerBound = comp->animLowerBound;
@@ -993,10 +991,6 @@ static void defStatement() {
 	indentedBlock();
 	compiler = exitCompilationScope();
 
-	if(newChunk->chunkType == CK_CONSTR) {
-		add(currentCompiler()->classes, getTokenStringObject(&idToken), OBJ_VAL(newChunk));
-	}
-	
 	if(currentCompiler()->scopeDepth > 0){	
 		emitBundle(OP_DEF_LOCAL, resolveLocal(currentCompiler(), &idToken));
 	}else{

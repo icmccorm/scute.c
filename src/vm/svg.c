@@ -281,11 +281,16 @@ void drawPoints(ObjShape* shape){
 				Value* originArray = AS_ARRAY(origin)->array->values;
 
 				Value axis = getValue(map, string("axis"));
-				CSType axisType = (CSType) axis.as.number;
+				CSType axisType = (CSType) AS_NUM(axis);
 
 				#ifdef EM_MAIN
-					em_addMirror(segment, originArray, axisType == CS_X ||
-					axisType == CS_XY, axisType == CS_Y || axisType == CS_XY);
+					em_addMirror(
+						segment,
+						originArray,
+						axisType == CS_X || axisType == CS_XY, 
+						axisType == CS_Y || axisType == CS_XY
+					);
+					
 				#else
 					print(O_OUT, "Mirror ");
 					printValue(O_OUT, origin);
