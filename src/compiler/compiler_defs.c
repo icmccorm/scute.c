@@ -3,10 +3,10 @@
 #include "compiler_defs.h"
 
 uint32_t addLocal(Compiler* compiler, TK idName){
-    if(compiler->localCount + 1 > compiler->scopeCapacity){
-        int oldCapacity = compiler->scopeCapacity;
-		compiler->scopeCapacity = GROW_CAPACITY(oldCapacity);
-		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->scopeCapacity);
+    if(compiler->localCount + 1 > compiler->localCapacity){
+        int oldCapacity = compiler->localCapacity;
+		compiler->localCapacity = GROW_CAPACITY(oldCapacity);
+		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->localCapacity);
     }
     Local* target = &(compiler->locals[compiler->localCount]);
 	target->type = VAR;
@@ -37,10 +37,10 @@ uint32_t addUpvalue(Compiler* compiler, int index, bool isLocal){
 }
 
 static uint32_t addDummyLocal(Compiler* compiler, LocalType type){
-    if(compiler->localCount + 1 > compiler->scopeCapacity){
-        int oldCapacity = compiler->scopeCapacity;
-		compiler->scopeCapacity = GROW_CAPACITY(oldCapacity);
-		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->scopeCapacity);
+    if(compiler->localCount + 1 > compiler->localCapacity){
+        int oldCapacity = compiler->localCapacity;
+		compiler->localCapacity = GROW_CAPACITY(oldCapacity);
+		compiler->locals = GROW_ARRAY(compiler->locals, Local, oldCapacity, compiler->localCapacity);
     }
 
     Local* target = &(compiler->locals[compiler->localCount]);
@@ -60,7 +60,7 @@ uint32_t addCounterLocal(Compiler* compiler){
 }
 
 void freeCompiler(Compiler* compiler){
-	FREE_ARRAY(Local, compiler->locals, compiler->scopeCapacity);
+	FREE_ARRAY(Local, compiler->locals, compiler->localCapacity);
 	FREE_ARRAY(Upvalue, compiler->upvalues, compiler->upvalueCapacity);
 	FREE(Compiler, compiler);
 }

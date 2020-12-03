@@ -65,7 +65,7 @@ struct sObjChunk{
 	Chunk* chunk;
 	ObjString* funcName;
 	CKType chunkType;
-	int numParameters;
+	uint8_t numParameters;
 	ObjChunk* superChunk;
 	int upvalueCount;
 };

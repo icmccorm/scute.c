@@ -88,7 +88,7 @@ static Compiler* enterCompilationScope(ObjChunk* chunkObj){
 		newComp->timestepVariable = NULL;
 	}
 
-	newComp->scopeCapacity = 0;
+	newComp->localCapacity = 0;
 	newComp->localCount = 0;
 	newComp->locals = NULL;
 
@@ -591,6 +591,7 @@ static void indentedBlock() {
 		){
 		advance();
 		statement();
+		printChunk(currentChunkObject()->chunk, "currResult");
 	}
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
@@ -1004,7 +1005,7 @@ static void withStatement(){
  	expression(false);
 	endLine();
 	emitByte(OP_PUSH_INST);
-
+	printChunk(currentChunkObject()->chunk, "currResult");
 	enterEnclosedScope();
 	indentedBlock();
 	exitEnclosedScope();	
@@ -1543,7 +1544,6 @@ bool compile(char* source, CompilePackage* package){
 	package->compiled->chunkType = CK_MAIN;
 
 	compiler = enterCompilationScope(package->compiled);
-
 	advance();
 	while(parser.current.type != TK_EOF){
 		statement();

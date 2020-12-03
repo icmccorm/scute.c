@@ -69,37 +69,36 @@ typedef struct{
     int index;
 } Upvalue;
 
-struct sCompiler{
-    struct sCompiler* super;
+typedef struct Compiler{
+    ObjChunk* compilingChunk;
+
+    int scopeDepth;
+    bool enclosed;
+
+    TKType instanceType;
+    bool returned;
 
     Local* locals;
+    int localCapacity;
     int localCount;
 
     Upvalue* upvalues;
     int upvalueCapacity;
 
-    int scopeDepth;
-    int scopeCapacity;
-
-    bool enclosed;
-    bool animated;
-
-    CompilePackage* result;
-    TKType instanceType;
-
-    ObjChunk* compilingChunk;
     ObjClosure* compilingClosure;
 
-    bool returned;
+    TK* timestepVariable;
 
+    struct Compiler* super;
+
+    CompilePackage* result;
+
+    bool animated;
     int animUpperBound;
     int animLowerBound;
     bool compilingAnimation;
     bool compilingParametric;
-    TK* timestepVariable;
-};
-
-typedef struct sCompiler Compiler;
+} Compiler;
 
 typedef void (*ParseFn)(bool canAssign);
 
