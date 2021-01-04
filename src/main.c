@@ -55,7 +55,7 @@ static char* readFile(const char* path){
 static InterpretResult runCode(char* source){
 	CompilePackage* compiled = initCompilationPackage();
 	
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("after init");
 	#endif
 
@@ -67,7 +67,7 @@ static InterpretResult runCode(char* source){
 	int length = strlen(source) + 1;
 	FREE_ARRAY(char, source, length);
 
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("after fcompile");
 	#endif
 
@@ -75,7 +75,7 @@ static InterpretResult runCode(char* source){
 }
 
 static InterpretResult runFile(const char* path){
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("before init");
 	#endif
 	char* source = readFile(path);
@@ -83,7 +83,7 @@ static InterpretResult runFile(const char* path){
 }
 
 static InterpretResult runInput(){
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("before init");
 	#endif
 

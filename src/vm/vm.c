@@ -584,18 +584,18 @@ InterpretResult executeCompiled(CompilePackage* code, int index){
 	ObjClosure* close = allocateClosure(code->compiled, false);
 	pushStackFrame(close, NULL, 0);
 
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("before runtime");
 	#endif
 	result = run();
 	
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("after runtime");
 	#endif
 	renderFrame(code);
 	freeVM();
 
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("after fruntime");
 	#endif
 	return result;
@@ -625,7 +625,7 @@ Value executeThunk(ObjClosure* thunk, int index){
 
 void runCompiler(CompilePackage* package, char* source){	
 	bool compiled = compile(source, package);
-	#ifndef EM_MAIN
+	#ifdef DEBUG_MEM
 		printMem("after compile");
 	#endif
 

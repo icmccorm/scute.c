@@ -28,24 +28,24 @@ typedef struct {
     TK previous;
     TK lastID;
 
-    TKType lastOperator;
-    PCType lastOperatorPrecedence;
-    uint32_t parenDepth;
-
     bool hadError;
     bool panicMode;
-
     char* codeStart;
+
+    int lineIndex;
+	int currentLineValueIndex;
+
     char* lastNewline; 
 
-	int lineIndex;
-	int currentLineValueIndex;
+    PCType manipPrecedence;
+    TKType lastOperator;
+    PCType lastOperatorPrecedence;
 
     Value* lastValueEmitted;
     Value* manipTarget;
-    PCType manipPrecedence;
     int manipTargetCharIndex;
     int manipTargetLength;
+    uint32_t parenDepth;
 
 } Parser;
  

@@ -1,0 +1,8 @@
+== result ==
+   0    1    OP_CONSTANT        1 hello
+   3     |   OP_PRINT
+   4     |   OP_RETURN
+======
+hello
+Canvas Origin: [0.000000, 0.000000]
+Canvas Size: [500.000000, 500.000000]

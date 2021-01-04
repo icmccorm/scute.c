@@ -1527,7 +1527,6 @@ void initParser(Parser* parser, char* source){
 	parser->manipTarget = NULL;
 	parser->manipTargetCharIndex = -1;
 	parser->manipTargetLength = 0;
-	
 	parser->parenDepth = 0;
 }
 

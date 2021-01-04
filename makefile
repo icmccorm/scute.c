@@ -15,6 +15,8 @@ EXEC_TEST_FILE = scute-test
 BUILD ?= ./build
 SRC_DIR ?= ./src
 TEST_DIR ?= ./tests
+BB_DIR ?= $(TEST_DIR)/blackbox
+UNIT_TEST_DIR ?= $(TEST_DIR)/unit
 
 C_ENTRY ?= ./src/main.c 
 TEST_ENTRY ?= ./tests/test-main.c
@@ -22,12 +24,15 @@ TEST_ENTRY ?= ./tests/test-main.c
 SRC_FILES := $(shell find $(SRC_DIR) -name *.c ! -name "*main.c")
 HEAD_FILES := $(shell find $(SRC_DIR) -name *.h)
 
-TEST_FILES := $(shell find $(TEST_DIR) -name *.c ! -name "*main.c")
-INC_TEST_DIRS := $(shell find $(TEST_DIR) -type d)
-INC_TEST_FLAGS :=  $(addprefix -I, $(INC_TEST_DIRS)) 
-TEST_OBJS := $(TEST_FILES:%=$(BUILD)/%.o)
+UNIT_TEST_FILES := $(shell find $(UNIT_TEST_DIR) -name *.c ! -name "*main.c")
+INC_UNIT_TEST_DIRS := $(shell find $(UNIT_TEST_DIR) -type d)
+INC_UNIT_TEST_FLAGS :=  $(addprefix -I, $(INC_UNIT_TEST_DIRS)) 
+UNIT_TEST_OBJS := $(UNIT_TEST_FILES:%=$(BUILD)/%.o)
+
+BB_CASES := $(shell find $(BB_DIR) -name *.test.sct)
 
 OBJS := $(SRC_FILES:%=$(BUILD)/%.o)
+DEBUG_OBJS := $(SRC_FILES:%=$(BUILD)/%.db.o)
 DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := $(shell find $(SRC_DIR) -type d)
@@ -35,18 +40,24 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 
 all : scanner ./$(EXEC_FILE) test web node
 
-./$(EXEC_FILE) : $(OBJS) $(C_ENTRY) ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
-	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
+./$(EXEC_FILE) : $(OBJS) $(C_ENTRY) scanner
+	@$(CC) -g $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
+
+./$(EXEC_TEST_FILE) : $(DEBUG_OBJS) $(C_ENTRY) scanner
+	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(DEBUG_OBJS) -o $(@) $(END_FLAGS)
+
+
+$(BUILD)/%.c.db.o : %.c 
+	@$(MKDIR) -p $(dir $@)
+	@$(CC) -g -D DEBUG $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
 $(BUILD)/%.c.o : %.c 
 	@$(MKDIR) -p $(dir $@)
-	@$(CC) -g -D DEBUG $(INC_TEST_FLAGS) $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
+	@$(CC) -g $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
 .PHONY : clean
  
-scanner:
-	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
-
+scanner: ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
 /scanner/parsemap.c /scanner/parsemap.h /scanner/tokenizer.c /scanner/tokenizer.h: 
 	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
 
@@ -74,6 +85,11 @@ node: $(SRC_FILES) $(EM_ENTRY)
 
 test :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
 	@$(CC) $(TEST_ENTRY) $(TEST_OBJS) $(OBJS) $(INC_FLAGS) $(INC_TEST_FLAGS) -o $(EXEC_TEST_FILE)
+
+blackbox : $(BB_CASES) 
+
+%.test.sct : %.result.txt ./$(EXEC_TEST_FILE)
+	@./$(EXEC_TEST_FILE) $@ | diff - $<
 
 make grind: ./$(EXEC_FILE)
 	valgrind --leak-check=full --track-origins=yes ./$(EXEC_FILE) ./test 
