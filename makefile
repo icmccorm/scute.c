@@ -83,10 +83,10 @@ web-prod: $(SRC_FILES) $(EM_ENTRY)
 node: $(SRC_FILES) $(EM_ENTRY)
 	@$(WASMC) $(EM_MAP) $(EM_FLAGS) $(EM_NODE_FLAGS) -g $(INC_FLAGS) -D EM_MAIN $(EM_ENTRY) $(SRC_FILES) -o ./$(EXEC_FILE)-test.js 
 
-test :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
+unit :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
 	@$(CC) $(TEST_ENTRY) $(TEST_OBJS) $(OBJS) $(INC_FLAGS) $(INC_TEST_FLAGS) -o $(EXEC_TEST_FILE)
 
-blackbox : $(BB_CASES) 
+test : $(BB_CASES) 
 
 %.test.sct : %.result.txt ./$(EXEC_TEST_FILE)
 	@./$(EXEC_TEST_FILE) $@ | diff - $<
