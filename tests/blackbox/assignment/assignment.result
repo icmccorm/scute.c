@@ -1,0 +1,33 @@
+== result ==
+   0    1    OP_CONSTANT        1 50.000000*(0, 0)
+   3     |   OP_DEF_GLOBAL      2 x
+   6     |   OP_POP
+   7     |   OP_CONSTANT        3 50.000000*(1, 0)
+  10    2    OP_DEF_GLOBAL      4 y
+  13     |   OP_POP
+  14     |   OP_GET_GLOBAL      5 x
+  17    3    OP_PRINT
+  18     |   OP_GET_GLOBAL      6 y
+  21    4    OP_PRINT
+  22     |   OP_CLOSURE          7 <chunk>
+------------
+   0    6    OP_CONSTANT        1 50.000000*(2, 0)
+   3     |   OP_DEF_LOCAL        0 
+   6     |   OP_GET_LOCAL        0 
+   9    7    OP_PRINT
+  10     |   OP_POP
+  11     |   OP_CONSTANT        2 NULL
+  14    8    OP_RETURN
+------------
+  26    8    OP_DEF_GLOBAL      8 scope
+  29     |   OP_POP
+  30     |   OP_GET_GLOBAL      9 scope
+  33     |   OP_CALL(0)
+  35     |   OP_POP
+  36     |   OP_RETURN
+======
+50.000000
+50.000000
+50.000000
+Canvas Origin: [0.000000, 0.000000]
+Canvas Size: [500.000000, 500.000000]

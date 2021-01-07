@@ -29,7 +29,7 @@ INC_UNIT_TEST_DIRS := $(shell find $(UNIT_TEST_DIR) -type d)
 INC_UNIT_TEST_FLAGS :=  $(addprefix -I, $(INC_UNIT_TEST_DIRS)) 
 UNIT_TEST_OBJS := $(UNIT_TEST_FILES:%=$(BUILD)/%.o)
 
-BB_CASES := $(shell find $(BB_DIR) -name *.test.sct)
+BB_CASES := $(shell find ./tests/blackbox -type f -name "*.test.sct")
 
 OBJS := $(SRC_FILES:%=$(BUILD)/%.o)
 DEBUG_OBJS := $(SRC_FILES:%=$(BUILD)/%.db.o)
@@ -64,7 +64,6 @@ scanner: ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
 clean:
 	@$(RM) -r $(BUILD)
 	@$(RM) *.wasm *.map $(EXEC_FILE).js $(EXEC_FILE) $(EXEC_TEST_FILE) $(EXEC_FILE)-test.js
-	
 
 -include $(DEPS)
 
@@ -88,8 +87,11 @@ unit :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
 
 test : $(BB_CASES) 
 
-%.test.sct : %.result.txt ./$(EXEC_TEST_FILE)
-	@./$(EXEC_TEST_FILE) $@ | diff - $<
+sand: ./$(EXEC_TEST_FILE) ./sandbox.sct
+	@./$(EXEC_TEST_FILE) ./sandbox.sct
+
+%.test.sct : %.result ./$(EXEC_TEST_FILE)
+	@./$(EXEC_TEST_FILE) $@ | diff - $< && echo "-\033[0;32m ☑ \033[0;37m $(basename $(notdir $@)) succeeded." || echo "-\033[31m ☑ \033[0;37m $(basename $(notdir $@)) failed."
 
 make grind: ./$(EXEC_FILE)
-	valgrind --leak-check=full --track-origins=yes ./$(EXEC_FILE) ./test 
+	valgrind --leak-check=full --track-origins=yes ./$(EXEC_FILE) ./test

@@ -591,7 +591,7 @@ static void indentedBlock() {
 		){
 		advance();
 		statement();
-		printChunk(currentChunkObject()->chunk, "currResult");
+	//	printChunk(currentChunkObject()->chunk, "currResult");
 	}
 	Compiler* currentComp = currentCompiler();
 	while(currentComp->localCount > initialLocalCount
@@ -1005,7 +1005,7 @@ static void withStatement(){
  	expression(false);
 	endLine();
 	emitByte(OP_PUSH_INST);
-	printChunk(currentChunkObject()->chunk, "currResult");
+	//printChunk(currentChunkObject()->chunk, "currResult");
 	enterEnclosedScope();
 	indentedBlock();
 	exitEnclosedScope();	
