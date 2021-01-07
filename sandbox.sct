@@ -1,8 +1,0 @@
-let x = 50
-var y = 50
-print(x)
-print(y)
-func scope()
-	let z = 50
-	print(z)
-scope()

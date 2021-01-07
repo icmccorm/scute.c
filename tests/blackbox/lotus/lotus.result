@@ -1,0 +1,177 @@
+== result ==
+   0    1    OP_GET_GLOBAL      1 canvas
+   3     |   OP_PUSH_INST
+   4     |   OP_LOAD_INST
+   5    2    OP_CONSTANT        2 60.000000*(0, 0)
+   8     |   OP_CONSTANT        3 50.000000*(0, 1)
+  11     |   OP_BUILD_ARRAY      2 
+  14     |   OP_DEF_INST         4 
+  18     |   OP_POP
+  19     |   OP_LOAD_INST
+  20     |   OP_CONSTANT        5 30.000000*(1, 0)
+  23    3    OP_CONSTANT        6 60.000000*(1, 1)
+  26     |   OP_BUILD_ARRAY      2 
+  29     |   OP_DEF_INST         7 
+  33     |   OP_POP
+  34     |   OP_POP_INST
+  36    4    OP_CLOSURE          8 <chunk>
+------------
+   0    4    OP_GET_GLOBAL      1 path
+   3     |   OP_CALL(0)
+   5     |   OP_PUSH_INST
+   6     |   OP_LOAD_INST
+   7     |   OP_CONSTANT        2 [255.000000, 0.000000, 255.000000, 255.000000]
+  10    5    OP_DEF_INST         3 
+  14     |   OP_POP
+  15     |   OP_LOAD_INST
+  16     |   OP_CONSTANT        4 [255.000000, 20.000000, 147.000000, 255.000000]
+  19    6    OP_DEF_INST         5 
+  23     |   OP_POP
+  24     |   OP_LOAD_INST
+  25     |   OP_CONSTANT        6 1.000000*(4, 0)
+  28    7    OP_DEF_INST         7 
+  32     |   OP_POP
+  33     |   OP_GET_GLOBAL      8 jump
+  36    8    OP_CALL(0)
+  38     |   OP_CONSTANT        9 -15.000000*(5, 0)
+  41     |   OP_CONSTANT       10 -50.000000*(5, 1)
+  44     |   OP_BUILD_ARRAY      2 
+  47     |   OP_DEF_INST        11 
+  51     |   OP_POP
+  52     |   OP_GET_GLOBAL     12 cbezier
+  55    9    OP_CALL(0)
+  57     |   OP_PUSH_INST
+  58     |   OP_LOAD_INST
+  59   10    OP_CONSTANT       13 -5.000000*(6, 0)
+  62     |   OP_CONSTANT       14 -4.000000*(6, 1)
+  65     |   OP_BUILD_ARRAY      2 
+  68     |   OP_DEF_INST        15 
+  72     |   OP_POP
+  73     |   OP_LOAD_INST
+  74     |   OP_CONSTANT       16 26.000000*(7, 0)
+  77   11    OP_CONSTANT       17 -42.000000*(7, 1)
+  80     |   OP_BUILD_ARRAY      2 
+  83     |   OP_DEF_INST        18 
+  87     |   OP_POP
+  88     |   OP_LOAD_INST
+  89     |   OP_CONSTANT       19 -9.000000*(8, 0)
+  92   12    OP_CONSTANT       20 -54.000000*(8, 1)
+  95     |   OP_BUILD_ARRAY      2 
+  98     |   OP_DEF_INST        21 
+ 102     |   OP_POP
+ 103     |   OP_POP_INST
+ 105   13    OP_GET_GLOBAL     22 arc
+ 108     |   OP_CALL(0)
+ 110     |   OP_PUSH_INST
+ 111     |   OP_LOAD_INST
+ 112   14    OP_CONSTANT       23 -34.000000*(9, 0)
+ 115     |   OP_CONSTANT       24 -25.000000*(9, 1)
+ 118     |   OP_BUILD_ARRAY      2 
+ 121     |   OP_DEF_INST        25 
+ 125     |   OP_POP
+ 126     |   OP_LOAD_INST
+ 127     |   OP_CONSTANT       26 40.000000*(10, 0)
+ 130   15    OP_DEF_INST        27 
+ 134     |   OP_POP
+ 135     |   OP_POP_INST
+ 137   16    OP_GET_GLOBAL     28 mirror
+ 140     |   OP_CALL(0)
+ 142     |   OP_PUSH_INST
+ 143     |   OP_LOAD_INST
+ 144   17    OP_CONSTANT       29 0.000000*(11, 0)
+ 147     |   OP_CONSTANT       30 0.000000*(11, 1)
+ 150     |   OP_BUILD_ARRAY      2 
+ 153     |   OP_DEF_INST        31 
+ 157     |   OP_POP
+ 158     |   OP_LOAD_INST
+ 159     |   OP_CONSTANT       32 31.000000
+ 162   18    OP_DEF_INST        33 
+ 166     |   OP_POP
+ 167     |   OP_POP_INST
+ 169   19    OP_POP_INST
+ 171     |   OP_RETURN
+------------
+  40   19    OP_DEF_GLOBAL      9 flower
+  43     |   OP_POP
+  44     |   OP_CLOSURE         10 <chunk>
+------------
+   0   19    OP_GET_GLOBAL      1 path
+   3     |   OP_CALL(0)
+   5     |   OP_PUSH_INST
+   6     |   OP_LOAD_INST
+   7     |   OP_CONSTANT        2 [0.000000, 255.000000, 0.000000, 255.000000]
+  10   20    OP_DEF_INST         3 
+  14     |   OP_POP
+  15     |   OP_LOAD_INST
+  16     |   OP_CONSTANT        4 [0.000000, 128.000000, 0.000000, 255.000000]
+  19   21    OP_DEF_INST         5 
+  23     |   OP_POP
+  24     |   OP_LOAD_INST
+  25     |   OP_CONSTANT        6 1.000000*(15, 0)
+  28   22    OP_DEF_INST         7 
+  32     |   OP_POP
+  33     |   OP_GET_GLOBAL      8 jump
+  36   23    OP_CALL(0)
+  38     |   OP_CONSTANT        9 27.000000*(16, 0)
+  41     |   OP_CONSTANT       10 -53.000000*(16, 1)
+  44     |   OP_BUILD_ARRAY      2 
+  47     |   OP_DEF_INST        11 
+  51     |   OP_POP
+  52     |   OP_GET_GLOBAL     12 cbezier
+  55   24    OP_CALL(0)
+  57     |   OP_PUSH_INST
+  58     |   OP_LOAD_INST
+  59   25    OP_CONSTANT       13 10.000000*(17, 0)
+  62     |   OP_CONSTANT       14 -58.000000*(17, 1)
+  65     |   OP_BUILD_ARRAY      2 
+  68     |   OP_DEF_INST        15 
+  72     |   OP_POP
+  73     |   OP_LOAD_INST
+  74     |   OP_CONSTANT       16 14.000000*(18, 0)
+  77   26    OP_CONSTANT       17 2.000000*(18, 1)
+  80     |   OP_BUILD_ARRAY      2 
+  83     |   OP_DEF_INST        18 
+  87     |   OP_POP
+  88     |   OP_LOAD_INST
+  89     |   OP_CONSTANT       19 -1.500000*(19, 0)
+  92   27    OP_CONSTANT       20 -31.000000*(19, 1)
+  95     |   OP_BUILD_ARRAY      2 
+  98     |   OP_DEF_INST        21 
+ 102     |   OP_POP
+ 103     |   OP_POP_INST
+ 105   28    OP_GET_GLOBAL     22 mirror
+ 108     |   OP_CALL(0)
+ 110     |   OP_PUSH_INST
+ 111     |   OP_LOAD_INST
+ 112   29    OP_CONSTANT       23 31.000000
+ 115     |   OP_DEF_INST        24 
+ 119     |   OP_POP
+ 120     |   OP_LOAD_INST
+ 121     |   OP_CONSTANT       25 0.000000*(21, 0)
+ 124   30    OP_CONSTANT       26 0.000000*(21, 1)
+ 127     |   OP_BUILD_ARRAY      2 
+ 130     |   OP_DEF_INST        27 
+ 134     |   OP_POP
+ 135     |   OP_POP_INST
+ 137   31    OP_POP_INST
+ 139     |   OP_RETURN
+------------
+  48   31    OP_DEF_GLOBAL     11 leaves
+  51     |   OP_POP
+  52     |   OP_GET_GLOBAL     12 flower
+  55     |   OP_CALL(0)
+  57     |   OP_POP
+  58     |   OP_GET_GLOBAL     13 leaves
+  61   32    OP_CALL(0)
+  63     |   OP_POP
+  64     |   OP_RETURN
+======
+Canvas Origin: [30.000000, 60.000000]
+Canvas Size: [60.000000, 50.000000]
+Jump: (27, -53)
+cBezier [10.000000, -58.000000] [14.000000, 2.000000] [-1.500000, -31.000000]
+Mirror [0.000000, 0.000000] 31.000000
+Jump: (-15, -50)
+cBezier [-5.000000, -4.000000] [26.000000, -42.000000] [-9.000000, -54.000000]
+Arc [-34.000000, -25.000000] 40.000000
+Mirror [0.000000, 0.000000] 31.000000

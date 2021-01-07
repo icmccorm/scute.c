@@ -1,0 +1,37 @@
+with canvas
+	.size = [60, 50]
+	.origin = [30, 60]
+
+def flower as path()
+	.stroke = :magenta
+	.fill = :pink
+	.strokeWidth = 1
+
+	jump().position = [-15, -50]
+
+	with cbezier()
+		.startControl = [-5, -4]
+		.endControl = [26, -42]
+		.end = [-9, -54]
+	with arc()
+		.center = [-34, -25]
+		.degrees = 40
+	with mirror()
+		.origin = [0, 0]
+		.axis = :x
+
+def leaves as path()
+	.stroke = :lime
+	.fill = :green
+	.strokeWidth = 1
+	jump().position = [27, -53]
+	with cbezier()
+		.startControl = [10, -58]
+		.endControl = [14, 2]
+		.end = [-1.5, -31]
+	with mirror()
+		.axis = :x
+		.origin = [0, 0]
+
+flower()
+leaves()
