@@ -1,4 +1,6 @@
 # Scute.c
+[![Build Status](https://travis-ci.com/icmcc/scute.c.svg?branch=master)](https://travis-ci.com/icmcc/scute.c)
+
 A C interpreter for the Scute programming language.
 Check out the live development [build](https://ian-colcanon.github.io/scute/). 
 
