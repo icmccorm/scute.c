@@ -87,6 +87,9 @@ unit :  $(OBJS) $(TEST_OBJS) $(TEST_ENTRY)
 
 test : $(BB_CASES) 
 
+refresh-bb: ./$(EXEC_TEST_FILE)
+	$(foreach case,$(BB_CASES),$(shell ./$(EXEC_TEST_FILE) $(case) > $(dir $(case))$(basename $(basename $(notdir $(case)))).result))
+
 sand: ./$(EXEC_TEST_FILE) ./sandbox.sct
 	@./$(EXEC_TEST_FILE) ./sandbox.sct
 
