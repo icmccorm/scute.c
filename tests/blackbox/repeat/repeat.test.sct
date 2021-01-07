@@ -1,0 +1,14 @@
+repeat 0
+	print("como esta")
+repeat 1
+	print("hola")
+repeat 2
+	print("nope")
+repeat 3
+	print("hi")
+repeat 4
+	print("hello")
+	repeat 3
+		print("goodbye")
+		repeat 2
+			print("see you next time!")

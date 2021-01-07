@@ -9,6 +9,7 @@
 build
 tmp
 test
+sandbox.sct
 
 # compiled solution
 scute*
@@ -18,3 +19,4 @@ scute*
 
 *.o
 *.xcodeproj
+

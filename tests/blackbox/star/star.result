@@ -1,0 +1,99 @@
+== result ==
+   0    1    OP_GET_GLOBAL      1 canvas
+   3     |   OP_PUSH_INST
+   4     |   OP_LOAD_INST
+   5    2    OP_CONSTANT        2 100.000000*(0, 0)
+   8     |   OP_CONSTANT        3 100.000000*(0, 1)
+  11     |   OP_BUILD_ARRAY      2 
+  14     |   OP_DEF_INST         4 
+  18     |   OP_POP
+  19     |   OP_LOAD_INST
+  20     |   OP_CONSTANT        5 -50.000000*(1, 0)
+  23    3    OP_CONSTANT        6 50.000000*(1, 1)
+  26     |   OP_BUILD_ARRAY      2 
+  29     |   OP_DEF_INST         7 
+  33     |   OP_POP
+  34     |   OP_POP_INST
+  36    4    OP_GET_GLOBAL      8 polygon
+  39     |   OP_CALL(0)
+  41     |   OP_PUSH_INST
+  42     |   OP_LOAD_INST
+  43    5    OP_CONSTANT        9 [0.000000, 0.000000, 0.000000, 255.000000]
+  46     |   OP_DEF_INST        10 
+  50     |   OP_POP
+  51     |   OP_LOAD_INST
+  52     |   OP_CONSTANT       11 [255.000000, 255.000000, 0.000000, 255.000000]
+  55    6    OP_DEF_INST        12 
+  59     |   OP_POP
+  60     |   OP_LOAD_INST
+  61     |   OP_CONSTANT       13 1.000000*(4, 0)
+  64    7    OP_DEF_INST        14 
+  68     |   OP_POP
+  69     |   OP_GET_GLOBAL     15 jump
+  72    8    OP_CALL(0)
+  74     |   OP_CONSTANT       16 50.000000*(5, 0)
+  77     |   OP_CONSTANT       17 -10.000000*(5, 1)
+  80     |   OP_BUILD_ARRAY      2 
+  83     |   OP_DEF_INST        18 
+  87     |   OP_POP
+  88     |   OP_CONSTANT       19 5.000000
+  91    9    OP_GET_LOCAL        0 
+  94   10    OP_CONSTANT       20 1.000000
+  97     |   OP_SUBTRACT
+  98     |   OP_DEF_LOCAL        0 
+ 101     |   OP_POP
+ 102     |   OP_GET_GLOBAL     21 move
+ 105     |   OP_CALL(0)
+ 107     |   OP_CONSTANT       22 20.000000*(6, 0)
+ 110     |   OP_DEF_INST        23 
+ 114     |   OP_POP
+ 115     |   OP_GET_GLOBAL     24 turn
+ 118   11    OP_CALL(0)
+ 120     |   OP_CONSTANT       25 0.000000*(7, 0)
+ 123     |   OP_DEF_INST        26 
+ 127     |   OP_POP
+ 128     |   OP_GET_GLOBAL     27 move
+ 131   12    OP_CALL(0)
+ 133     |   OP_CONSTANT       28 80.000000*(8, 0)
+ 136     |   OP_DEF_INST        29 
+ 140     |   OP_POP
+ 141     |   OP_GET_GLOBAL     30 turn
+ 144   13    OP_CALL(0)
+ 146     |   OP_CONSTANT       31 144.000000*(9, 0)
+ 149     |   OP_DEF_INST        32 
+ 153     |   OP_POP
+ 154     |   OP_GET_LOCAL        0 
+ 157     |   OP_CONSTANT       33 0.000000
+ 160     |   OP_LESS
+ 161     |   OP_JMP_FALSE      -73
+ 164     |   OP_POP
+ 165     |   OP_POP_INST
+ 167     |   OP_RETURN
+======
+Canvas Origin: [-50.000000, 50.000000]
+Canvas Size: [100.000000, 100.000000]
+Jump: (50, -10)
+Move 20.000000: (70, -10)
+Turn by 0 deg to 0 deg
+Move 80.000000: (150, -10)
+Turn by 0 deg to 0 deg
+Move 20.000000: (134, 2)
+Turn by 144 deg to 0 deg
+Move 80.000000: (69, 49)
+Turn by 144 deg to 0 deg
+Move 20.000000: (75, 30)
+Turn by 288 deg to 0 deg
+Move 80.000000: (100, -46)
+Turn by 288 deg to 0 deg
+Move 20.000000: (106, -27)
+Turn by 432 deg to 0 deg
+Move 80.000000: (131, 49)
+Turn by 432 deg to 0 deg
+Move 20.000000: (115, 37)
+Turn by 576 deg to 0 deg
+Move 80.000000: (50, -10)
+Turn by 576 deg to 0 deg
+Move 20.000000: (70, -10)
+Turn by 720 deg to 0 deg
+Move 80.000000: (150, -11)
+Turn by 720 deg to 0 deg

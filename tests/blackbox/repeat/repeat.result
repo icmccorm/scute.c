@@ -1,0 +1,191 @@
+== result ==
+   0    1    OP_CONSTANT        1 0.000000
+   3     |   OP_GET_LOCAL        0 
+   6    2    OP_CONSTANT        2 1.000000
+   9     |   OP_SUBTRACT
+  10     |   OP_DEF_LOCAL        0 
+  13     |   OP_POP
+  14     |   OP_CONSTANT        3 como esta
+  17     |   OP_PRINT
+  18     |   OP_GET_LOCAL        0 
+  21    3    OP_CONSTANT        4 0.000000
+  24     |   OP_LESS
+  25     |   OP_JMP_FALSE      -25
+  28     |   OP_POP
+  29     |   OP_CONSTANT        5 1.000000
+  32     |   OP_GET_LOCAL        0 
+  35    4    OP_CONSTANT        6 1.000000
+  38     |   OP_SUBTRACT
+  39     |   OP_DEF_LOCAL        0 
+  42     |   OP_POP
+  43     |   OP_CONSTANT        7 hola
+  46     |   OP_PRINT
+  47     |   OP_GET_LOCAL        0 
+  50    5    OP_CONSTANT        8 0.000000
+  53     |   OP_LESS
+  54     |   OP_JMP_FALSE      -25
+  57     |   OP_POP
+  58     |   OP_CONSTANT        9 2.000000
+  61     |   OP_GET_LOCAL        0 
+  64    6    OP_CONSTANT       10 1.000000
+  67     |   OP_SUBTRACT
+  68     |   OP_DEF_LOCAL        0 
+  71     |   OP_POP
+  72     |   OP_CONSTANT       11 nope
+  75     |   OP_PRINT
+  76     |   OP_GET_LOCAL        0 
+  79    7    OP_CONSTANT       12 0.000000
+  82     |   OP_LESS
+  83     |   OP_JMP_FALSE      -25
+  86     |   OP_POP
+  87     |   OP_CONSTANT       13 3.000000
+  90     |   OP_GET_LOCAL        0 
+  93    8    OP_CONSTANT       14 1.000000
+  96     |   OP_SUBTRACT
+  97     |   OP_DEF_LOCAL        0 
+ 100     |   OP_POP
+ 101     |   OP_CONSTANT       15 hi
+ 104     |   OP_PRINT
+ 105     |   OP_GET_LOCAL        0 
+ 108    9    OP_CONSTANT       16 0.000000
+ 111     |   OP_LESS
+ 112     |   OP_JMP_FALSE      -25
+ 115     |   OP_POP
+ 116     |   OP_CONSTANT       17 4.000000
+ 119     |   OP_GET_LOCAL        0 
+ 122   10    OP_CONSTANT       18 1.000000
+ 125     |   OP_SUBTRACT
+ 126     |   OP_DEF_LOCAL        0 
+ 129     |   OP_POP
+ 130     |   OP_CONSTANT       19 hello
+ 133     |   OP_PRINT
+ 134     |   OP_CONSTANT       20 3.000000
+ 137   11    OP_GET_LOCAL        1 
+ 140   12    OP_CONSTANT       21 1.000000
+ 143     |   OP_SUBTRACT
+ 144     |   OP_DEF_LOCAL        1 
+ 147     |   OP_POP
+ 148     |   OP_CONSTANT       22 goodbye
+ 151     |   OP_PRINT
+ 152     |   OP_CONSTANT       23 2.000000
+ 155   13    OP_GET_LOCAL        2 
+ 158   14    OP_CONSTANT       24 1.000000
+ 161     |   OP_SUBTRACT
+ 162     |   OP_DEF_LOCAL        2 
+ 165     |   OP_POP
+ 166     |   OP_CONSTANT       25 see you next time!
+ 169     |   OP_PRINT
+ 170     |   OP_GET_LOCAL        2 
+ 173     |   OP_CONSTANT       26 0.000000
+ 176     |   OP_LESS
+ 177     |   OP_JMP_FALSE      -25
+ 180     |   OP_POP
+ 181     |   OP_GET_LOCAL        1 
+ 184     |   OP_CONSTANT       27 0.000000
+ 187     |   OP_LESS
+ 188     |   OP_JMP_FALSE      -54
+ 191     |   OP_POP
+ 192     |   OP_GET_LOCAL        0 
+ 195     |   OP_CONSTANT       28 0.000000
+ 198     |   OP_LESS
+ 199     |   OP_JMP_FALSE      -83
+ 202     |   OP_POP
+ 203     |   OP_RETURN
+======
+como esta
+hola
+hola
+nope
+nope
+nope
+hi
+hi
+hi
+hi
+hello
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+hello
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+hello
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+hello
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+hello
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+goodbye
+see you next time!
+see you next time!
+see you next time!
+Canvas Origin: [0.000000, 0.000000]
+Canvas Size: [500.000000, 500.000000]

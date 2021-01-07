@@ -805,7 +805,7 @@ static void repeatStatement() {
 
 		//jump back to the beginning if the counter has ended.
 		emitBundle(OP_GET_LOCAL, counterLocalIndex);	
-		emitConstant(NUM_VAL(1));
+		emitConstant(NUM_VAL(0));
 		emitByte(OP_LESS);
 		//only jump back if the counter hasn't fallen below zero
 		jumpTo(OP_JMP_FALSE, jumpIndex);
