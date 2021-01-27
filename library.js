@@ -409,31 +409,13 @@ mergeInto(LibraryManager.library, {
 		'lib_getValueMeta',
 	],
 
-	em_addStringAttribute__deps: [
-		'currentShape',
-		'lib_getValueMeta'
-	],
-
 	em_addValue__deps: [
-		'values',
-		'lib_getValue'
-	],
-
-	em_addValueInsert__deps: [
 		'values',
 		'lib_getValue'
 	],
 
 	em_endLine__deps: [
 		'values',
-	],
-
-	em_addStage__deps: [
-		'lib_getValueMeta'
-	],
-
-	em_getValueMeta__deps: [
-		'valuePointerOffsets'
 	],
 
 	em_configureValuePointerOffsets__deps:[
@@ -457,10 +439,6 @@ mergeInto(LibraryManager.library, {
 
 	em_addColorStyle__deps: [
 		'lib_getValue',
-		'currentShape'
-	],
-
-	em_setShapeAnimation__deps:[
 		'currentShape'
 	],
 
