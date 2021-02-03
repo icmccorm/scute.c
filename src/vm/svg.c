@@ -59,21 +59,17 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 		while(currentEntry != NULL){
 			char* property = currentEntry->key->chars;
 			ObjTimeline* timeline = (ObjTimeline*) AS_OBJ(currentEntry->value);
+			Timestep* previous = NULL;
 			for(int i = timeline->stepIndex; i<timeline->numSteps; ++i){
 				Timestep* step = &timeline->steps[i];
 
 				if(fallsWithinTimeline(step->min, step->max, timeIndex)){
-					Value executedValue = executeThunk(step->thunk, timeIndex);
-					Value currentValue;
-					if(i > 0){
-						currentValue = NUM_VAL(AS_NUM(timeline->steps[i-1].resolved) + AS_NUM(executedValue));
-					}else{
-						currentValue = executedValue;
-					}
-					step->resolved = currentValue;
-					switch(currentValue.type){
+					Value* previousValue = previous ? &previous->resolved : NULL;
+					Value executedValue = executeThunk(step->thunk, timeIndex, previousValue);
+					step->resolved = executedValue;
+					switch(step->resolved.type){
 						case VL_OBJ:{
-							Obj* valueAsObject = AS_OBJ(currentValue);
+							Obj* valueAsObject = AS_OBJ(step->resolved);
 							switch(valueAsObject->type){
 								default: {
 									runtimeError("Animation value type not currently supported.");
@@ -82,9 +78,9 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 						}
 						default: {
 							#ifdef EM_MAIN
-								em_animateValue(currentEntry->key->chars, &currentValue);
+								em_animateValue(currentEntry->key->chars, &step->resolved);
 							#else
-								printValue(O_OUT, currentValue);
+								printValue(O_OUT, step->resolved);
 								print(O_OUT, "\n");
 							#endif
 						} break;
@@ -92,6 +88,7 @@ void renderAnimationBlocks(CompilePackage* package, int timeIndex){
 				}else{
 					++timeline->stepIndex;
 				}
+				previous = step;
 			}
 			currentEntry = currentEntry->next;
 		}

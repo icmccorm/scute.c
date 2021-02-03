@@ -40,10 +40,10 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 
 all : scanner ./$(EXEC_FILE) test web node
 
-./$(EXEC_FILE) : $(OBJS) $(C_ENTRY) scanner
+./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
 	@$(CC) -g $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
 
-./$(EXEC_TEST_FILE) : $(DEBUG_OBJS) $(C_ENTRY) scanner
+./$(EXEC_TEST_FILE) : $(DEBUG_OBJS) $(C_ENTRY)
 	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(DEBUG_OBJS) -o $(@) $(END_FLAGS)
 
 
@@ -57,8 +57,7 @@ $(BUILD)/%.c.o : %.c
 
 .PHONY : clean
  
-scanner: ./src/scanner/constants.txt ./src/scanner/keywords.txt ./autoscanner.py
-/scanner/parsemap.c /scanner/parsemap.h /scanner/tokenizer.c /scanner/tokenizer.h: 
+/scanner/parsemap.% /scanner/tokenizer.%: /scanner/constants.txt /scanner/keywords.txt autoscanner.py
 	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
 
 clean:
@@ -68,7 +67,7 @@ clean:
 -include $(DEPS)
 
 EM_FLAGS = --js-library ./library.js --extern-pre-js ./library-interop.js --pre-js ./pre.js
-EM_WEB_FLAGS = $(EM_EXPORTS) -s ASSERTIONS=1 -s SAFE_HEAP=1 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -s STRICT=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0  -s EXPORT_NAME="'scute'" -s FILESYSTEM=0 -s ENVIRONMENT='worker'
+EM_WEB_FLAGS = $(EM_EXPORTS) -s ASSERTIONS=2 -s SAFE_HEAP=1 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -s STRICT=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0  -s EXPORT_NAME="'scute'" -s FILESYSTEM=0 -s ENVIRONMENT='worker'
 EM_NODE_FLAGS = $(EM_EXPORTS) -O0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='node' -s EXPORT_NAME="'scute'" -s USE_ES6_IMPORT_META=0
 EM_EXPORTS = -s EXPORTED_FUNCTIONS='["_free", "_malloc", "_runCode", "_compileCode", "_freeCompilationPackage", "_renderAnimationBlocks"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["intArrayFromString", "ccall", "UTF8ToString"]'
 EM_ENTRY = ./src/em_main.c

@@ -27,15 +27,14 @@ static void resetStack(){
 static bool pushStackFrame(ObjClosure* closure, ObjInstance* super, uint8_t numParams);
 static uint8_t* popStackFrame();
 void initGlobals(HashMap* map);
-Value executeThunk(ObjClosure* thunk, int index);
+Value executeThunk(ObjClosure* thunk, int index, Value* startInterval);
 
 void initVM(CompilePackage* package, int frameIndex) {	
 
 	initMap(&vm.globals);
 	initGlobals(vm.globals);
-	double proportion = (frameIndex - package->lowerLimit) / (double) (package->upperLimit - package->lowerLimit);
-	add(vm.globals, string("t"), NUM_VAL(proportion));
-
+	vm.interpolant = (frameIndex - package->lowerLimit) / (double) (package->upperLimit - package->lowerLimit);
+	add(vm.globals, string("t"), NUM_VAL(vm.interpolant));
 	vm.objects = NULL;
 	heap = &vm.objects;
 
@@ -56,6 +55,8 @@ void initVM(CompilePackage* package, int frameIndex) {
   	mergeMaps(package->globals, vm.globals);
 	vm.objects = NULL;
 	heap = &vm.objects;
+
+	vm.animIntervalStart = NULL;
 }
 
 void freeVM() {
@@ -64,6 +65,7 @@ void freeVM() {
 	freeObjects(vm.objects);
 	vm.chunk = NULL;
 	heap = &vm.package->objects;
+	vm.animIntervalStart = NULL;
 }
 
 void push(Value value) {
@@ -301,6 +303,13 @@ static InterpretResult run() {
 			}
 		#endif
 		switch(readByte()){
+			case OP_INTERPOLATE: {
+				Value current = pop();
+				double initial = vm.animIntervalStart ? AS_NUM(*vm.animIntervalStart) : 0;
+				double diff = vm.interpolant * (AS_NUM(current) - initial);
+				double finalVal = AS_NUM(current) + diff;
+				push(NUM_VAL(finalVal));
+			} break;
 			case OP_CLOSE_UPVALUE:{
 				closeUpvalues(vm.stackTop - 1);
 				pop();
@@ -606,13 +615,20 @@ InterpretResult interpretCompiled(CompilePackage* code, int index){
 	if(result != INTERPRET_COMPILE_ERROR) {
 		result = executeCompiled(code, index);
 	}
+	#ifdef DEBUG
+		for(int i = 0; i < code->upperLimit; ++i){
+			renderAnimationBlocks(code, i);
+		}
+	#endif
 
-	//renderAnimationBlocks(code, 1);
 	return result;
 }
 
-Value executeThunk(ObjClosure* thunk, int index){
+Value executeThunk(ObjClosure* thunk, int index, Value* startInterval){
 	initVM(currentResult(), index);
+
+	vm.animIntervalStart = startInterval;
+
 	pushStackFrame(thunk, NULL, 0);
 
 	InterpretResult thunkInterpretSuccess = run();

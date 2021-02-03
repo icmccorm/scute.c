@@ -42,6 +42,9 @@ typedef struct {
 	ObjUpvalue* openUpvalues;
 	int frameIndex;
 	CompilePackage* package;
+
+	Value* animIntervalStart;
+	double interpolant;
 } VM;
 
 extern VM vm;
@@ -52,6 +55,6 @@ Value pop();
 InterpretResult interpretCompiled(CompilePackage* code, int index);
 void runCompiler(CompilePackage* package, char* source);
 ObjInstance* currentInstance();
-Value executeThunk(ObjClosure* thunk, int index);
+Value executeThunk(ObjClosure* thunk, int index, Value* previous);
 
 #endif

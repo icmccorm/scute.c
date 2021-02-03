@@ -494,11 +494,7 @@ static ObjChunk* thunkExpression(bool emitTrace){
 
 	//If we're in a one-sided limit
 	if(!currentCompiler()->compilingParametric && currentCompiler()->animUpperBound >= -1 && currentCompiler()->animLowerBound >= -1){
-		emitByte(OP_FRAME_INDEX);
-		emitConstant(NUM_VAL(currentCompiler()->animLowerBound));
-		emitByte(OP_SUBTRACT);
-		emitConstant(NUM_VAL(currentCompiler()->animUpperBound - currentCompiler()->animLowerBound));
-		emitBytes(OP_DIVIDE, OP_MULTIPLY);
+		emitByte(OP_INTERPOLATE);
 	}
 
 	compiler = exitCompilationScope();
@@ -539,7 +535,7 @@ static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	Value* link = emitConstant(val);
-	if((parser.lastOperatorPrecedence <= parser.manipPrecedence) && (parser.parenDepth == 0)){
+	if((parser.lastOperatorPrecedence < parser.manipPrecedence) && (parser.parenDepth == 0)){
 		parser.manipTarget = link;
 		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
 		parser.manipTargetLength = parser.previous.length;

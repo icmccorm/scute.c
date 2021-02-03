@@ -40,6 +40,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
+		case OP_INTERPOLATE: 
+			return simpleInstruction("OP_INTERPOLATE", offset);
 		case OP_ANIM:
 			return animInstruction("OP_ANIM", chunk, offset);
 		case OP_CLOSE_UPVALUE:
@@ -225,9 +227,11 @@ static int animInstruction(const char* name, Chunk* chunk, int offset){
 	uint32_t valIndex = readEmbeddedInteger(chunk, numBytes, offset);
 	offset = offset + 1 + numBytes;
 
+	uint16_t min = (chunk->code[offset] << 8) & chunk->code[offset+1];
+	uint16_t max = (chunk->code[offset+2] << 8) & chunk->code[offset+3];
 	offset = offset + 4;
 
-	print(O_DEBUG, "%-16s %4d %4d ", name, valIndex);
+	print(O_DEBUG, "%-16s %4d [%d, %d] ", name, valIndex, min, max);
 	printValue(O_DEBUG, chunk->constants->values[valIndex]);
 	print(O_DEBUG, "\n");
 	return offset + 1;

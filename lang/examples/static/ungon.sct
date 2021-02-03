@@ -1,0 +1,13 @@
+with canvas
+	.size = [100, 100]
+	.origin = [50, 50]
+with ungon()
+	.stroke = :black
+	.fill = :yellow
+	let base = cos(36)*40
+	jump().position = [-base+20, base*1.539]
+	repeat 5
+		move().distance = 20
+		turn().degrees = -72
+		move().distance = 20
+		turn().degrees = 144
