@@ -515,10 +515,6 @@ static InterpretResult run() {
 			case OP_POP: {
 				pop();
 			} break;
-			case OP_PRINT: {
-				printValue(O_OUT, pop());
-				print(O_OUT, "\n");
-			} break;
 			case OP_CONSTANT: {
 				Value cons = READ_CONSTANT();
 				push(cons);

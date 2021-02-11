@@ -372,6 +372,8 @@ void renderFrame(CompilePackage* code){
 					em_newPath(address);
 					assignStyles(shape);
 					em_assignAnimation(shape->animation);
+					Value closed = getValue(shape->instance.map, string("closed"));
+					em_addAttribute("closed", &closed);
 				#endif
 				drawPoints(shape);
 			} break;
@@ -380,6 +382,8 @@ void renderFrame(CompilePackage* code){
 					em_newUngon(address);
 					assignStyles(shape);
 					em_assignAnimation(shape->animation);
+					Value closed = getValue(shape->instance.map, string("closed"));
+					em_addAttribute("closed", &closed);
 				#endif
 				drawPoints(shape);
 			} break;

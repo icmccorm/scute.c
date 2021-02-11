@@ -45,7 +45,6 @@ typedef enum {
 	OP_EQUALS,
 	OP_LESS_EQUALS,
 	OP_GREATER_EQUALS,
-	OP_PRINT,
 
 	OP_DRAW,
 	OP_POP,

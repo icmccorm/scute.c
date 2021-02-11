@@ -194,6 +194,7 @@ static TK identifier(){
         case TK_RADIANS:
         case TK_SQRT:
         case TK_RAND: 
+        case TK_PRINT:
             return makeDualToken(TK_NATIVE, type);
         default:
             return makeToken(type);
@@ -251,7 +252,6 @@ TK scanTK(){
         case '~': return makeToken(TK_TILDA);
         case '?': return makeToken(TK_QUESTION);
         case ';': return makeToken(TK_SEMI);
-
         case ':':{
             char b = advance();
             if(isAlpha(b)){

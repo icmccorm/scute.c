@@ -349,7 +349,6 @@ static bool isInitialized(TK* id){
 static void expression(bool emitTrace);
 static ObjChunk* thunkExpression(bool emitTrace);
 static void indentedBlock();
-static void printStatement();
 static void expressionStatement();
 static void assignStatement(bool enforceGlobal);
 static void defStatement();
@@ -381,7 +380,7 @@ static void parsePrecedence(PCType precedence){
 	advance();
 	ParseRule* prefixRule = getRule(parser.previous.type);
 	if(prefixRule == NULL || prefixRule->prefix == NULL){
-		errorAtCurrent("Expect expression.");
+		errorAt(&parser.previous, "Expected a valid expression.");
 	}else{
 		bool canAssign = (precedence <= PC_ASSIGN);
 		prefixRule->prefix(canAssign);
@@ -424,10 +423,6 @@ static void statement() {
 			case TK_FUNC:
 				advance();
 				funcStatement();
-				break;
-			case TK_PRINT:
-				advance();
-				printStatement();
 				break;
 			case TK_LET:
 				advance();
@@ -506,8 +501,8 @@ static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
 			if(parser.manipTarget){
-				parser.manipTarget->lineIndex = parser.lineIndex;
-				parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
+				//parser.manipTarget->lineIndex = parser.lineIndex;
+				//parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
 				int operator = (int)(parser.lastOperator);
 				#ifdef EM_MAIN
 					em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, &operator, parser.manipTarget);	
@@ -1051,17 +1046,14 @@ static uint8_t emitParams() {
 	return paramCount;
 }
 
-static void printStatement() {
-	consume(TK_L_PAREN, "Expected '('.");
-	expression(false);
-	consume(TK_R_PAREN, "Expected ')'.");
-	emitByte(OP_PRINT);
-	endLine();
-}
-
 static void expressionStatement() {
 	expression(false);
 	emitByte(OP_POP);
+	while(parser.current.type == TK_SEMI){
+		advance();
+		expression(false);
+		emitByte(OP_POP);
+	}
 	endLine();
 }
 
@@ -1273,6 +1265,9 @@ void native(bool canAssign){
 			break;
 		case TK_RAND:
 			func = nativeRandom;
+			break;
+		case TK_PRINT:
+			func = nativePrint;
 			break;
 		default:
 			break;

@@ -17,6 +17,7 @@ Value nativeDegrees(Value* params, int numParams);
 Value nativeRadians(Value* params, int numParams);
 Value nativeSqrt(Value* params, int numParams);
 Value nativeRandom(Value* params, int numParams);
+Value nativePrint(Value* params, int numParams);
 
 Value rect(Value* params, int numParams);
 Value circle(Value* params, int numParams);

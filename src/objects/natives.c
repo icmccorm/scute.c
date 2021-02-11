@@ -38,6 +38,18 @@ Value nativeRandom(Value* params, int numParams){
 	return NULL_VAL();
 }
 
+Value nativePrint(Value* params, int numParams){
+	if(numParams > 0){
+		for(int i = 0; i<numParams; ++i){
+			printValue(O_OUT, params[i]);
+			print(O_OUT, "\n");
+		}
+	}else{
+		print(O_OUT, "\n");
+	}
+	return NULL_VAL();
+}
+
 Value nativeSine(Value* params, int numParams){
 	if(numParams > 0) {
 		Value operand = params[0];
@@ -283,6 +295,7 @@ Value polygon(Value* params, int numParams){
 
 Value path(Value* params, int numParams){
 	ObjShape* pathInstance = allocateShape(NULL, TK_PATH);
+	add(pathInstance->instance.map, string("closed"), BOOL_VAL(true));
 	pushShape(pathInstance);
 
 	return OBJ_VAL((ObjInstance*) pathInstance);
@@ -290,6 +303,7 @@ Value path(Value* params, int numParams){
 
 Value ungon(Value* params, int numParams){
 	ObjShape* ungonInstance = allocateShape(NULL, TK_UNGON);
+	add(ungonInstance->instance.map, string("closed"), BOOL_VAL(true));
 	pushShape(ungonInstance);
 
 	return OBJ_VAL((ObjInstance*) ungonInstance);

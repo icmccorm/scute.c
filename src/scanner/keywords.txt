@@ -40,6 +40,7 @@
 asin
 acos
 atan
+print
 and[,and_,and]
 arc
 by
@@ -71,7 +72,6 @@ true[literal,,none]
 to
 turn
 or
-print
 path
 polyline
 polygon
