@@ -96,4 +96,4 @@ sand: ./$(EXEC_TEST_FILE) ./sandbox.sct
 	@./$(EXEC_TEST_FILE) $@ | diff - $< && echo "-\033[0;32m ☑ \033[0;37m $(basename $(notdir $@)) succeeded." || echo "-\033[31m ☑ \033[0;37m $(basename $(notdir $@)) failed."
 
 make grind: ./$(EXEC_FILE)
-	valgrind --leak-check=full --track-origins=yes ./$(EXEC_FILE) ./test
+	valgrind --leak-check=full --track-origins=yes ./$(EXEC_FILE) ./sandbox.sct

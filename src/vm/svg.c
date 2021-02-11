@@ -275,19 +275,20 @@ void drawPoints(ObjShape* shape){
 			} break;
 			case TK_MIRROR: {
 				Value origin = getValue(map, string("origin"));
-				Value* originArray = AS_ARRAY(origin)->array->values;
+				ObjArray* originObj = (ObjArray*) AS_OBJ(origin);
+				Value* originArray = originObj->array->values;
 
 				Value axis = getValue(map, string("axis"));
 				CSType axisType = (CSType) AS_NUM(axis);
-
+				bool isX = axisType == CS_X || axisType == CS_XY;
+				bool isY = axisType == CS_Y || axisType == CS_XY;
 				#ifdef EM_MAIN
 					em_addMirror(
 						segment,
 						originArray,
-						axisType == CS_X || axisType == CS_XY, 
-						axisType == CS_Y || axisType == CS_XY
+						isX, 
+						isY
 					);
-					
 				#else
 					print(O_OUT, "Mirror ");
 					printValue(O_OUT, origin);

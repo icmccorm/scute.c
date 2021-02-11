@@ -308,15 +308,6 @@ mergeInto(LibraryManager.library, {
 		};
 	},
 
-	em_addMirror: function(anim, originPtr, axisPtr){
-		_currentShape.segments.push(anim)	
-		Module["_currentFrame"].segments[anim] = {
-			type: Segments.MIRROR,
-			origin: _lib_getVector(originPtr),
-			axis: _lib_getValue(axisPtr),
-		};
-	},
-
 	em_printOut__deps: [
 
 	],
