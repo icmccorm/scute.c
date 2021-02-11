@@ -86,8 +86,6 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 			return simpleInstruction("OP_GREATER_EQUALS", offset);
 		case OP_EQUALS:
 			return simpleInstruction("OP_EQUALS", offset);
-		case OP_PRINT:
-			return simpleInstruction("OP_PRINT", offset);
 		case OP_LOAD_INST:
 			return simpleInstruction("OP_LOAD_INST", offset);
 		case OP_DEF_GLOBAL:
