@@ -59,8 +59,8 @@ mergeInto(LibraryManager.library, {
 	em_addValue: function(inlineOffsetPtr, lengthPtr, opPtr, valPtr){
 		var inlineOffset = getValue(inlineOffsetPtr, 'i32');
 		var length = getValue(lengthPtr, 'i32');
-		var operator = getValue(opPtr, 'i32');
-
+		var operator = Module.UTF8ToString(opPtr);
+		console.log(operator);
 		_values.push({
 			delta: 0,
 			prevDelta: 0,
