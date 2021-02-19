@@ -195,7 +195,9 @@ static void emitLinkedConstant(Value value, TK* token){
 
 static Value* emitConstant(Value value){
 	emitByte(OP_CONSTANT);
-	return &(currentChunk()->constants->values[writeConstant(currentChunk(), value, parser.previous.line)]);
+	Value* values = currentChunk()->constants->values;
+	uint32_t arrayIndex = writeConstant(currentChunk(), value, parser.previous.line);
+	return &(values[arrayIndex]);
 }
 
 static void errorAt(TK* token, char* message){
