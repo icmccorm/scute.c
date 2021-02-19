@@ -1,0 +1,9 @@
+with ungon()
+	.stroke = :black
+	.fill = :yellow
+	jump().position = [0, 125]
+	repeat 4
+		move().distance = 125
+		turn().degrees = -72
+		move().distance = 125
+		turn().degrees = 144

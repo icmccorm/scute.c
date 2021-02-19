@@ -1,0 +1,20 @@
+canvas.size = [50, 50]
+canvas.origin = [25, 10]
+def hole(x, y) as polygon()
+	jump().position = [x, y]
+	repeat 1
+		turn().degrees = 90
+		move().distance = 10
+		turn().degrees = 90
+		move().distance = 3
+hole(-7, 10); hole(10, 10)
+with path()
+	.closed = false
+	jump().position = [0, 0]
+	move().distance = 15
+	with qbezier()
+		.control = [25, 15]
+		.end = [15, 30]
+	turn().degrees = -180
+	move().distance = 15
+	mirror()
