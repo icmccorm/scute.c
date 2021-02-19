@@ -195,9 +195,10 @@ static void emitLinkedConstant(Value value, TK* token){
 
 static Value* emitConstant(Value value){
 	emitByte(OP_CONSTANT);
-	Value* values = currentChunk()->constants->values;
 	uint32_t arrayIndex = writeConstant(currentChunk(), value, parser.previous.line);
-	return &(values[arrayIndex]);
+	Value* values = currentChunk()->constants->values;
+	Value* indexed = &(values[arrayIndex]);
+	return indexed;
 }
 
 static void errorAt(TK* token, char* message){
@@ -506,6 +507,7 @@ static ObjChunk* thunkExpression(bool emitTrace){
 
 void resetManipTargeting(Parser* parser);
 static void expression(bool emitTrace) {
+	resetManipTargeting(&parser);
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
 		if(parser.manipTarget && parser.manipPrecedence == parser.leastOperatorPrecedence){
