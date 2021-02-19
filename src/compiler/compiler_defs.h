@@ -39,7 +39,8 @@ typedef struct {
 
     PCType manipPrecedence;
     TKType lastOperator;
-    PCType lastOperatorPrecedence;
+    TKType leastOperator;
+    PCType leastOperatorPrecedence;
 
     Value* lastValueEmitted;
     Value* manipTarget;

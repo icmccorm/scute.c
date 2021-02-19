@@ -393,7 +393,10 @@ static void parsePrecedence(PCType precedence){
 			ParseRule* infixRule = rule;
 			if(infixRule){
 				parser.lastOperator = parser.previous.type;
-				parser.lastOperatorPrecedence = infixRule->precedence;
+				if(parser.leastOperatorPrecedence > infixRule->precedence || parser.leastOperatorPrecedence == PC_NONE){
+ 					parser.leastOperatorPrecedence = infixRule->precedence;
+					parser.leastOperator = parser.lastOperator;
+				}
 				infixRule->infix(canAssign);
 			}
 			rule = getRule(parser.current.type);
@@ -501,47 +504,50 @@ static ObjChunk* thunkExpression(bool emitTrace){
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
-			if(parser.manipTarget){
-				double targetValue = AS_NUM(*parser.manipTarget);
-				#ifdef DEBUG
-					print(O_DEBUG, "MTV [%d, %d]: %f\n", parser.lineIndex, parser.currentLineValueIndex, targetValue);
-				#endif
-				parser.manipTarget->lineIndex = parser.lineIndex;
-				parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
-				char operator[2];
-				operator[1] = '\0';
-				switch(parser.lastOperator){
-					case TK_PLUS:
-						operator[0] = '+';
-						break;
-					case TK_MINUS:
-						operator[0] = '-';
-						break;
-					case TK_TIMES:
-						operator[0] = '*';
-						break;
-					case TK_DIVIDE:
-						operator[0] = '/';
-						break;
-					case TK_MODULO:
-						operator[0] = '%';
-						break;
-					default:
-						break;
-				}
-				#ifdef EM_MAIN
-					em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, operator, parser.manipTarget);	
-				#endif
-			}else{
-				if(parser.lastValueEmitted){
-					parser.lastValueEmitted->lineIndex = parser.lineIndex;
-					parser.lastValueEmitted->inlineIndex = parser.currentLineValueIndex;
-					int insertionIndex = parser.current.start + parser.current.length - parser.lastNewline;
-					#ifdef EM_MAIN
-						em_addUnlinkedValue(&insertionIndex, parser.lastValueEmitted);
-					#endif
-				}
+		if(parser.manipTarget && parser.manipPrecedence == parser.leastOperatorPrecedence){
+			double targetValue = AS_NUM(*parser.manipTarget);
+			#ifdef DEBUG
+				print(O_DEBUG, "MTV [%d, %d]: %f\n", parser.lineIndex, parser.currentLineValueIndex, targetValue);
+			#endif
+			parser.manipTarget->lineIndex = parser.lineIndex;
+			parser.manipTarget->inlineIndex = parser.currentLineValueIndex;
+			char operator[2];
+			operator[1] = '\0';
+			switch(parser.leastOperator){
+				case TK_PLUS:
+					operator[0] = '+';
+					break;
+				case TK_MINUS:
+					operator[0] = '-';
+					break;
+				case TK_TIMES:
+					operator[0] = '*';
+					break;
+				case TK_DIVIDE:
+					operator[0] = '/';
+					break;
+				case TK_MODULO:
+					operator[0] = '%';
+					break;
+				default:
+					break;
 			}
+			#ifdef EM_MAIN
+				em_addValue(&parser.manipTargetCharIndex, &parser.manipTargetLength, operator, parser.manipTarget);	
+			#endif
+		}else{
+			if(parser.lastValueEmitted){
+				#ifdef DEBUG
+					print(O_DEBUG, "ULV\n");
+				#endif
+				parser.lastValueEmitted->lineIndex = parser.lineIndex;
+				parser.lastValueEmitted->inlineIndex = parser.currentLineValueIndex;
+				int insertionIndex = parser.current.start + parser.current.length - parser.lastNewline;
+				#ifdef EM_MAIN
+					em_addUnlinkedValue(&insertionIndex, parser.lastValueEmitted);
+				#endif
+			}
+		}
 		++parser.currentLineValueIndex;
 	}
 	parser.manipTarget = NULL;
@@ -549,19 +555,18 @@ static void expression(bool emitTrace) {
 	parser.manipTargetLength = 0;
 	parser.manipTargetCharIndex = -1;
 	parser.manipPrecedence = PC_NONE;
-	parser.lastOperatorPrecedence = PC_NONE;
+	parser.leastOperatorPrecedence = PC_NONE;
+	parser.leastOperator = TK_NULL;
 }
 static double tokenToNumber(TK token);
 static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	Value val = NUM_VAL(value);
 	Value* link = emitConstant(val);
-	if((parser.lastOperatorPrecedence < parser.manipPrecedence || parser.manipPrecedence == PC_NONE || parser.lastOperatorPrecedence == PC_NONE) && (parser.parenDepth == 0)){
+	if(/*(parser.leastOperatorPrecedence < parser.manipPrecedence || parser.manipPrecedence == PC_NONE || parser.leastOperatorPrecedence == PC_NONE) && */parser.parenDepth == 0){
 		parser.manipTarget = link;
 		parser.manipTargetCharIndex = parser.previous.start - parser.lastNewline;
 		parser.manipTargetLength = parser.previous.length;
-		
-		parser.manipPrecedence = parser.lastOperatorPrecedence;
 	}
 	parser.lastValueEmitted = link;
 }
@@ -1540,7 +1545,8 @@ void initParser(Parser* parser, char* source){
 
 	parser->manipPrecedence = PC_NONE;
 	parser->lastOperator = TK_NULL;
-	parser->lastOperatorPrecedence = PC_NONE;
+	parser->leastOperator = TK_NULL;
+	parser->leastOperatorPrecedence = PC_NONE;
 
 	parser->manipTarget = NULL;
 	parser->manipTargetCharIndex = -1;
