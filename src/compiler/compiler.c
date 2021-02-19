@@ -514,6 +514,9 @@ static void expression(bool emitTrace) {
 			char operator[2];
 			operator[1] = '\0';
 			switch(parser.leastOperator){
+				case TK_POWER:
+					operator[0] = '^';
+					break;
 				case TK_PLUS:
 					operator[0] = '+';
 					break;
@@ -1481,6 +1484,9 @@ void binary(bool canAssign){
 			break;
 		case TK_BANG_EQUALS:
 			emitBytes(OP_EQUALS, OP_NOT);
+			break;
+		case TK_POWER:
+			emitByte(OP_POWER);
 			break;
 		default:
 			break;

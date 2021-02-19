@@ -40,13 +40,16 @@ INC_FLAGS := $(addprefix -I, $(INC_DIRS))
 
 all : scanner ./$(EXEC_FILE) test web node
 
-./$(EXEC_FILE) : $(OBJS) $(C_ENTRY)
+./$(EXEC_FILE) : $(OBJS) $(C_ENTRY) 
 	@$(CC) -g $(INC_FLAGS) $(C_ENTRY) $(OBJS) -o $(@) $(END_FLAGS)
 
 ./$(EXEC_TEST_FILE) : $(DEBUG_OBJS) $(C_ENTRY)
 	@$(CC) -g -D DEBUG $(INC_FLAGS) $(C_ENTRY) $(DEBUG_OBJS) -o $(@) $(END_FLAGS)
 
-
+./src/scanner/constants.txt ./src/scanner/keywords.txt: scanner-src
+scanner-src: 
+	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
+	
 $(BUILD)/%.c.db.o : %.c 
 	@$(MKDIR) -p $(dir $@)
 	@$(CC) -g -D DEBUG $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
@@ -56,9 +59,9 @@ $(BUILD)/%.c.o : %.c
 	@$(CC) -g $(INC_FLAGS) $(D_FLAGS) -c $< -o $@
 
 .PHONY : clean
- 
-/scanner/parsemap.% /scanner/tokenizer.%: /scanner/constants.txt /scanner/keywords.txt autoscanner.py
-	python3 autoscanner.py -d ./src/scanner -c constants.txt -k keywords.txt 
+
+*.txt:
+*.py:
 
 clean:
 	@$(RM) -r $(BUILD)

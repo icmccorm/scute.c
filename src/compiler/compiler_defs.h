@@ -17,6 +17,7 @@ typedef enum{
 	PC_COMPARE, // > < <= >=
 	PC_TERM, // + -
 	PC_FACTOR, // * / %
+    PC_POWER, // ^
 	PC_UNARY, // - -- ++ !
 	PC_CALL, // . [] ()
 	PC_PRIMARY

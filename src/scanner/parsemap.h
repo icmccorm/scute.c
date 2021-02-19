@@ -3,5 +3,5 @@
 
 #include "compiler_defs.h"
 extern ParseRule rules[];
-#define NUM_PARSE_RULES 31
+#define NUM_PARSE_RULES 32
 #endif

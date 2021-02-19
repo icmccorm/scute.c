@@ -252,6 +252,7 @@ TK scanTK(){
         case '~': return makeToken(TK_TILDA);
         case '?': return makeToken(TK_QUESTION);
         case ';': return makeToken(TK_SEMI);
+        case '^': return makeToken(TK_POWER);
         case ':':{
             char b = advance();
             if(isAlpha(b)){

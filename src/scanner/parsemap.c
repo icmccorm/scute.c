@@ -36,6 +36,7 @@ ParseRule rules[] = {
 	{unary, NULL, PC_UNARY},		//TK_BANG
 	{unary, NULL, PC_UNARY},		//TK_INCR
 	{unary, NULL, PC_UNARY},		//TK_DECR
+	{NULL, binary, PC_POWER},		//TK_POWER
 	{literal, NULL, PC_NONE},		//TK_REAL
 	{literal, NULL, PC_NONE},		//TK_INTEGER
 	{grouping, NULL, PC_NONE},		//TK_L_PAREN

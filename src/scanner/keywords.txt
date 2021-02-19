@@ -19,6 +19,7 @@
 :bang[unary,,unary]
 :incr[unary,,unary]
 :decr[unary,,unary]
+:power[,binary, power]
 :colon
 :question
 :eval_assign

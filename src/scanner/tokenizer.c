@@ -81,6 +81,39 @@ TKType findKeyword(char* start, char* current){
 		} break;
 
 		case 'n': return checkKeyword(1, 3, "ull", TK_NULL);
+		case 'p':{
+			if(length > 1){
+				switch(start[1]){
+					case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
+					case 'a': return checkKeyword(2, 2, "th", TK_PATH);
+					case 'o':{
+						if(length > 2){
+							switch(start[2]){
+								case 'l':{
+									if(length > 3){
+										switch(start[3]){
+											case 'y':{
+												if(length > 4){
+													switch(start[4]){
+														case 'l': return checkKeyword(5, 3, "ine", TK_POLYLINE);
+														case 'g': return checkKeyword(5, 2, "on", TK_POLYGON);
+													}
+												}
+											} break;
+
+										}
+									}
+								} break;
+
+							}
+						}
+					} break;
+
+				}
+			}
+		return TK_ID;
+		} break;
+
 		case 'b': return checkKeyword(1, 1, "y", TK_BY);
 		case 'd':{
 			if(length > 1){
@@ -172,39 +205,6 @@ TKType findKeyword(char* start, char* current){
 		} break;
 
 		case 'o': return checkKeyword(1, 1, "r", TK_OR);
-		case 'p':{
-			if(length > 1){
-				switch(start[1]){
-					case 'r': return checkKeyword(2, 3, "int", TK_PRINT);
-					case 'a': return checkKeyword(2, 2, "th", TK_PATH);
-					case 'o':{
-						if(length > 2){
-							switch(start[2]){
-								case 'l':{
-									if(length > 3){
-										switch(start[3]){
-											case 'y':{
-												if(length > 4){
-													switch(start[4]){
-														case 'l': return checkKeyword(5, 3, "ine", TK_POLYLINE);
-														case 'g': return checkKeyword(5, 2, "on", TK_POLYGON);
-													}
-												}
-											} break;
-
-										}
-									}
-								} break;
-
-							}
-						}
-					} break;
-
-				}
-			}
-		return TK_ID;
-		} break;
-
 		case 'e':{
 			if(length > 1){
 				switch(start[1]){

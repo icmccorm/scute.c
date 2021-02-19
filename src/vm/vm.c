@@ -545,6 +545,12 @@ static InterpretResult run() {
 			case OP_MODULO:
 				BINARY_OP(%, NUM_VAL, int);
 				break;
+			case OP_POWER: {
+				Value b = pop();
+				Value a = pop();
+				Value power = NUM_VAL(pow(AS_NUM(a), AS_NUM(b)));
+				push(power);
+			} break;
 			case OP_EQUALS: ;
 				b = pop();
 				a = pop();

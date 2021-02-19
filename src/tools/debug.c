@@ -40,6 +40,8 @@ static int printInstruction(Chunk* chunk, int offset, int currLine, int prevLine
 
 	uint8_t instruction = chunk->code[offset];
 	switch(instruction){
+		case OP_POWER:
+			return simpleInstruction("OP_POWER", offset);
 		case OP_INTERPOLATE: 
 			return simpleInstruction("OP_INTERPOLATE", offset);
 		case OP_ANIM:
