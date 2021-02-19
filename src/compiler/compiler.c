@@ -384,22 +384,23 @@ static void parsePrecedence(PCType precedence){
 		bool canAssign = (precedence <= PC_ASSIGN);
 		prefixRule->prefix(canAssign);
 
-		ParseRule* rule = getRule(parser.current.type);
+		ParseRule* infixRule = getRule(parser.current.type);
 
-		if(parser.manipTarget && parser.manipPrecedence == PC_NONE) parser.manipPrecedence = rule->precedence;
-		
-		while(rule && precedence <= rule->precedence){
+		while(infixRule && precedence <= infixRule->precedence){
+			if(parser.manipTarget && parser.manipPrecedence == PC_NONE) parser.manipPrecedence = infixRule->precedence;
+
 			advance();
-			ParseRule* infixRule = rule;
 			if(infixRule){
 				parser.lastOperator = parser.previous.type;
 				if(parser.leastOperatorPrecedence > infixRule->precedence || parser.leastOperatorPrecedence == PC_NONE){
- 					parser.leastOperatorPrecedence = infixRule->precedence;
-					parser.leastOperator = parser.lastOperator;
+ 					if(infixRule->precedence < PC_CALL){
+						parser.leastOperatorPrecedence = infixRule->precedence;
+						parser.leastOperator = parser.lastOperator;
+					}
 				}
 				infixRule->infix(canAssign);
 			}
-			rule = getRule(parser.current.type);
+			infixRule = getRule(parser.current.type);
 		}
 
 		if(!canAssign && match(TK_ASSIGN)){
@@ -501,6 +502,7 @@ static ObjChunk* thunkExpression(bool emitTrace){
 	return newChunk;
 }
 
+void resetManipTargeting(Parser* parser);
 static void expression(bool emitTrace) {
 	parsePrecedence(PC_ASSIGN);
 	if(emitTrace){
@@ -553,13 +555,7 @@ static void expression(bool emitTrace) {
 		}
 		++parser.currentLineValueIndex;
 	}
-	parser.manipTarget = NULL;
-	parser.lastValueEmitted = NULL;
-	parser.manipTargetLength = 0;
-	parser.manipTargetCharIndex = -1;
-	parser.manipPrecedence = PC_NONE;
-	parser.leastOperatorPrecedence = PC_NONE;
-	parser.leastOperator = TK_NULL;
+	resetManipTargeting(&parser);
 }
 static double tokenToNumber(TK token);
 static void number(bool canAssign) {
@@ -1054,6 +1050,8 @@ void stringLiteral(bool canAssign) {
 void array(bool canAssign) {
 	uint32_t numParameters = 0;
 	while(parser.current.type != TK_R_BRACK){
+
+		resetManipTargeting(&parser);
 		expression(true);
 		++numParameters;
 		if(parser.current.type != TK_R_BRACK) consume(TK_COMMA, "Expected ','");
@@ -1539,6 +1537,16 @@ void grouping(bool canAssign){
 
 static void printToken();
 
+void resetManipTargeting(Parser* parser){
+	parser->manipPrecedence = PC_NONE;
+	parser->lastOperator = TK_NULL;
+	parser->leastOperator = TK_NULL;
+	parser->leastOperatorPrecedence = PC_NONE;
+	parser->manipTarget = NULL;
+	parser->manipTargetCharIndex = -1;
+	parser->manipTargetLength = 0;
+}
+
 void initParser(Parser* parser, char* source){
 	parser->hadError = false;
 	parser->panicMode = false;
@@ -1548,16 +1556,9 @@ void initParser(Parser* parser, char* source){
 	parser->currentLineValueIndex = 0;
 
 	parser->lastNewline = source;
-
-	parser->manipPrecedence = PC_NONE;
-	parser->lastOperator = TK_NULL;
-	parser->leastOperator = TK_NULL;
-	parser->leastOperatorPrecedence = PC_NONE;
-
-	parser->manipTarget = NULL;
-	parser->manipTargetCharIndex = -1;
-	parser->manipTargetLength = 0;
 	parser->parenDepth = 0;
+
+	resetManipTargeting(parser);
 }
 
 bool compile(char* source, CompilePackage* package){
