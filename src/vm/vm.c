@@ -411,7 +411,7 @@ static InterpretResult run() {
 			} break;
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
-
+				Value params[numParams];
 				Value fnValue = pop();
 				if(fnValue.type == VL_OBJ){
 					Obj* object = AS_OBJ(fnValue);
@@ -428,7 +428,7 @@ static InterpretResult run() {
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;
 							NativeFn function = native->function;
-							Value params[numParams];
+		
 							for(int i = 0; i<numParams; ++i){
 								params[i] = pop();
 							}
