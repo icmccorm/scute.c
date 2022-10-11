@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "compiler.h"
 #include "obj.h"
+#include <stdlib.h>
 #include "hashmap.h"
 #include "output.h"
 #include "svg.h"
@@ -270,6 +271,8 @@ signed short readShort(){
 
 static InterpretResult run() {
 
+	Value * params = NULL;
+
 #define READ_BYTE() (*vm.ip++)
 #define READ_SHORT() (readShort())
 #define READ_INT() (readInteger())
@@ -411,7 +414,7 @@ static InterpretResult run() {
 			} break;
 			case OP_CALL: {
 				uint8_t numParams = READ_BYTE();
-				Value params[numParams];
+				params = malloc(sizeof(Value) * numParams);
 				Value fnValue = pop();
 				if(fnValue.type == VL_OBJ){
 					Obj* object = AS_OBJ(fnValue);
@@ -428,7 +431,7 @@ static InterpretResult run() {
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;
 							NativeFn function = native->function;
-		
+							Value params[numParams];
 							for(int i = 0; i<numParams; ++i){
 								params[i] = pop();
 							}
@@ -578,6 +581,7 @@ static InterpretResult run() {
 				push(NUM_VAL(vm.frameIndex));
 				break;
 		}	
+		free(params);
 	}
 #undef READ_BYTE
 #undef READ_SHORT
