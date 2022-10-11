@@ -431,7 +431,6 @@ static InterpretResult run() {
 						case OBJ_NATIVE: {
 							ObjNative* native = (ObjNative*) object;
 							NativeFn function = native->function;
-							Value params[numParams];
 							for(int i = 0; i<numParams; ++i){
 								params[i] = pop();
 							}
