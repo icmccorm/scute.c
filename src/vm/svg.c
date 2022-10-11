@@ -350,7 +350,7 @@ void renderFrame(CompilePackage* code){
 	setCanvas();
 	while(vm.shapeCount > 0){
 		ObjShape* shape = popShape();
-		unsigned address = (unsigned) shape->instance.map;
+		unsigned address = (uintptr_t) shape->instance.map;
 		switch(shape->shapeType){
 			case TK_POLYGON: {
 				#ifdef EM_MAIN
