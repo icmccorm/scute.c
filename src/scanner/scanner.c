@@ -355,6 +355,8 @@ TK scanTK(){
             return errorToken("Unrecognized character.");
             break;
     }
+    return errorToken("Unrecognized character.");
+
 }
 
 static void printToken(TK token){
